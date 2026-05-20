@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Job {
+    #[serde(rename = "_id", alias = "id")]
     pub id: String,
     pub url: String,
     pub status: String,

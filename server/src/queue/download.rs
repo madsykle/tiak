@@ -144,9 +144,8 @@ impl DownloadQueue {
             .arg("mp4")
             .arg("--postprocessor-args")
             .arg("ffmpeg:-movflags +faststart")
-            .arg("--write-info-json")
-            .arg("--")
-            .arg(url);
+            .arg("--write-info-json");
+
         if is_tiktok {
             cmd.arg("--add-header")
                 .arg("Referer:https://www.tiktok.com/");
@@ -158,6 +157,7 @@ impl DownloadQueue {
         let mut child = cmd
             .arg("-o")
             .arg(template)
+            .arg("--")
             .arg(url)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

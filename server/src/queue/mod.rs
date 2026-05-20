@@ -208,9 +208,14 @@ impl DownloadQueue {
             };
 
             if let Some(id) = next_id {
-                if let Ok(job) = self.db.get_job(&id).await {
-                    if job.status == "queued" {
-                        self.start_download_task(job).await;
+                match self.db.get_job(&id).await {
+                    Ok(job) => {
+                        if job.status == "queued" {
+                            self.start_download_task(job).await;
+                        }
+                    }
+                    Err(e) => {
+                        error!("Failed to fetch job {} from DB: {}", id, e);
                     }
                 }
             } else {

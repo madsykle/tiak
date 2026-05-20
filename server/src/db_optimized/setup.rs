@@ -25,9 +25,46 @@ impl Db {
         }
 
         db_struct.ensure_schema().await?;
+        db_struct.fix_job_ids().await?;
         db_struct.seed_admin_user().await?;
         
         Ok(db_struct)
+    }
+
+    async fn fix_job_ids(&self) -> Result<()> {
+        use futures::stream::StreamExt;
+        let coll = self.db.collection::<mongodb::bson::Document>("jobs");
+        let mut cursor = coll.find(doc! { "id": { "$exists": true } }).await?;
+        while let Some(res) = cursor.next().await {
+            let doc = res?;
+            if let Some(id) = doc.get("id").and_then(|v| v.as_str()) {
+                if let Some(oid) = doc.get("_id").and_then(|v| v.as_object_id()) {
+                    let mut new_doc = doc.clone();
+                    let id_val = id.to_string();
+                    new_doc.insert("_id", &id_val);
+                    new_doc.remove("id");
+                    
+                    // Check if a document with this _id already exists to avoid duplicate key error
+                    let existing_count = coll.count_documents(doc! { "_id": &id_val }).await.unwrap_or(0);
+                    if existing_count == 0 {
+                        if let Err(e) = coll.delete_one(doc! { "_id": oid }).await {
+                            tracing::warn!("Failed to delete old job doc: {}", e);
+                            continue;
+                        }
+                        if let Err(e) = coll.insert_one(new_doc).await {
+                            tracing::warn!("Failed to insert fixed job doc {}: {}", id_val, e);
+                        } else {
+                            tracing::info!("Fixed job ID: {}", id_val);
+                        }
+                    } else {
+                        // Already exists with this UUID as _id, just delete the old one
+                        tracing::info!("Job with _id {} already exists, removing legacy doc", id_val);
+                        let _ = coll.delete_one(doc! { "_id": oid }).await;
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     async fn migrate_from_sqlite(&self) -> Result<()> {
