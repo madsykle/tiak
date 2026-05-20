@@ -11,6 +11,39 @@ import { useVisibilityPolling } from '../hooks/useVisibilityPolling';
 
 const CustomVideoPlayer = dynamic(() => import('../components/CustomVideoPlayer'), { ssr: false });
 
+function ExpiryCountdown({ expiresAt }: { expiresAt: number }) {
+  const [timeLeft, setTimeLeft] = useState(expiresAt - Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(expiresAt - Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+
+  if (timeLeft <= 0) return <span className="text-[10px] text-red-500 font-medium italic">Expired</span>;
+
+  const totalDuration = 5 * 60 * 1000; // 5 minutes
+  const percentage = Math.max(0, Math.min(100, (timeLeft / totalDuration) * 100));
+  
+  const minutes = Math.floor(timeLeft / 60000);
+  const seconds = Math.floor((timeLeft % 60000) / 1000);
+
+  return (
+    <div className="flex items-center gap-2 min-w-[80px]">
+        <div className="h-1 w-12 bg-surface-strong rounded-full overflow-hidden">
+            <div 
+                className={`h-full transition-all duration-1000 ease-linear ${percentage < 20 ? 'bg-red-500' : 'bg-orange-400'}`}
+                style={{ width: `${percentage}%` }}
+            />
+        </div>
+        <span className="text-[10px] tabular-nums font-medium text-content-muted">
+            {minutes}:{seconds.toString().padStart(2, '0')}
+        </span>
+    </div>
+  );
+}
+
 export default function Queue() {
   const router = useRouter();
   const [urls, setUrls] = useState('');
@@ -430,33 +463,6 @@ export default function Queue() {
         {/* History Section for Guests/Non-admins */}
         {role !== 'admin' && (
             <div className="space-y-4 pt-4 border-t border-border-subtle">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-medium text-content-muted uppercase tracking-wider">Recent History</h2>
-                </div>
-                <HistoryTable 
-                    jobs={historyJobs}
-                    onRetry={handleRetry}
-                    onRedownload={handleRedownload}
-                    onPreview={handlePreview}
-                    onDelete={handleDeleteHistory}
-                />
-            </div>
-        )}
-
-        {previewJob && (
-          <CustomVideoPlayer 
-            src={previewSrc}
-            onClose={() => {
-                setPreviewJob(null);
-                setPreviewSrc('');
-            }}
-          />
-        )}
-      </div>
-    </>
-  );
-}
-<div className="space-y-4 pt-4 border-t border-border-subtle">
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-medium text-content-muted uppercase tracking-wider">Recent History</h2>
                 </div>
