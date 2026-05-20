@@ -381,13 +381,14 @@ export default function Queue() {
                                         <span className={`inline-flex h-2 w-2 rounded-full ${
                                             job.status === 'done' ? 'bg-emerald-500' :
                                             job.status === 'downloading' ? 'bg-blue-500' :
-                                            job.status === 'failed' ? 'bg-red-500' : 'bg-zinc-300'
+                                            job.status === 'failed' ? 'bg-red-500' :
+                                            job.status === 'missing' ? 'bg-red-500' : 'bg-zinc-300'
                                         }`} />
                                         <p className="truncate text-sm font-medium text-foreground" title={job.url}>{job.url}</p>
                                     </div>
                                     
                                     <div className="flex items-center gap-3 text-xs text-content-muted">
-                                        <span className="capitalize">{job.status}</span>
+                                        <span className="capitalize">{job.status === 'missing' ? 'Expired' : job.status}</span>
                                         {job.category && role === 'admin' && (
                                             <>
                                                 <span>•</span>
@@ -482,14 +483,6 @@ export default function Queue() {
             onClose={() => {
                 setPreviewJob(null);
                 setPreviewSrc('');
-            }}
-          />
-        )}
-      </div>
-    </>
-  );
-}
-         setPreviewSrc('');
             }}
           />
         )}
