@@ -1,0 +1,39 @@
+server {
+    listen 80;
+    server_name your-domain.com; # Replace with your domain
+
+    # Next.js Web Frontend
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Rust Backend API
+    location /api {
+        proxy_pass http://localhost:4697/api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        
+        # Increase body size for file uploads if needed
+        client_max_body_size 100M;
+    }
+
+    # Rust Backend Streaming/Static Files
+    location /api/files/stream {
+        proxy_pass http://localhost:4697/api/files/stream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        
+        # Disable buffering for smooth streaming
+        proxy_buffering off;
+    }
+}

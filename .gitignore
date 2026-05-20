@@ -1,0 +1,54 @@
+android_native/android-sdk/
+android_native/gradle-dist/
+android_native/.gradle/
+android_native/build/
+android_native/app/build/
+android_native/local.properties
+# android_native/gradle/wrapper/gradle-wrapper.jar
+android_native/.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Private Data & Secrets
+.env
+.env.*
+!.env.example
+data/
+server/data/
+*.keystore
+*.pem
+
+# Sub-projects to hide for now
+.github/workflows/
+android_native/
+
+# Dependencies & Build Artifacts
+node_modules/
+target/
+venv_python/
+.next/
+dist/
+build/
+bin/yt-dlp
+
+# AI & Local Agent State
+.omx/
+.codex/
+.codex
+.claude/
+.claude
+.opencode/
+opencode.json
+
+# Local artifacts & Logs
+*.apk
+test-results/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Misc
+2026-*-analyse-*.txt
+.cursor/

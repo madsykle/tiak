@@ -1,0 +1,46 @@
+version: 2
+updates:
+  # Gradle dependencies
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin:*"
+      compose:
+        patterns:
+          - "androidx.compose:*"
+      media3:
+        patterns:
+          - "androidx.media3:*"
+      retrofit:
+        patterns:
+          - "com.squareup.retrofit2:*"
+      coil:
+        patterns:
+          - "io.coil-kt:*"
+      security:
+        patterns:
+          - "androidx.security:*"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # Gradle wrapper
+  - package-ecosystem: "gradle"
+    directory: "/gradle/wrapper"
+    schedule:
+      interval: "monthly"
+    groups:
+      gradle:
+        patterns:
+          - "*"
