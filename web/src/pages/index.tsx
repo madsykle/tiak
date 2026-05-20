@@ -1,16 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { deleteJob, DownloadJob, AddJobResponse, listCategories, getRole, getDownloadUrl, fetchWithAuth } from '../lib/api';
+import { deleteJob, DownloadJob, AddJobResponse, listCategories, getRole, getDownloadUrl, fetchWithAuth, getHistory, retryJob, redownloadJob, getPreviewUrl } from '../lib/api';
 import { API_BASE } from '../lib/config';
 import SearchableSelect from '../components/SearchableSelect';
+import HistoryTable from '../components/HistoryTable';
 import { platformLabel, platformBadgeClass } from '../lib/utils';
 import { useVisibilityPolling } from '../hooks/useVisibilityPolling';
+
+const CustomVideoPlayer = dynamic(() => import('../components/CustomVideoPlayer'), { ssr: false });
 
 export default function Queue() {
   const router = useRouter();
   const [urls, setUrls] = useState('');
   const [jobs, setJobs] = useState<DownloadJob[]>([]);
+  const [historyJobs, setHistoryJobs] = useState<DownloadJob[]>([]);
   const [loading, setLoading] = useState(false);
   const [skipped, setSkipped] = useState<{ url: string; reason: string; filename?: string; category?: string; dateFolder?: string }[]>([]);
 
@@ -18,6 +23,10 @@ export default function Queue() {
   const [selectedCategory, setSelectedCategory] = useState('default');
   const [refreshing, setRefreshing] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+
+  // Preview Modal State
+  const [previewJob, setPreviewJob] = useState<DownloadJob | null>(null);
+  const [previewSrc, setPreviewSrc] = useState('');
 
   useEffect(() => {
     setRole(getRole());
@@ -82,10 +91,19 @@ export default function Queue() {
     }
   };
 
+  const fetchHistory = useCallback(async () => {
+    try {
+      const data = await getHistory(1, 10);
+      setHistoryJobs(data.items);
+    } catch (err) {
+      console.error('Failed to fetch history:', err);
+    }
+  }, []);
+
   const handleManualRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetchJobs();
+      await Promise.all([fetchJobs(), fetchHistory()]);
     } finally {
       setRefreshing(false);
     }
@@ -93,9 +111,11 @@ export default function Queue() {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+    fetchHistory();
+  }, [fetchHistory]);
 
   useVisibilityPolling(fetchJobs, 5000, { runImmediately: true });
+  useVisibilityPolling(fetchHistory, 15000, { runImmediately: false });
 
   const handleSubmit = async () => {
     if (!urls.trim()) return;
@@ -142,12 +162,21 @@ export default function Queue() {
 
   const handleRetry = async (id: string) => {
     try {
-      await fetchWithAuth(`${API_BASE}/queue/retry/${id}`, {
-        method: 'POST'
-      });
+      await retryJob(id);
       fetchJobs();
+      fetchHistory();
     } catch (error) {
       console.error('Failed to retry job:', error);
+    }
+  };
+
+  const handleRedownload = async (id: string) => {
+    try {
+      await redownloadJob(id);
+      fetchJobs();
+      fetchHistory();
+    } catch (error) {
+      console.error('Failed to redownload job:', error);
     }
   };
 
@@ -156,10 +185,33 @@ export default function Queue() {
     try {
       await deleteJob(id);
       fetchJobs();
+      fetchHistory();
     } catch (error) {
       console.error('Failed to cancel job:', error);
       alert('Failed to cancel job');
     }
+  };
+
+  const handleDeleteHistory = async (id: string) => {
+    if (!confirm('Delete this history entry?')) return;
+    try {
+      await deleteJob(id);
+      fetchHistory();
+    } catch (error) {
+      console.error('Failed to delete history:', error);
+    }
+  };
+
+  const handlePreview = (job: DownloadJob) => {
+    if (!job.filename) return;
+    const ts = job.completedAt || job.createdAt;
+    const date = new Date(ts);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const dateFolder = `${yyyy}-${mm}-${dd}`;
+    setPreviewSrc(getPreviewUrl(dateFolder, job.filename));
+    setPreviewJob(job);
   };
 
   const getJobDownloadPath = (job: DownloadJob) => {
@@ -368,6 +420,32 @@ export default function Queue() {
                 </div>
             )}
         </div>
+
+        {/* History Section for Guests/Non-admins */}
+        {role !== 'admin' && (
+            <div className="space-y-4 pt-4 border-t border-border-subtle">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-medium text-content-muted uppercase tracking-wider">Recent History</h2>
+                </div>
+                <HistoryTable 
+                    jobs={historyJobs}
+                    onRetry={handleRetry}
+                    onRedownload={handleRedownload}
+                    onPreview={handlePreview}
+                    onDelete={handleDeleteHistory}
+                />
+            </div>
+        )}
+
+        {previewJob && (
+          <CustomVideoPlayer 
+            src={previewSrc}
+            onClose={() => {
+                setPreviewJob(null);
+                setPreviewSrc('');
+            }}
+          />
+        )}
       </div>
     </>
   );
