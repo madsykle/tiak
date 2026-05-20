@@ -60,9 +60,17 @@ async fn perform_cleanup(db: &Db, data_root: &str) -> anyhow::Result<()> {
             }
         }
         
-        // 2. Delete the job from the database
-        db.delete_job(&job.id).await?;
-        tracing::info!("Deleted expired job record: {}", job.id);
+        // 2. Instead of deleting the job, mark it as missing so history is preserved
+        let _ = db.db.collection::<crate::db::Job>("jobs")
+            .update_one(
+                doc! { "_id": &job.id },
+                doc! { 
+                    "$set": { "status": "missing" },
+                    "$unset": { "expiresAt": "" }
+                }
+            ).await?;
+        
+        tracing::info!("Expired file cleaned up, kept record as 'missing': {}", job.id);
     }
     
     Ok(())

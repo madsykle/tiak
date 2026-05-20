@@ -253,11 +253,11 @@ impl Db {
                 "status": { "$in": ["queued", "downloading", "failed"] } 
             }
         } else if let Some(uid) = user_id {
-            // Guests see their active and done (ephemeral)
+            // Guests see their active, done (ephemeral), and missing (expired history)
             doc! {
                 "user_id": uid,
                 "$or": [
-                    { "status": { "$in": ["queued", "downloading", "failed"] } },
+                    { "status": { "$in": ["queued", "downloading", "failed", "missing"] } },
                     { "status": "done", "expiresAt": { "$ne": mongodb::bson::Bson::Null } }
                 ]
             }
