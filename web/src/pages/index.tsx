@@ -444,7 +444,7 @@ export default function Queue() {
                                       Cancel
                                     </button>
                                   )}
-                                  {job.status === 'failed' && (
+                                  {(job.status === 'failed' || job.status === 'missing') && (
                                     <button
                                         onClick={() => handleRetry(job.id)}
                                         className="shrink-0 rounded-md bg-surface-subtle px-2 py-1 text-xs font-medium text-foreground hover:bg-surface-strong transition-colors"
@@ -482,6 +482,14 @@ export default function Queue() {
             onClose={() => {
                 setPreviewJob(null);
                 setPreviewSrc('');
+            }}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+         setPreviewSrc('');
             }}
           />
         )}

@@ -21,7 +21,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     done: 'Completed',
     completed: 'Completed',
     failed: 'Failed',
-    missing: 'Missing',
+    missing: 'Expired',
     imported: 'Imported',
   };
 
