@@ -381,6 +381,12 @@ export default function Queue() {
                                                 <span className="truncate max-w-[200px]">{job.filename}</span>
                                             </>
                                         )}
+                                        {job.expiresAt && job.status === 'done' && (
+                                            <>
+                                                <span>•</span>
+                                                <ExpiryCountdown expiresAt={job.expiresAt} />
+                                            </>
+                                        )}
                                         {job.error && (
                                             <span className="text-red-500 truncate max-w-[200px]">{job.error}</span>
                                         )}
@@ -424,6 +430,33 @@ export default function Queue() {
         {/* History Section for Guests/Non-admins */}
         {role !== 'admin' && (
             <div className="space-y-4 pt-4 border-t border-border-subtle">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-medium text-content-muted uppercase tracking-wider">Recent History</h2>
+                </div>
+                <HistoryTable 
+                    jobs={historyJobs}
+                    onRetry={handleRetry}
+                    onRedownload={handleRedownload}
+                    onPreview={handlePreview}
+                    onDelete={handleDeleteHistory}
+                />
+            </div>
+        )}
+
+        {previewJob && (
+          <CustomVideoPlayer 
+            src={previewSrc}
+            onClose={() => {
+                setPreviewJob(null);
+                setPreviewSrc('');
+            }}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+<div className="space-y-4 pt-4 border-t border-border-subtle">
                 <div className="flex items-center justify-between">
                     <h2 className="text-sm font-medium text-content-muted uppercase tracking-wider">Recent History</h2>
                 </div>

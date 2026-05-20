@@ -35,6 +35,7 @@ export interface DownloadJob {
   createdAt: number;
   startedAt: number | null;
   completedAt: number | null;
+  expiresAt?: number | null;
   retries: number;
   error: string | null;
   progress: number;
