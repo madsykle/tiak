@@ -357,7 +357,7 @@ pub(super) async fn import_queue(
 }
 
 pub(super) async fn retry_job(
-    user: AuthenticatedUser,
+    user: OptionalUser,
     State(state): State<AppState>,
     Path(id): Path<String>
 ) -> Response {
