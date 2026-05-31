@@ -129,6 +129,17 @@ impl Db {
         jobs_coll.create_index(IndexModel::builder().keys(doc! { "completedAt": -1 }).build()).await?;
         jobs_coll.create_index(IndexModel::builder().keys(doc! { "url": 1, "status": 1 }).build()).await?;
         jobs_coll.create_index(IndexModel::builder().keys(doc! { "expiresAt": 1 }).build()).await?;
+        jobs_coll.create_index(IndexModel::builder().keys(doc! { "filename": 1 }).build()).await?;
+        jobs_coll.create_index(IndexModel::builder().keys(doc! { "creator_name": 1, "status": 1, "createdAt": -1 }).build()).await?;
+        jobs_coll.create_index(IndexModel::builder().keys(doc! { "category": 1, "status": 1, "createdAt": -1 }).build()).await?;
+
+        // Corrections Indexes
+        let corrections_coll = self.db.collection::<mongodb::bson::Document>("corrections");
+        corrections_coll.create_index(IndexModel::builder().keys(doc! { "timestamp": -1 }).build()).await?;
+
+        // Presets Indexes
+        let presets_coll = self.db.collection::<mongodb::bson::Document>("presets");
+        presets_coll.create_index(IndexModel::builder().keys(doc! { "user_id": 1 }).build()).await?;
 
         Ok(())
     }
