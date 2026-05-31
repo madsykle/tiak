@@ -238,3 +238,84 @@ pub fn is_safe_ytdlp_arg(arg: &str) -> bool {
     true
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::IpAddr;
+
+    #[test]
+    fn test_is_private_ip() {
+        // IPv4 loopback & private
+        assert!(is_private_ip("127.0.0.1".parse::<IpAddr>().unwrap()));
+        assert!(is_private_ip("10.0.0.1".parse::<IpAddr>().unwrap()));
+        assert!(is_private_ip("172.16.0.1".parse::<IpAddr>().unwrap()));
+        assert!(is_private_ip("192.168.1.1".parse::<IpAddr>().unwrap()));
+        assert!(is_private_ip("169.254.1.1".parse::<IpAddr>().unwrap())); // Link-local
+        assert!(is_private_ip("224.0.0.1".parse::<IpAddr>().unwrap())); // Multicast
+        assert!(is_private_ip("255.255.255.255".parse::<IpAddr>().unwrap())); // Broadcast
+        assert!(is_private_ip("0.0.0.0".parse::<IpAddr>().unwrap())); // Unspecified
+
+        // IPv4 public
+        assert!(!is_private_ip("8.8.8.8".parse::<IpAddr>().unwrap()));
+        assert!(!is_private_ip("1.1.1.1".parse::<IpAddr>().unwrap()));
+        assert!(!is_private_ip("142.250.190.46".parse::<IpAddr>().unwrap()));
+
+        // IPv6 loopback & private
+        assert!(is_private_ip("::1".parse::<IpAddr>().unwrap()));
+        assert!(is_private_ip("::".parse::<IpAddr>().unwrap()));
+        assert!(is_private_ip("fc00::1".parse::<IpAddr>().unwrap())); // Unique Local
+        assert!(is_private_ip("fe80::1".parse::<IpAddr>().unwrap())); // Link-local
+        assert!(is_private_ip("ff02::1".parse::<IpAddr>().unwrap())); // Multicast
+        assert!(is_private_ip("::ffff:127.0.0.1".parse::<IpAddr>().unwrap())); // IPv4-mapped loopback
+        assert!(is_private_ip("::ffff:192.168.0.1".parse::<IpAddr>().unwrap())); // IPv4-mapped private
+
+        // IPv6 public
+        assert!(!is_private_ip("2001:4860:4860::8888".parse::<IpAddr>().unwrap()));
+        assert!(!is_private_ip("::ffff:8.8.8.8".parse::<IpAddr>().unwrap())); // IPv4-mapped public
+    }
+
+    #[tokio::test]
+    async fn test_validate_url_ssrf_blocks_private_destinations() {
+        // Direct private IPs
+        assert!(validate_url_ssrf("http://127.0.0.1").await.is_err());
+        assert!(validate_url_ssrf("http://localhost").await.is_err());
+        assert!(validate_url_ssrf("http://192.168.0.1").await.is_err());
+        assert!(validate_url_ssrf("https://[::1]").await.is_err());
+    }
+
+    #[test]
+    fn test_ytdlp_arg_sanitization() {
+        // Safe args
+        assert!(is_safe_ytdlp_arg("-f"));
+        assert!(is_safe_ytdlp_arg("bestvideo"));
+        assert!(is_safe_ytdlp_arg("--write-sub"));
+        assert!(is_safe_ytdlp_arg("--embed-subs"));
+
+        // Unsafe args (prefixes)
+        assert!(!is_safe_ytdlp_arg("--exec"));
+        assert!(!is_safe_ytdlp_arg("--exec=rm -rf"));
+        assert!(!is_safe_ytdlp_arg("--downloader"));
+        assert!(!is_safe_ytdlp_arg("--external-downloader"));
+        assert!(!is_safe_ytdlp_arg("--cookies"));
+        assert!(!is_safe_ytdlp_arg("--config"));
+        assert!(!is_safe_ytdlp_arg("--batch-file"));
+        assert!(!is_safe_ytdlp_arg("--load-info"));
+        assert!(!is_safe_ytdlp_arg("--use-postprocessor"));
+        assert!(!is_safe_ytdlp_arg("--print"));
+        assert!(!is_safe_ytdlp_arg("--alias"));
+        assert!(!is_safe_ytdlp_arg("-e"));
+
+        // Case insensitivity
+        assert!(!is_safe_ytdlp_arg("--EXEC"));
+        assert!(!is_safe_ytdlp_arg("--External-downloader"));
+
+        // Shell injections
+        assert!(!is_safe_ytdlp_arg("arg; rm -rf /"));
+        assert!(!is_safe_ytdlp_arg("arg && rm -rf /"));
+        assert!(!is_safe_ytdlp_arg("arg | rm -rf /"));
+        assert!(!is_safe_ytdlp_arg("$(rm -rf)"));
+        assert!(!is_safe_ytdlp_arg("`rm -rf`"));
+    }
+}
+
+

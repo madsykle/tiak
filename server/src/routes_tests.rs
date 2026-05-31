@@ -540,3 +540,91 @@ async fn timeline_endpoint_excludes_queued_jobs() {
     assert_eq!(items[0]["job"]["_id"], done.id);
     assert_eq!(items[0]["job"]["status"], "done");
 }
+
+#[tokio::test]
+async fn resolve_endpoint_blocks_ssrf_urls() {
+    let _lock = route_test_lock();
+    let app = test_router().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/files/resolve")
+                .header("content-type", "application/json")
+                .header("Authorization", format!("Bearer {}", admin_token()))
+                .body(Body::from(r#"{"url":"http://127.0.0.1"}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let body = json_body(response).await;
+    assert!(body["error"].as_str().unwrap().contains("SSRF check failed"));
+}
+
+#[tokio::test]
+async fn guest_is_forbidden_from_zipping_files() {
+    let _lock = route_test_lock();
+    let app = test_router().await;
+
+    let guest_token = {
+        let auth_state = crate::auth::AuthState::new();
+        auth_state.generate_token("guest_user", "guest").unwrap()
+    };
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/files/zip")
+                .header("content-type", "application/json")
+                .header("Authorization", format!("Bearer {}", guest_token))
+                .body(Body::from(r#"{"paths":[]}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn guest_can_list_categories_if_authenticated() {
+    let _lock = route_test_lock();
+    let temp = tempfile::TempDir::new().unwrap();
+    let _guard = CwdGuard::new();
+    std::env::set_current_dir(temp.path()).unwrap();
+
+    let app = test_router().await;
+
+    let guest_token = {
+        let auth_state = crate::auth::AuthState::new();
+        auth_state.generate_token("guest_user", "guest").unwrap()
+    };
+
+    let anon_response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/api/categories")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_ne!(anon_response.status(), StatusCode::OK);
+
+    let guest_response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/categories")
+                .header("Authorization", format!("Bearer {}", guest_token))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(guest_response.status(), StatusCode::OK);
+}

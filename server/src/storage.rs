@@ -693,4 +693,53 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_delete_category_traversal() {
+        assert!(delete_category("../some_cat").is_err());
+        assert!(delete_category("/etc").is_err());
+        assert!(delete_category("default").is_err());
+    }
+
+    #[test]
+    fn test_rename_category_traversal() {
+        assert!(rename_category("default", "New").is_err());
+        assert!(rename_category("SomeCat", "../Traversed").is_err());
+    }
+
+    #[tokio::test]
+    async fn test_move_file_outside_data_root() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+        let root = temp_dir.path();
+
+        let old_cat = root.join("default");
+        tokio::fs::create_dir_all(&old_cat).await?;
+        let file_path = old_cat.join("test.txt");
+        File::create(&file_path)?;
+
+        let result = move_file_on_disk_internal(&file_path, "../..", root).await;
+        assert!(result.is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_validate_data_path_traversal() -> Result<()> {
+        // Setup data directory to ensure it can be canonicalized
+        let _ = std::fs::create_dir_all(DATA_ROOT);
+        let root_canon = Path::new(DATA_ROOT).canonicalize()?;
+        
+        let child = root_canon.join("default");
+        let _ = std::fs::create_dir_all(&child);
+        
+        let valid = validate_data_path(child.to_str().unwrap());
+        assert!(valid.is_ok());
+
+        // Unsafe traversal
+        let unsafe_path = root_canon.join("..");
+        let invalid = validate_data_path(unsafe_path.to_str().unwrap());
+        assert!(invalid.is_err());
+        
+        Ok(())
+    }
 }
