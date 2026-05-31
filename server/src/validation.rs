@@ -21,6 +21,20 @@ pub enum ValidationError {
     TooLong(usize, usize), // actual, max
 }
 
+impl std::fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValidationError::PathTraversalAttempt => write!(f, "Path traversal attempt detected"),
+            ValidationError::InvalidPathCharacters => write!(f, "Invalid characters in path"),
+            ValidationError::InvalidUrl => write!(f, "Invalid URL format"),
+            ValidationError::EmptyInput => write!(f, "Input cannot be empty"),
+            ValidationError::TooLong(actual, max) => write!(f, "Input too long: {} characters (max {})", actual, max),
+        }
+    }
+}
+
+impl std::error::Error for ValidationError {}
+
 impl IntoResponse for ValidationError {
     fn into_response(self) -> Response {
         let (status, message) = match self {
@@ -142,3 +156,85 @@ pub fn sanitize_user_input(input: &str) -> String {
         .take(5000)
         .collect()
 }
+
+pub async fn validate_url_ssrf(url_str: &str) -> Result<(), ValidationError> {
+    validate_url(url_str)?;
+
+    let uri: axum::http::Uri = url_str.parse().map_err(|_| ValidationError::InvalidUrl)?;
+    let host = uri.host().ok_or(ValidationError::InvalidUrl)?;
+    let scheme = uri.scheme_str().unwrap_or("http");
+    let port = uri.port_u16().unwrap_or(if scheme == "https" { 443 } else { 80 });
+
+    let host_port = format!("{}:{}", host, port);
+    let addrs = tokio::net::lookup_host(&host_port)
+        .await
+        .map_err(|_| ValidationError::InvalidUrl)?;
+
+    for addr in addrs {
+        if is_private_ip(addr.ip()) {
+            return Err(ValidationError::InvalidUrl);
+        }
+    }
+
+    Ok(())
+}
+
+pub fn is_private_ip(ip: std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(ipv4) => {
+            ipv4.is_loopback() ||
+            ipv4.is_private() ||
+            ipv4.is_link_local() ||
+            ipv4.is_multicast() ||
+            ipv4.is_broadcast() ||
+            ipv4.is_unspecified()
+        }
+        std::net::IpAddr::V6(ipv6) => {
+            let segments = ipv6.segments();
+            ipv6.is_loopback() ||
+            ipv6.is_unspecified() ||
+            // Unique Local Address (fc00::/7)
+            (segments[0] & 0xfe00) == 0xfc00 ||
+            // Link-local address (fe80::/10)
+            (segments[0] & 0xffc0) == 0xfe80 ||
+            // Multicast address (ff00::/8)
+            (segments[0] & 0xff00) == 0xff00 ||
+            // IPv4-mapped address (::ffff:0:0/96)
+            ipv6.to_ipv4_mapped().map(|ipv4| is_private_ip(std::net::IpAddr::V4(ipv4))).unwrap_or(false)
+        }
+    }
+}
+
+pub fn is_safe_ytdlp_arg(arg: &str) -> bool {
+    let lower = arg.to_lowercase();
+    
+    // Block dangerous options
+    let dangerous_prefixes = [
+        "--exec",
+        "--downloader",
+        "--external-downloader",
+        "--cookies",
+        "--config",
+        "--batch-file",
+        "--load-info",
+        "--use-postprocessor",
+        "--print",
+        "--alias",
+        "-e",
+    ];
+
+    for prefix in &dangerous_prefixes {
+        if lower.starts_with(prefix) {
+            return false;
+        }
+    }
+
+    // Also block shell metacharacters
+    let bad_chars = [';', '&', '|', '$', '`', '\n', '\r'];
+    if arg.chars().any(|c| bad_chars.contains(&c)) {
+        return false;
+    }
+
+    true
+}
+

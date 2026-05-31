@@ -114,6 +114,9 @@ pub fn create_router(state: AppState) -> Router {
 }
 
 pub(crate) async fn resolve_url(url: &str) -> Result<String, anyhow::Error> {
+    // Validate input URL against SSRF
+    crate::validation::validate_url_ssrf(url).await?;
+
     use tokio::process::Command;
 
     let output = Command::new("curl")
@@ -133,7 +136,12 @@ pub(crate) async fn resolve_url(url: &str) -> Result<String, anyhow::Error> {
         url.to_string()
     };
 
-    Ok(normalize_url(&resolved))
+    let normalized = normalize_url(&resolved);
+    
+    // Validate resolved URL against SSRF
+    crate::validation::validate_url_ssrf(&normalized).await?;
+
+    Ok(normalized)
 }
 
 pub(crate) fn normalize_url(url: &str) -> String {

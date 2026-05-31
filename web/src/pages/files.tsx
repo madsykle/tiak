@@ -162,13 +162,21 @@ export default function FilesEnhanced() {
       }
 
       const deletedSet = new Set(result.deleted);
+      if (cachedResponse) {
+        cachedResponse.allFiles = cachedResponse.allFiles.filter(f => !deletedSet.has(f.path));
+      }
       setAllFiles(prev => prev.filter(f => !deletedSet.has(f.path)));
       setSelectedPaths(prev => {
         const next = new Set(prev);
         paths.forEach(p => next.delete(p));
         return next;
       });
-      getSystemUsage().then(setUsage).catch(console.error);
+      getSystemUsage().then(u => {
+        setUsage(u);
+        if (cachedResponse) {
+          cachedResponse.usage = u;
+        }
+      }).catch(console.error);
     } catch (err) {
       console.error('Batch delete failed', err);
       showFeedback('error', 'Failed to delete selected files');

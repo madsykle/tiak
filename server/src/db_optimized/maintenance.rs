@@ -11,16 +11,42 @@ impl Db {
 
     pub async fn add_correction(
         &self,
-        _job_id: &str,
-        _original: &str,
-        _suggested: &str,
-        _final_cat: &str,
+        job_id: &str,
+        original: &str,
+        suggested: &str,
+        final_cat: &str,
     ) -> Result<()> {
+        let coll = self.db.collection::<Document>("corrections");
+        let doc = doc! {
+            "job_id": job_id,
+            "original": original,
+            "suggested": suggested,
+            "final_cat": final_cat,
+            "timestamp": chrono::Utc::now().timestamp(),
+        };
+        coll.insert_one(doc).await?;
         Ok(())
     }
 
-    pub async fn get_recent_corrections(&self, _limit: i64) -> Result<Vec<(String, String, String, String, i64)>> {
-        Ok(vec![])
+    pub async fn get_recent_corrections(&self, limit: i64) -> Result<Vec<(String, String, String, String, i64)>> {
+        let coll = self.db.collection::<Document>("corrections");
+        let find_options = mongodb::options::FindOptions::builder()
+            .sort(doc! { "timestamp": -1 })
+            .limit(limit)
+            .build();
+        
+        let mut cursor = coll.find(doc! {}).with_options(find_options).await?;
+        let mut results = Vec::new();
+        while let Some(res) = cursor.next().await {
+            let doc = res?;
+            let job_id = doc.get_str("job_id").unwrap_or("").to_string();
+            let original = doc.get_str("original").unwrap_or("").to_string();
+            let suggested = doc.get_str("suggested").unwrap_or("").to_string();
+            let final_cat = doc.get_str("final_cat").unwrap_or("").to_string();
+            let timestamp = doc.get_i64("timestamp").unwrap_or(0);
+            results.push((job_id, original, suggested, final_cat, timestamp));
+        }
+        Ok(results)
     }
 
     pub async fn get_stats(&self) -> Result<super::DbStats> {

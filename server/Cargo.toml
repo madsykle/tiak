@@ -36,3 +36,13 @@ getrandom = "0.4.2"
 
 [dev-dependencies]
 tempfile = "3"
+
+[profile.dev]
+debug = 0 # Disables debug info to significantly reduce `target/` directory size during development
+
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations
+panic = "abort"     # Abort on panic
+strip = true        # Automatically strip symbols from the binary

@@ -23,8 +23,8 @@ pub(super) async fn move_file(
     catalog::move_file(user, state, payload).await
 }
 
-pub(super) async fn list_categories() -> impl IntoResponse {
-    catalog::list_categories().await
+pub(super) async fn list_categories(user: AuthenticatedUser) -> impl IntoResponse {
+    catalog::list_categories(user).await
 }
 
 pub(super) async fn create_category(
@@ -63,10 +63,11 @@ pub(super) async fn system_usage(user: AuthenticatedUser) -> Response {
 }
 
 pub(super) async fn zip_files(
+    user: AuthenticatedUser,
     state: State<AppState>,
     payload: Json<delivery::ZipPayload>,
 ) -> Response {
-    delivery::zip_files(state, payload).await
+    delivery::zip_files(user, state, payload).await
 }
 
 pub(super) async fn download_file(query: Query<delivery::FileQuery>) -> Response {

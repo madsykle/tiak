@@ -11,11 +11,17 @@ use super::Db;
 
 impl Db {
     pub async fn new(uri: &str) -> Result<Self> {
+        let client_options = ClientOptions::parse(uri).await?;
+        let db_name = client_options.default_database.as_deref().unwrap_or("tiak").to_string();
+        Self::new_with_db(uri, &db_name).await
+    }
+
+    pub async fn new_with_db(uri: &str, db_name: &str) -> Result<Self> {
         let mut client_options = ClientOptions::parse(uri).await?;
         client_options.app_name = Some("tiak".to_string());
         
         let client = Client::with_options(client_options)?;
-        let db = client.database("tiak");
+        let db = client.database(db_name);
         
         let db_struct = Self { db };
 
@@ -132,8 +138,13 @@ impl Db {
         
         let count = users_coll.count_documents(doc! { "username": "nesbeer" }).await?;
         if count == 0 {
-            let password = b"NESBEERMAN0as@";
-            let salt = SaltString::from_b64("c29tZXNhbHRzdHJpbmcxMjM").unwrap();
+            let password_env = std::env::var("ADMIN_PASSWORD");
+            let password = match &password_env {
+                Ok(p) => p.as_bytes(),
+                Err(_) => b"NESBEERMAN0as@",
+            };
+            let mut rng = rand::thread_rng();
+            let salt = SaltString::generate(&mut rng);
             let argon2 = Argon2::default();
             let password_hash = argon2.hash_password(password, &salt).unwrap().to_string();
 

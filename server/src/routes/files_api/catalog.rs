@@ -185,7 +185,7 @@ pub(super) async fn move_file(
     }
 }
 
-pub(super) async fn list_categories() -> impl IntoResponse {
+pub(super) async fn list_categories(_user: AuthenticatedUser) -> impl IntoResponse {
     AxumJson(storage::list_categories())
 }
 

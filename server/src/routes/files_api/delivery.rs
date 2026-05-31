@@ -15,7 +15,7 @@ use tower_http::services::ServeFile;
 use zip::write::SimpleFileOptions;
 
 use crate::{
-    auth::OptionalUser,
+    auth::{AuthenticatedUser, OptionalUser},
     queue::DownloadQueue,
     routes::AppState,
     storage::{validate_data_path, DATA_ROOT, THUMBNAILS_ROOT},
@@ -27,9 +27,13 @@ pub(crate) struct ZipPayload {
 }
 
 pub(super) async fn zip_files(
+    user: AuthenticatedUser,
     State(_state): State<AppState>,
     Json(payload): Json<ZipPayload>,
 ) -> Response {
+    if user.role != "admin" {
+        return (StatusCode::FORBIDDEN, "Admin access required").into_response();
+    }
     let paths = payload.paths;
     if paths.is_empty() {
         return (StatusCode::BAD_REQUEST, "No files to zip").into_response();

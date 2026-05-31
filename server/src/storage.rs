@@ -475,38 +475,49 @@ pub fn create_category(name: &str) -> Result<()> {
 }
 
 pub fn delete_category(name: &str) -> Result<()> {
-    if name == DEFAULT_CATEGORY {
+    let sanitized = sanitize_category_name(name);
+    if sanitized.is_empty() || sanitized == DEFAULT_CATEGORY {
         return Err(anyhow::anyhow!("Cannot delete default category"));
     }
-    let path = Path::new(DATA_ROOT).join(name);
-    if !path.exists() {
-        return Err(anyhow::anyhow!("Category not found"));
+    let data_root = Path::new(DATA_ROOT)
+        .canonicalize()
+        .map_err(|_| anyhow::anyhow!("DATA_ROOT does not exist"))?;
+    let path = data_root.join(&sanitized);
+    let path_canon = path.canonicalize()
+        .map_err(|_| anyhow::anyhow!("Category not found"))?;
+    if !path_canon.starts_with(&data_root) || path_canon == data_root {
+        return Err(anyhow::anyhow!("Access denied"));
     }
-    fs::remove_dir_all(path)?;
+    fs::remove_dir_all(path_canon)?;
     Ok(())
 }
 
 pub fn rename_category(old: &str, new: &str) -> Result<()> {
-    if old == DEFAULT_CATEGORY {
+    let sanitized_old = sanitize_category_name(old);
+    let sanitized_new = sanitize_category_name(new);
+    if sanitized_old.is_empty() || sanitized_old == DEFAULT_CATEGORY {
         return Err(anyhow::anyhow!("Cannot rename default category"));
     }
-
-    let sanitized_new = sanitize_category_name(new);
-    if sanitized_new.is_empty() {
+    if sanitized_new.is_empty() || sanitized_new == DEFAULT_CATEGORY {
         return Err(anyhow::anyhow!("Invalid new category name"));
     }
 
-    let old_path = Path::new(DATA_ROOT).join(old);
-    let new_path = Path::new(DATA_ROOT).join(&sanitized_new);
+    let data_root = Path::new(DATA_ROOT)
+        .canonicalize()
+        .map_err(|_| anyhow::anyhow!("DATA_ROOT does not exist"))?;
+    let old_path = data_root.join(&sanitized_old);
+    let new_path = data_root.join(&sanitized_new);
 
-    if !old_path.exists() {
-        return Err(anyhow::anyhow!("Category not found"));
+    let old_path_canon = old_path.canonicalize()
+        .map_err(|_| anyhow::anyhow!("Category not found"))?;
+    if !old_path_canon.starts_with(&data_root) || old_path_canon == data_root {
+        return Err(anyhow::anyhow!("Access denied"));
     }
     if new_path.exists() {
         return Err(anyhow::anyhow!("Target category name already exists"));
     }
 
-    fs::rename(old_path, new_path)?;
+    fs::rename(old_path_canon, new_path)?;
     Ok(())
 }
 
@@ -554,10 +565,11 @@ pub fn list_categories() -> Vec<String> {
 }
 
 pub async fn move_file_on_disk(abs_path: &Path, new_category: &str) -> Result<PathBuf> {
+    let sanitized_category = sanitize_category_name(new_category);
     let data_root = Path::new(DATA_ROOT)
         .canonicalize()
         .unwrap_or_else(|_| PathBuf::from(DATA_ROOT));
-    move_file_on_disk_internal(abs_path, new_category, &data_root).await
+    move_file_on_disk_internal(abs_path, &sanitized_category, &data_root).await
 }
 
 async fn move_file_on_disk_internal(
@@ -576,9 +588,17 @@ async fn move_file_on_disk_internal(
     }
 
     // Validate target category
-    let target_cat_path = data_root.join(new_category);
+    let sanitized_new_category = sanitize_category_name(new_category);
+    if sanitized_new_category.is_empty() {
+        return Err(anyhow::anyhow!("Invalid category name"));
+    }
+    let target_cat_path = data_root.join(&sanitized_new_category);
     if !target_cat_path.exists() {
         tokio::fs::create_dir_all(&target_cat_path).await?;
+    }
+    let target_cat_path_canon = target_cat_path.canonicalize()?;
+    if !target_cat_path_canon.starts_with(data_root) {
+        return Err(anyhow::anyhow!("Access denied: Target path outside data root"));
     }
 
     // Calculate relative path to preserve structure
@@ -598,7 +618,7 @@ async fn move_file_on_disk_internal(
         rest.push(c);
     }
 
-    let new_abs_path = target_cat_path.join(rest);
+    let new_abs_path = target_cat_path_canon.join(rest);
 
     // Create parent directories if needed
     if let Some(parent) = new_abs_path.parent() {

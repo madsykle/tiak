@@ -7,8 +7,10 @@ mod tests {
     use uuid::Uuid;
 
     async fn create_test_db() -> Result<Db> {
-        let db_path = std::env::temp_dir().join(format!("tiak-test-{}.sqlite", Uuid::new_v4()));
-        Db::new(db_path.to_str().expect("utf8 temp path")).await
+        dotenv::dotenv().ok();
+        let uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".to_string());
+        let db_name = format!("tiak-td-{}", &Uuid::new_v4().to_string().replace("-", "")[..15]);
+        Db::new_with_db(&uri, &db_name).await
     }
 
     #[tokio::test]
@@ -19,6 +21,9 @@ mod tests {
                 "http://example.com".to_string(),
                 Some("test".to_string()),
                 Some("youtube".to_string()),
+                None,
+                None,
+                None,
             )
             .await?;
 
@@ -35,7 +40,7 @@ mod tests {
     async fn test_update_analysis_result() -> Result<()> {
         let db = create_test_db().await?;
         let job = db
-            .add_job("http://example.com".to_string(), None, None)
+            .add_job("http://example.com".to_string(), None, None, None, None, None)
             .await?;
 
         db.update_analysis_result(

@@ -200,6 +200,9 @@ pub async fn create_user_handler(
     State(state): State<crate::routes::AppState>,
     Json(payload): Json<SignupRequest>,
 ) -> impl IntoResponse {
+    if _admin.role != "admin" {
+        return (StatusCode::FORBIDDEN, "Forbidden").into_response();
+    }
     let db = &state.db;
 
     // Check if user exists
@@ -273,8 +276,12 @@ pub async fn login_handler(
 }
 
 pub async fn list_users_handler(
+    _admin: AuthenticatedUser,
     State(state): State<crate::routes::AppState>,
 ) -> impl IntoResponse {
+    if _admin.role != "admin" {
+        return (StatusCode::FORBIDDEN, "Forbidden").into_response();
+    }
     use futures::stream::StreamExt;
     let mut cursor = state.db.db.collection::<crate::db_optimized::models::User>("users").find(mongodb::bson::doc! {}).await.unwrap();
     let mut users = Vec::new();
@@ -288,7 +295,7 @@ pub async fn list_users_handler(
             }));
         }
     }
-    Json(users)
+    Json(users).into_response()
 }
 
 #[derive(Deserialize)]
@@ -297,10 +304,14 @@ pub struct RoleUpdatePayload {
 }
 
 pub async fn update_role_handler(
+    _admin: AuthenticatedUser,
     State(state): State<crate::routes::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(payload): Json<RoleUpdatePayload>,
 ) -> impl IntoResponse {
+    if _admin.role != "admin" {
+        return (StatusCode::FORBIDDEN, "Forbidden").into_response();
+    }
     let res = state.db.db.collection::<crate::db_optimized::models::User>("users")
         .update_one(mongodb::bson::doc! { "_id": id }, mongodb::bson::doc! { "$set": { "role": payload.role } })
         .await;

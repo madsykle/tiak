@@ -18,12 +18,36 @@ use uuid::Uuid;
 
 fn route_test_lock() -> std::sync::MutexGuard<'static, ()> {
     static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-    LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    LOCK.get_or_init(|| Mutex::new(())).lock().unwrap_or_else(|e| e.into_inner())
+}
+
+struct CwdGuard {
+    original_cwd: std::path::PathBuf,
+}
+
+impl CwdGuard {
+    fn new() -> Self {
+        let original_cwd = std::env::current_dir().unwrap();
+        Self { original_cwd }
+    }
+}
+
+impl Drop for CwdGuard {
+    fn drop(&mut self) {
+        let _ = std::env::set_current_dir(&self.original_cwd);
+    }
+}
+
+fn admin_token() -> String {
+    let auth_state = crate::auth::AuthState::new();
+    auth_state.generate_token("admin_user", "admin").unwrap()
 }
 
 async fn test_db() -> Db {
-    let db_path = std::env::temp_dir().join(format!("tiak-routes-test-{}.sqlite", Uuid::new_v4()));
-    Db::new(db_path.to_str().expect("utf8 temp path"))
+    dotenv::dotenv().ok();
+    let uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".to_string());
+    let db_name = format!("tiak-tr-{}", &Uuid::new_v4().to_string().replace("-", "")[..15]);
+    Db::new_with_db(&uri, &db_name)
         .await
         .expect("create test db")
 }
@@ -39,6 +63,7 @@ async fn test_router() -> Router {
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
         config: AppConfig::default(),
+        auth_state: Arc::new(crate::auth::AuthState::new()),
     };
 
     create_router(state)
@@ -94,6 +119,9 @@ async fn queue_list_only_returns_active_jobs() {
             "https://example.com/q".to_string(),
             Some("default".to_string()),
             None,
+            None,
+            None,
+            None,
         )
         .await
         .unwrap();
@@ -101,6 +129,9 @@ async fn queue_list_only_returns_active_jobs() {
         .add_job(
             "https://example.com/d".to_string(),
             Some("default".to_string()),
+            None,
+            None,
+            None,
             None,
         )
         .await
@@ -117,12 +148,14 @@ async fn queue_list_only_returns_active_jobs() {
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
         config: AppConfig::default(),
+        auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
     let response = app
         .oneshot(
             Request::builder()
                 .uri("/api/queue/list")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -133,7 +166,7 @@ async fn queue_list_only_returns_active_jobs() {
     let body = json_body(response).await;
     let items = body.as_array().unwrap();
     assert_eq!(items.len(), 1);
-    assert_eq!(items[0]["id"], queued.id);
+    assert_eq!(items[0]["_id"], queued.id);
     assert_eq!(items[0]["status"], "queued");
 }
 
@@ -145,12 +178,18 @@ async fn queue_history_returns_paginated_shape() {
         "https://example.com/1".to_string(),
         Some("cats".to_string()),
         None,
+        None,
+        None,
+        None,
     )
     .await
     .unwrap();
     db.add_job(
         "https://example.com/2".to_string(),
         Some("cats".to_string()),
+        None,
+        None,
+        None,
         None,
     )
     .await
@@ -164,12 +203,14 @@ async fn queue_history_returns_paginated_shape() {
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
         config: AppConfig::default(),
+        auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
     let response = app
         .oneshot(
             Request::builder()
                 .uri("/api/queue/history?page=1&limit=1")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -194,6 +235,9 @@ async fn search_endpoint_only_returns_done_jobs() {
             "https://example.com/done".to_string(),
             Some("music".to_string()),
             None,
+            None,
+            None,
+            None,
         )
         .await
         .unwrap();
@@ -211,6 +255,9 @@ async fn search_endpoint_only_returns_done_jobs() {
         "https://example.com/queued".to_string(),
         Some("music".to_string()),
         None,
+        None,
+        None,
+        None,
     )
     .await
     .unwrap();
@@ -223,12 +270,14 @@ async fn search_endpoint_only_returns_done_jobs() {
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
         config: AppConfig::default(),
+        auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
     let response = app
         .oneshot(
             Request::builder()
                 .uri("/api/videos/search?q=music")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -239,7 +288,7 @@ async fn search_endpoint_only_returns_done_jobs() {
     let body = json_body(response).await;
     let items = body.as_array().unwrap();
     assert_eq!(items.len(), 1);
-    assert_eq!(items[0]["id"], done.id);
+    assert_eq!(items[0]["_id"], done.id);
     assert_eq!(items[0]["status"], "done");
 }
 
@@ -268,7 +317,7 @@ fn normalize_url_canonicalizes_platform_urls() {
 async fn category_endpoints_create_rename_delete_and_list() {
     let _lock = route_test_lock();
     let temp = tempfile::TempDir::new().unwrap();
-    let original_cwd = std::env::current_dir().unwrap();
+    let _guard = CwdGuard::new();
     std::env::set_current_dir(temp.path()).unwrap();
 
     let app = test_router().await;
@@ -278,6 +327,7 @@ async fn category_endpoints_create_rename_delete_and_list() {
         .oneshot(
             Request::builder()
                 .uri("/api/categories")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -298,6 +348,7 @@ async fn category_endpoints_create_rename_delete_and_list() {
                 .method("POST")
                 .uri("/api/categories")
                 .header("content-type", "application/json")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::from(r#"{"name":"Clips"}"#))
                 .unwrap(),
         )
@@ -312,6 +363,7 @@ async fn category_endpoints_create_rename_delete_and_list() {
                 .method("POST")
                 .uri("/api/categories/rename")
                 .header("content-type", "application/json")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::from(r#"{"old":"Clips","new":"Edits"}"#))
                 .unwrap(),
         )
@@ -324,6 +376,7 @@ async fn category_endpoints_create_rename_delete_and_list() {
         .oneshot(
             Request::builder()
                 .uri("/api/categories")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -344,6 +397,7 @@ async fn category_endpoints_create_rename_delete_and_list() {
             Request::builder()
                 .method("DELETE")
                 .uri("/api/categories/Edits")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -351,15 +405,13 @@ async fn category_endpoints_create_rename_delete_and_list() {
         .unwrap();
     assert_eq!(delete.status(), StatusCode::OK);
     assert!(!temp.path().join("data/Edits").exists());
-
-    std::env::set_current_dir(original_cwd).unwrap();
 }
 
 #[tokio::test]
 async fn move_file_endpoint_moves_file_and_updates_job_category() {
     let _lock = route_test_lock();
     let temp = tempfile::TempDir::new().unwrap();
-    let original_cwd = std::env::current_dir().unwrap();
+    let _guard = CwdGuard::new();
     std::env::set_current_dir(temp.path()).unwrap();
 
     let db = test_db().await;
@@ -373,6 +425,9 @@ async fn move_file_endpoint_moves_file_and_updates_job_category() {
             "https://example.com/video".to_string(),
             Some("default".to_string()),
             Some("youtube".to_string()),
+            None,
+            None,
+            None,
         )
         .await
         .unwrap();
@@ -389,6 +444,7 @@ async fn move_file_endpoint_moves_file_and_updates_job_category() {
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
         config: AppConfig::default(),
+        auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
     let response = app
@@ -397,6 +453,7 @@ async fn move_file_endpoint_moves_file_and_updates_job_category() {
                 .method("POST")
                 .uri("/api/files/move")
                 .header("content-type", "application/json")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::from(format!(
                     r#"{{"jobId":"{}","newCategory":"edits"}}"#,
                     job.id
@@ -414,15 +471,13 @@ async fn move_file_endpoint_moves_file_and_updates_job_category() {
 
     let updated = db.find_job_by_filename("clip.mp4").await.unwrap().unwrap();
     assert_eq!(updated.category, "edits");
-
-    std::env::set_current_dir(original_cwd).unwrap();
 }
 
 #[tokio::test]
 async fn timeline_endpoint_excludes_queued_jobs() {
     let _lock = route_test_lock();
     let temp = tempfile::TempDir::new().unwrap();
-    let original_cwd = std::env::current_dir().unwrap();
+    let _guard = CwdGuard::new();
     std::env::set_current_dir(temp.path()).unwrap();
 
     let db = test_db().await;
@@ -430,6 +485,9 @@ async fn timeline_endpoint_excludes_queued_jobs() {
         .add_job(
             "https://example.com/timeline-done".to_string(),
             Some("default".to_string()),
+            None,
+            None,
+            None,
             None,
         )
         .await
@@ -447,6 +505,9 @@ async fn timeline_endpoint_excludes_queued_jobs() {
         "https://example.com/timeline-queued".to_string(),
         Some("default".to_string()),
         None,
+        None,
+        None,
+        None,
     )
     .await
     .unwrap();
@@ -459,12 +520,14 @@ async fn timeline_endpoint_excludes_queued_jobs() {
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
         config: AppConfig::default(),
+        auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
     let response = app
         .oneshot(
             Request::builder()
                 .uri("/api/timeline")
+                .header("Authorization", format!("Bearer {}", admin_token()))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -474,8 +537,6 @@ async fn timeline_endpoint_excludes_queued_jobs() {
     let body = json_body(response).await;
     let items = body.as_array().unwrap();
     assert_eq!(items.len(), 1);
-    assert_eq!(items[0]["job"]["id"], done.id);
+    assert_eq!(items[0]["job"]["_id"], done.id);
     assert_eq!(items[0]["job"]["status"], "done");
-
-    std::env::set_current_dir(original_cwd).unwrap();
 }

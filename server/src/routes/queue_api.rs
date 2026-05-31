@@ -14,10 +14,21 @@ pub(super) struct ResolvePayload {
 }
 
 pub(super) async fn resolve_url_endpoint(
+    _user: AuthenticatedUser,
     State(state): State<AppState>,
     Json(payload): Json<ResolvePayload>,
 ) -> impl IntoResponse {
     let url = payload.url;
+
+    // Enforce SSRF validation on the input URL first
+    if let Err(e) = crate::validation::validate_url_ssrf(&url).await {
+        return (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": format!("SSRF check failed: {}", e) })),
+        )
+            .into_response();
+    }
+
     if !url.starts_with("http") {
         return Json(serde_json::json!({ "url": url })).into_response();
     }
@@ -31,7 +42,11 @@ pub(super) async fn resolve_url_endpoint(
             state.url_cache.insert(url, resolved.clone()).await;
             Json(serde_json::json!({ "url": resolved })).into_response()
         }
-        Err(_) => Json(serde_json::json!({ "url": url })).into_response(),
+        Err(e) => (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": e.to_string() })),
+        )
+            .into_response(),
     }
 }
 
@@ -184,9 +199,23 @@ pub(super) async fn add_to_queue(
         }
 
         let original_url = normalize_url(raw_url);
+
+        // Perform SSRF validation on the input URL first
+        if let Err(e) = crate::validation::validate_url_ssrf(&original_url).await {
+            skipped.push(serde_json::json!({ "url": original_url, "reason": format!("SSRF check failed: {}", e) }));
+            continue;
+        }
+
         let final_url = match resolve_url(&original_url).await {
             Ok(resolved) => resolved,
-            Err(_) => original_url.clone(),
+            Err(e) => {
+                // If resolving failed because of SSRF or validation error, we must skip it
+                if e.downcast_ref::<crate::validation::ValidationError>().is_some() {
+                    skipped.push(serde_json::json!({ "url": original_url, "reason": format!("SSRF validation failed: {}", e) }));
+                    continue;
+                }
+                original_url.clone()
+            }
         };
 
         if state.queue.has_job(&final_url).await {

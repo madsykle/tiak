@@ -116,7 +116,11 @@ impl DownloadQueue {
             if let Some(pid) = job.preset_id {
                 if let Ok(preset) = db.get_preset(&pid).await {
                     for arg in preset.args {
-                        cmd.arg(arg);
+                        if crate::validation::is_safe_ytdlp_arg(&arg) {
+                            cmd.arg(arg);
+                        } else {
+                            tracing::warn!("Skipping unsafe custom preset argument: {}", arg);
+                        }
                     }
                     quality_applied = true;
                 }
