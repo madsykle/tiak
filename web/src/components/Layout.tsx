@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ReactNode, useEffect, useState } from 'react';
 import InstallPrompt from './InstallPrompt';
-import { getRole } from '../lib/api';
+import { getRole, checkAuthSession } from '../lib/api';
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,6 +14,9 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     setRole(getRole());
+    // Verify auth status with server on load
+    checkAuthSession();
+
     const handleAuthChange = () => setRole(getRole());
     window.addEventListener('auth-change', handleAuthChange);
     return () => window.removeEventListener('auth-change', handleAuthChange);

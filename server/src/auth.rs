@@ -1,7 +1,7 @@
 use axum::{
     async_trait,
     extract::{FromRequestParts, State},
-    http::{request::Parts, StatusCode},
+    http::{header::{HeaderMap, SET_COOKIE}, request::Parts, StatusCode},
     response::{IntoResponse, Response},
     Json,
 };
@@ -85,25 +85,45 @@ pub struct AuthenticatedUser {
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for AuthenticatedUser
-where
-    S: Send + Sync,
-{
+impl FromRequestParts<crate::routes::AppState> for AuthenticatedUser {
     type Rejection = AuthError;
 
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let auth_header = parts
-            .headers
-            .get("Authorization")
-            .ok_or(AuthError::MissingToken)?
-            .to_str()
-            .map_err(|_| AuthError::InvalidToken)?;
-
-        if !auth_header.starts_with("Bearer ") {
-            return Err(AuthError::InvalidToken);
+    async fn from_request_parts(parts: &mut Parts, state: &crate::routes::AppState) -> Result<Self, Self::Rejection> {
+        // If auth is disabled in configuration, bypass validation and grant full admin access
+        if !state.config.server.enable_auth {
+            return Ok(AuthenticatedUser {
+                username: "admin_bypass".to_string(),
+                role: "admin".to_string(),
+            });
         }
 
-        let token = &auth_header[7..];
+        let mut token = None;
+
+        // 1. Try to extract token from Authorization header
+        if let Some(auth_header) = parts.headers.get("Authorization") {
+            if let Ok(auth_str) = auth_header.to_str() {
+                if auth_str.starts_with("Bearer ") {
+                    token = Some(auth_str[7..].to_string());
+                }
+            }
+        }
+
+        // 2. Try to extract token from Cookie header
+        if token.is_none() {
+            if let Some(cookie_header) = parts.headers.get("Cookie") {
+                if let Ok(cookie_str) = cookie_header.to_str() {
+                    for cookie in cookie_str.split(';') {
+                        let parts: Vec<&str> = cookie.trim().splitn(2, '=').collect();
+                        if parts.len() == 2 && parts[0] == "token" {
+                            token = Some(parts[1].to_string());
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        let token = token.ok_or(AuthError::MissingToken)?;
 
         let auth_state = parts
             .extensions
@@ -111,7 +131,7 @@ where
             .ok_or(AuthError::MissingAuthState)?;
 
         let claims = auth_state
-            .verify_token(token)
+            .verify_token(&token)
             .map_err(|_| AuthError::InvalidToken)?;
 
         Ok(AuthenticatedUser {
@@ -128,13 +148,18 @@ pub struct OptionalUser {
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for OptionalUser
-where
-    S: Send + Sync,
-{
+impl FromRequestParts<crate::routes::AppState> for OptionalUser {
     type Rejection = std::convert::Infallible;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, state: &crate::routes::AppState) -> Result<Self, Self::Rejection> {
+        // If auth is disabled, default to admin bypass
+        if !state.config.server.enable_auth {
+            return Ok(OptionalUser {
+                username: "admin_bypass".to_string(),
+                role: "admin".to_string(),
+            });
+        }
+
         if let Ok(user) = AuthenticatedUser::from_request_parts(parts, state).await {
             Ok(OptionalUser {
                 username: user.username,
@@ -264,7 +289,18 @@ pub async fn login_handler(
 
             if is_valid {
                 match auth_state.generate_token(&user.username, &user.role) {
-                    Ok(token) => Json(serde_json::json!({ "token": token, "role": user.role })).into_response(),
+                    Ok(token) => {
+                        let mut headers = HeaderMap::new();
+                        let cookie_value = format!(
+                            "token={}; Path=/; HttpOnly; SameSite=Lax; Max-Age={}",
+                            token,
+                            auth_state.config.jwt_expiry_hours * 3600
+                        );
+                        if let Ok(val) = axum::http::HeaderValue::from_str(&cookie_value) {
+                            headers.insert(SET_COOKIE, val);
+                        }
+                        (headers, Json(serde_json::json!({ "token": token, "role": user.role }))).into_response()
+                    }
                     Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to generate token").into_response()
                 }
             } else {
@@ -272,6 +308,58 @@ pub async fn login_handler(
             }
         }
         _ => (StatusCode::UNAUTHORIZED, "Invalid credentials").into_response()
+    }
+}
+
+pub async fn logout_handler() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    let cookie_value = "token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0";
+    if let Ok(val) = axum::http::HeaderValue::from_str(cookie_value) {
+        headers.insert(SET_COOKIE, val);
+    }
+    (headers, Json(serde_json::json!({ "success": true }))).into_response()
+}
+
+pub async fn signup_handler(
+    State(state): State<crate::routes::AppState>,
+    Json(payload): Json<SignupRequest>,
+) -> impl IntoResponse {
+    let db = &state.db;
+
+    // Check if user exists
+    let existing = db.db.collection::<crate::db_optimized::models::User>("users")
+        .count_documents(mongodb::bson::doc! {
+            "$or": [
+                { "username": &payload.username },
+                { "email": &payload.email }
+            ]
+        }).await;
+
+    if let Ok(count) = existing {
+        if count > 0 {
+            return (StatusCode::CONFLICT, "Username or email already exists").into_response();
+        }
+    }
+
+    let salt = argon2::password_hash::SaltString::generate(&mut rand::thread_rng());
+    let argon2 = Argon2::default();
+    let password_hash = match argon2.hash_password(payload.password.as_bytes(), &salt) {
+        Ok(h) => h.to_string(),
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Hashing failed").into_response()
+    };
+
+    let user = crate::db_optimized::models::User {
+        id: uuid::Uuid::new_v4().to_string(),
+        username: payload.username,
+        email: payload.email,
+        password_hash,
+        role: "premium_member".to_string(),
+        default_preset_id: None,
+    };
+
+    match db.db.collection::<crate::db_optimized::models::User>("users").insert_one(user).await {
+        Ok(_) => (StatusCode::CREATED, "User created successfully").into_response(),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create user").into_response()
     }
 }
 

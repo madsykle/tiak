@@ -120,7 +120,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     if !origins.is_empty() {
-        cors_builder = cors_builder.allow_origin(origins);
+        cors_builder = cors_builder.allow_origin(origins).allow_credentials(true);
     } else {
         cors_builder = cors_builder.allow_origin(Any);
     }

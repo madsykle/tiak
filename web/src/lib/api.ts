@@ -69,7 +69,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     headers.set('Authorization', `Bearer ${token}`);
   }
   
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(url, { ...options, headers, credentials: 'include' });
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
@@ -84,6 +84,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
 export async function login(username: string, password: string): Promise<{ token: string; role: string }> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     body: JSON.stringify({ username, password })
   });
@@ -102,6 +103,15 @@ export async function login(username: string, password: string): Promise<{ token
 }
 
 export async function logout(): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+  } catch (err) {
+    console.error('Logout request failed', err);
+  }
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
@@ -112,6 +122,7 @@ export async function logout(): Promise<void> {
 export async function signup(username: string, email: string, password: string): Promise<void> {
   const res = await fetch(`${API_BASE}/auth/signup`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     body: JSON.stringify({ username, email, password })
   });
@@ -319,4 +330,27 @@ export function getDownloadUrl(path: string): string {
 
 export function getPreviewUrl(dateFolder: string, filename: string): string {
   return getStreamUrl(`data/${dateFolder}/${filename}`);
+}
+
+export async function checkAuthSession(): Promise<{ username: string; role: string } | null> {
+  try {
+    const res = await fetchWithAuth(`${API_BASE}/auth/me`);
+    if (res.ok) {
+      const data = await res.json();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('role', data.role);
+        window.dispatchEvent(new Event('auth-change'));
+      }
+      return data;
+    } else if (res.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        window.dispatchEvent(new Event('auth-change'));
+      }
+    }
+  } catch (err) {
+    console.error('Session check failed', err);
+  }
+  return null;
 }

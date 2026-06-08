@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { API_BASE } from '../lib/config';
-import { listCategories, createCategory, deleteCategory, renameCategory, runMaintenance, backfillMetadata, backfillThumbnails, login, logout, getRole } from '../lib/api';
+import { listCategories, createCategory, deleteCategory, renameCategory, runMaintenance, backfillMetadata, backfillThumbnails, login, logout, getRole, signup } from '../lib/api';
 import CategorySettingsSection from '../components/settings/CategorySettingsSection';
 import MaintenanceToolsSection from '../components/settings/MaintenanceToolsSection';
 import SystemInfoSection from '../components/settings/SystemInfoSection';
@@ -15,6 +15,11 @@ export default function Settings() {
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
+
+  // Register state
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [email, setEmail] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [maxConcurrent, setMaxConcurrent] = useState<number>(2);
   const [syncDestination, setSyncDestination] = useState<string>('onedrive:others/Edits');
@@ -45,12 +50,32 @@ export default function Settings() {
     e.preventDefault();
     setLoginError('');
     setLoginLoading(true);
-    try {
-      await login(username, password);
-    } catch (err: unknown) {
-      setLoginError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoginLoading(false);
+    
+    if (isRegistering) {
+      if (password !== confirmPassword) {
+        setLoginError('Passwords do not match');
+        setLoginLoading(false);
+        return;
+      }
+      try {
+        await signup(username, email, password);
+        showMessage('success', 'Account created successfully! Please sign in.');
+        setIsRegistering(false);
+        setPassword('');
+        setConfirmPassword('');
+      } catch (err: unknown) {
+        setLoginError(err instanceof Error ? err.message : 'Registration failed');
+      } finally {
+        setLoginLoading(false);
+      }
+    } else {
+      try {
+        await login(username, password);
+      } catch (err: unknown) {
+        setLoginError(err instanceof Error ? err.message : 'Login failed');
+      } finally {
+        setLoginLoading(false);
+      }
     }
   };
 
@@ -293,46 +318,116 @@ export default function Settings() {
   if (role !== 'admin' && role !== 'premium_member') {
     return (
       <div className="max-w-md mx-auto py-12 animate-in fade-in duration-500">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-8 text-center">
-          Admin / Member Login
+        <h1 className="text-2xl font-bold tracking-tight text-foreground mb-8 text-center">
+          Admin / Member Dashboard
         </h1>
-        <div className="rounded-xl border border-border-subtle bg-surface p-6 shadow-sm">
+        <div className="rounded-2xl border border-border-subtle bg-surface p-6 shadow-md">
+          {/* Tab Switcher */}
+          <div className="flex border-b border-border-subtle mb-6">
+            <button
+              type="button"
+              onClick={() => { setIsRegistering(false); setLoginError(''); }}
+              className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-all ${
+                !isRegistering
+                  ? 'border-blue-500 text-blue-500 font-semibold'
+                  : 'border-transparent text-content-muted hover:text-foreground'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsRegistering(true); setLoginError(''); }}
+              className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-all ${
+                isRegistering
+                  ? 'border-blue-500 text-blue-500 font-semibold'
+                  : 'border-transparent text-content-muted hover:text-foreground'
+              }`}
+            >
+              Register
+            </button>
+          </div>
+
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Username</label>
+              <label className="block text-sm font-medium mb-1 text-content-muted">Username</label>
               <input
                 type="text"
-                className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-content-muted/50"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
+                placeholder="Enter username"
                 required
               />
             </div>
+            
+            {isRegistering && (
+              <div className="animate-in slide-in-from-top-1 duration-200">
+                <label className="block text-sm font-medium mb-1 text-content-muted">Email Address</label>
+                <input
+                  type="email"
+                  className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-content-muted/50"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  required
+                />
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm font-medium mb-1">Password</label>
+              <label className="block text-sm font-medium mb-1 text-content-muted">Password</label>
               <input
                 type="password"
-                className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-content-muted/50"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
                 required
               />
             </div>
-            {loginError && <p className="text-red-500 text-sm font-medium">{loginError}</p>}
+
+            {isRegistering && (
+              <div className="animate-in slide-in-from-top-1 duration-200">
+                <label className="block text-sm font-medium mb-1 text-content-muted">Confirm Password</label>
+                <input
+                  type="password"
+                  className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-content-muted/50"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            )}
+
+            {loginError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm font-medium animate-in fade-in duration-200">
+                {loginError}
+              </div>
+            )}
+            
+            {msg && msg.type === 'success' && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-sm font-medium animate-in fade-in duration-200">
+                {msg.text}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98]"
             >
-              {loginLoading ? 'Signing in...' : 'Sign In'}
+              {loginLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  {isRegistering ? 'Creating account...' : 'Signing in...'}
+                </span>
+              ) : (
+                isRegistering ? 'Create Account' : 'Sign In'
+              )}
             </button>
           </form>
-          
-          <div className="mt-6 text-center">
-            <div className="inline-block rounded-full bg-blue-50 px-4 py-1.5 border border-blue-100">
-                <p className="text-xs font-semibold text-blue-600 tracking-wide uppercase">Premium Subscriptions Coming Soon</p>
-            </div>
-          </div>
         </div>
       </div>
     );
