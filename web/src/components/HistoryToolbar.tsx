@@ -40,7 +40,7 @@ export default function HistoryToolbar({ onImportSuccess, onImportError }: Histo
   };
 
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
       <input
         type="file"
         accept=".json"
@@ -51,21 +51,21 @@ export default function HistoryToolbar({ onImportSuccess, onImportError }: Histo
       
       <button
         onClick={handleExport}
-        className="inline-flex items-center justify-center gap-2 rounded-lg bg-surface border border-border-subtle px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-surface-subtle transition-all active:scale-95"
+        className="inline-flex items-center justify-center gap-2 rounded-xl bg-surface border border-border px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-surface-subtle transition-all active:scale-95 w-full sm:w-auto"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span>Export History</span>
       </button>
 
       <button
         onClick={handleImportClick}
         disabled={importing}
-        className="inline-flex items-center justify-center gap-2 rounded-lg bg-surface border border-border-subtle px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-surface-subtle transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+        className="inline-flex items-center justify-center gap-2 rounded-xl bg-surface border border-border px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-surface-subtle transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none w-full sm:w-auto"
       >
         {importing ? (
              <div className="h-4 w-4 border-2 border-foreground border-t-transparent rounded-full animate-spin"></div>
         ) : (
-             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         )}
         <span>{importing ? 'Importing...' : 'Import History'}</span>
       </button>

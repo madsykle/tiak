@@ -413,10 +413,10 @@ export default function Settings() {
               </div>
             )}
 
-            <button
+             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full mt-6 bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed glow-purple"
+              className="w-full mt-6 bg-neon-purple hover:bg-neon-purple/90 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed glow-purple"
             >
               {loginLoading ? (
                 <span className="flex items-center justify-center gap-2">

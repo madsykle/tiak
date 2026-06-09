@@ -280,7 +280,7 @@ export default function Queue() {
       </Head>
 
       <div className="space-y-8 animate-in fade-in duration-500">
-        <header className="flex items-center justify-between">
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">Queue</h1>
               {role && (
@@ -347,7 +347,7 @@ export default function Queue() {
                     <button
                         onClick={handleSubmit}
                         disabled={loading || !urls.trim()}
-                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 px-5 py-2 text-sm font-semibold text-white shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-neon-purple hover:bg-neon-purple/90 px-5 py-2 text-sm font-semibold text-white shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                         {loading ? 'Adding...' : 'Add to Queue'}
                     </button>
@@ -482,7 +482,7 @@ export default function Queue() {
                                     {job.status === 'done' && job.filename && (
                                       <a
                                         href={getDownloadUrl(getJobDownloadPath(job))}
-                                        className="shrink-0 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
+                                        className="shrink-0 rounded-lg bg-neon-purple hover:bg-neon-purple/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
                                         download
                                       >
                                         Download File

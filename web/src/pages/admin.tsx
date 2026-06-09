@@ -191,7 +191,7 @@ export default function AdminDashboard() {
                       <button
                         type="submit"
                         disabled={creating}
-                        className="w-full bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold py-2.5 rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 glow-purple"
+                        className="w-full bg-neon-purple hover:bg-neon-purple/90 text-white font-bold py-2.5 rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 glow-purple"
                       >
                         {creating ? 'Creating...' : 'Create Premium User'}
                       </button>

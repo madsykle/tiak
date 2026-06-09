@@ -114,21 +114,15 @@ body {
   }
 
   .text-gradient-purple {
-    background: linear-gradient(135deg, #00f2fe 0%, #8b5cf6 50%, #ff0844 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--neon-purple);
   }
   
   .text-gradient-cyan {
-    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--neon-cyan);
   }
 
   .text-gradient-pink {
-    background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--neon-pink);
   }
 }
 

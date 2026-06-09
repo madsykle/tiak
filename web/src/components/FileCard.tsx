@@ -190,7 +190,7 @@ export default React.memo(function FileCard({
           </button>
           <button
             onClick={handleDownloadClick}
-            className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 px-3 py-2 text-xs font-bold text-white shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
+            className="flex-1 rounded-xl bg-neon-purple hover:bg-neon-purple/90 px-3 py-2 text-xs font-bold text-white shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           >
             Download
           </button>

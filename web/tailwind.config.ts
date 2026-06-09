@@ -30,6 +30,12 @@ const config: Config = {
           DEFAULT: "var(--border)",
           subtle: "var(--border-subtle)",
         },
+        neon: {
+          cyan: "var(--neon-cyan)",
+          pink: "var(--neon-pink)",
+          red: "var(--neon-red)",
+          purple: "var(--neon-purple)",
+        },
       },
     },
   },
