@@ -64,18 +64,29 @@ export default React.memo(function FileCard({
     onPreview(file);
   };
 
+  const isYoutube = file.platform === 'youtube';
+  const isTiktok = file.platform === 'tiktok';
+  const isInstagram = file.platform === 'instagram';
+
+  let cardStyle = "border-border/60 bg-surface/40 hover:border-purple-500/30 hover:glow-purple";
+  if (isSelected) {
+    cardStyle = "border-neon-purple bg-neon-purple/10 ring-1 ring-neon-purple/40 glow-purple";
+  } else if (isYoutube) {
+    cardStyle = "border-border/60 bg-surface/40 hover:border-red-500/30 hover:glow-red";
+  } else if (isTiktok) {
+    cardStyle = "border-border/60 bg-surface/40 hover:border-cyan-500/30 hover:glow-cyan";
+  } else if (isInstagram) {
+    cardStyle = "border-border/60 bg-surface/40 hover:border-pink-500/30 hover:glow-pink";
+  }
+
   return (
     <div
-      className={`group relative overflow-hidden rounded-xl border ${
-        isSelected
-          ? 'border-blue-500 bg-blue-50/30 ring-1 ring-blue-500'
-          : 'border-border-subtle bg-surface hover:border-border hover:shadow-sm'
-      } transition-all duration-200 cursor-default`}
+      className={`group relative overflow-hidden rounded-2xl border glass-premium hover-scale transition-all duration-300 cursor-default ${cardStyle}`}
       onClick={handleCardClick}
     >
       {/* Selection Overlay */}
       {isSelected && (
-        <div className="absolute inset-0 bg-blue-500/5 z-0"></div>
+        <div className="absolute inset-0 bg-neon-purple/5 z-0"></div>
       )}
 
       {/* Checkbox */}
@@ -85,7 +96,7 @@ export default React.memo(function FileCard({
           checked={isSelected}
           onChange={() => onSelect(file.path)}
           onClick={handleCheckboxClick}
-          className="h-4 w-4 rounded border-border bg-white text-blue-600 focus:ring-blue-500"
+          className="h-4 w-4 rounded border-border bg-surface text-neon-purple focus:ring-neon-purple/30 focus:ring-1"
         />
       </div>
 
@@ -101,10 +112,10 @@ export default React.memo(function FileCard({
         {isVideo && (
           <button
             onClick={handlePreviewClick}
-            className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           >
-            <div className="rounded-full bg-white/90 p-3 shadow-lg">
-              <svg className="h-6 w-6 text-foreground" fill="currentColor" viewBox="0 0 24 24">
+            <div className="rounded-full bg-white/90 p-3 shadow-lg hover:scale-110 active:scale-95 transition-transform">
+              <svg className="h-6 w-6 text-background" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </div>
@@ -112,33 +123,33 @@ export default React.memo(function FileCard({
         )}
 
         {/* File Type Indicator */}
-        <div className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white">
+        <div className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-white">
           {isVideo ? 'VIDEO' : isImage ? 'IMAGE' : 'FILE'}
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 relative z-10">
         {/* File Name */}
         <div className="mb-2">
-          <h3 className="line-clamp-2 text-sm font-medium text-foreground">
+          <h3 className="line-clamp-2 text-sm font-semibold text-foreground tracking-tight leading-tight">
             {file.name}
           </h3>
         </div>
 
         {/* Metadata */}
-        <div className="space-y-2 text-xs text-content-muted">
+        <div className="space-y-2.5 text-xs text-content-muted">
           {/* Platform Badge */}
           {file.platform && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <span className={platformBadgeClass(file.platform)}>
                 {platformLabel(file.platform)}
               </span>
               {file.creator && (
                 <>
-                  <span className="mx-1">•</span>
-                  <span className="truncate" title={file.creator}>
-                    {file.creator}
+                  <span className="text-content-subtle">•</span>
+                  <span className="truncate font-medium text-content-muted" title={file.creator}>
+                    @{file.creator}
                   </span>
                 </>
               )}
@@ -147,39 +158,39 @@ export default React.memo(function FileCard({
 
           {/* Caption Preview */}
           {file.caption && (
-            <p className="line-clamp-2 text-xs text-content">
+            <p className="line-clamp-2 text-[11px] leading-relaxed text-content-muted bg-surface-subtle/30 p-2 rounded-lg border border-border/40">
               {file.caption}
             </p>
           )}
 
           {/* File Info */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between border-t border-border/40 pt-2 text-[11px]">
+            <div className="flex items-center gap-1.5 font-mono">
               <span>{formatBytes(file.size)}</span>
-              <span>•</span>
+              <span className="text-content-subtle">•</span>
               <span>{date}</span>
             </div>
 
             <div className="flex items-center gap-1">
               {/* Category Badge */}
-              <span className="rounded bg-surface-strong px-1.5 py-0.5 text-[10px] font-medium">
+              <span className="rounded-full bg-surface-strong px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-content-muted border border-border/50">
                 {file.category}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="mt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions - visible by default on mobile, hover-only on desktop */}
+        <div className="mt-4 flex items-center gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
           <button
             onClick={handlePreviewClick}
-            className="flex-1 rounded-lg border border-border-subtle bg-surface px-2 py-1.5 text-xs font-medium text-foreground hover:bg-surface-subtle transition-colors"
+            className="flex-1 rounded-xl border border-border bg-surface-subtle/50 px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           >
             Preview
           </button>
           <button
             onClick={handleDownloadClick}
-            className="flex-1 rounded-lg bg-foreground px-2 py-1.5 text-xs font-medium text-background hover:bg-foreground/90 transition-colors"
+            className="flex-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 px-3 py-2 text-xs font-bold text-white shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           >
             Download
           </button>

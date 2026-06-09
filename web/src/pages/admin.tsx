@@ -116,7 +116,7 @@ export default function AdminDashboard() {
       <Head><title>Admin Dashboard - Tiak</title></Head>
       <div className="space-y-8 animate-in fade-in duration-500 pb-20">
         <header>
-          <h1 className="text-3xl font-bold tracking-tight">System Dashboard</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">System Dashboard</h1>
           <p className="text-content-muted mt-1">Global oversight and user management.</p>
         </header>
 
@@ -124,29 +124,29 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard title="Total Jobs" value={stats?.total_jobs || 0} icon="📊" />
           <StatCard title="Storage" value={usage ? formatBytes(usage.totalSize) : '...'} icon="💾" />
-          <StatCard title="In Queue" value={stats?.queue_size || 0} color="text-blue-500" icon="⏳" />
-          <StatCard title="Failed" value={stats?.failed_jobs || 0} color="text-red-500" icon="❌" />
+          <StatCard title="In Queue" value={stats?.queue_size || 0} color="text-gradient-cyan" icon="⏳" />
+          <StatCard title="Failed" value={stats?.failed_jobs || 0} color="text-gradient-pink" icon="❌" />
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
             {/* User Management */}
             <div className="space-y-8">
-              <section className="rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm">
-                  <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <section className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
+                  <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                       User Directory
                   </h2>
                   <div className="space-y-4">
                       {users.map(u => (
-                          <div key={u.id} className="flex items-center justify-between p-3 rounded-xl bg-surface-subtle/50 border border-border-subtle">
+                          <div key={u.id} className="flex items-center justify-between p-3 rounded-xl bg-surface/40 border border-border/80">
                               <div className="min-w-0">
-                                  <p className="font-medium truncate">{u.username}</p>
+                                  <p className="font-semibold truncate text-sm">{u.username}</p>
                                   <p className="text-xs text-content-muted truncate">{u.email}</p>
                               </div>
                               <select 
                                   value={u.role}
                                   onChange={(e) => updateUserRole(u.id, e.target.value)}
-                                  className="bg-surface-strong text-xs font-semibold rounded-lg border-none focus:ring-2 focus:ring-blue-500 py-1 pl-2 pr-8"
+                                  className="bg-surface/60 border border-border text-xs font-semibold rounded-xl focus:ring-1 focus:ring-neon-purple focus:border-neon-purple py-1.5 pl-3 pr-8 transition-all duration-200"
                                   disabled={u.username === 'nesbeer'}
                               >
                                   <option value="guest">Guest</option>
@@ -158,16 +158,16 @@ export default function AdminDashboard() {
                   </div>
               </section>
 
-              <section className="rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm">
-                  <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              <section className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
+                  <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                     Create New User
                   </h2>
                   <form onSubmit={handleCreateUser} className="space-y-4">
                       <input
                         type="text"
                         placeholder="Username"
-                        className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all placeholder-content-subtle"
                         value={newUsername}
                         onChange={e => setNewUsername(e.target.value)}
                         required
@@ -175,7 +175,7 @@ export default function AdminDashboard() {
                       <input
                         type="email"
                         placeholder="Email"
-                        className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all placeholder-content-subtle"
                         value={newEmail}
                         onChange={e => setNewEmail(e.target.value)}
                         required
@@ -183,7 +183,7 @@ export default function AdminDashboard() {
                       <input
                         type="password"
                         placeholder="Password"
-                        className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                        className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all placeholder-content-subtle"
                         value={newPassword}
                         onChange={e => setNewPassword(e.target.value)}
                         required
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
                       <button
                         type="submit"
                         disabled={creating}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
+                        className="w-full bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold py-2.5 rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 glow-purple"
                       >
                         {creating ? 'Creating...' : 'Create Premium User'}
                       </button>
@@ -201,18 +201,23 @@ export default function AdminDashboard() {
             </div>
 
             {/* Platform Distribution */}
-            <section className="rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm">
-                <h2 className="text-lg font-semibold mb-6">Platform Usage</h2>
-                <div className="space-y-4">
+            <section className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
+                <h2 className="text-lg font-bold mb-6">Platform Usage</h2>
+                <div className="space-y-5">
                     {stats?.platforms.map(([p, count]) => (
-                        <div key={p || 'unknown'} className="space-y-1">
-                            <div className="flex justify-between text-xs font-medium">
+                        <div key={p || 'unknown'} className="space-y-1.5">
+                            <div className="flex justify-between text-xs font-semibold">
                                 <span className={platformBadgeClass(p || 'unknown')}>{platformLabel(p || 'unknown')}</span>
-                                <span>{count} videos</span>
+                                <span className="font-mono text-content-muted">{count} video{count !== 1 ? 's' : ''}</span>
                             </div>
-                            <div className="h-2 w-full bg-surface-strong rounded-full overflow-hidden">
+                            <div className="h-2 w-full bg-surface-strong rounded-full overflow-hidden border border-border/30">
                                 <div 
-                                    className="h-full bg-foreground transition-all duration-1000" 
+                                    className={`h-full transition-all duration-1000 ${
+                                      p === 'youtube' ? 'bg-red-500 glow-red' :
+                                      p === 'tiktok' ? 'bg-cyan-500 glow-cyan' :
+                                      p === 'instagram' ? 'bg-pink-500 glow-pink' :
+                                      'bg-neon-purple glow-purple'
+                                    }`} 
                                     style={{ width: `${(count / (stats.done_jobs || 1)) * 100}%` }}
                                 ></div>
                             </div>
@@ -228,10 +233,10 @@ export default function AdminDashboard() {
 
 function StatCard({ title, value, color = "text-foreground", icon }: { title: string, value: string | number, color?: string, icon: string }) {
   return (
-    <div className="rounded-2xl border border-border-subtle bg-surface p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-surface/40 p-5 shadow-md glass-premium hover-scale transition-all duration-300 hover:border-purple-500/30 hover:glow-purple">
       <div className="text-2xl mb-2">{icon}</div>
-      <p className="text-xs font-medium text-content-muted uppercase tracking-wider">{title}</p>
-      <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+      <p className="text-xs font-semibold text-content-muted uppercase tracking-wider">{title}</p>
+      <p className={`text-2xl font-extrabold mt-1 tracking-tight ${color}`}>{value}</p>
     </div>
   );
 }

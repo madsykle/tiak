@@ -134,14 +134,18 @@ export default function HistoryPage() {
       <div className="space-y-6 animate-in fade-in duration-500 relative">
         {/* Toast */}
         {toast && (
-           <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-sm font-medium animate-in slide-in-from-top-2 fade-in ${toast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+           <div className={`fixed top-4 right-4 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold animate-in slide-in-from-top-2 fade-in border backdrop-blur-md ${
+             toast.type === 'success' 
+               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 glow-cyan' 
+               : 'bg-red-500/10 border-red-500/30 text-red-400 glow-pink'
+           }`}>
              {toast.msg}
            </div>
         )}
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">History</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">History</h1>
             <p className="mt-1 text-sm text-content-muted">View past download jobs.</p>
           </div>
           <HistoryToolbar onImportSuccess={handleImportSuccess} onImportError={(msg) => showToast(msg, 'error')} />
@@ -150,16 +154,16 @@ export default function HistoryPage() {
         {/* Filters */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <div className="flex-1">
-                <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-content-muted">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <div className="relative group">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-content-subtle">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </div>
                     <input
                         type="text"
                         placeholder="Search URL or filename..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="block w-full rounded-lg border-border-subtle bg-surface pl-10 pr-3 py-2 text-sm text-foreground shadow-sm placeholder:text-content-subtle focus:border-foreground focus:ring-1 focus:ring-foreground transition-all"
+                        className="block w-full rounded-xl border-border bg-surface/40 pl-10 pr-3 py-2.5 text-sm text-foreground shadow-sm placeholder:text-content-subtle focus:border-neon-purple focus:ring-1 focus:ring-neon-purple/30 transition-all duration-200"
                     />
                 </div>
             </div>
@@ -168,7 +172,7 @@ export default function HistoryPage() {
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="block w-full rounded-lg border-border-subtle bg-surface py-2 pl-3 pr-8 text-sm text-foreground shadow-sm focus:border-foreground focus:ring-1 focus:ring-foreground transition-all"
+                    className="block w-full rounded-xl border-border bg-surface/40 py-2.5 pl-3 pr-8 text-sm text-foreground shadow-sm focus:border-neon-purple focus:ring-1 focus:ring-neon-purple/30 transition-all duration-200"
                 >
                     <option value="all">All Status</option>
                     <option value="done">Done</option>
@@ -181,14 +185,14 @@ export default function HistoryPage() {
                 
                 <button
                     onClick={() => setRetryFilter(!retryFilter)}
-                    className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium shadow-sm transition-all ${
+                    className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200 ${
                         retryFilter 
-                        ? 'bg-surface-strong border-border text-foreground' 
-                        : 'bg-surface border-border-subtle text-content-muted hover:bg-surface-subtle hover:text-foreground'
+                        ? 'bg-neon-purple/20 border-neon-purple/40 text-foreground glow-purple' 
+                        : 'bg-surface/40 border-border text-content-muted hover:bg-surface-subtle hover:text-foreground'
                     }`}
                 >
                     <span>Retried</span>
-                    {retryFilter && <span className="h-1.5 w-1.5 rounded-full bg-foreground"></span>}
+                    {retryFilter && <span className="h-1.5 w-1.5 rounded-full bg-neon-purple animate-pulse"></span>}
                 </button>
             </div>
         </div>

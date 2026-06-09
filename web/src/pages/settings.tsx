@@ -318,18 +318,18 @@ export default function Settings() {
   if (role !== 'admin' && role !== 'premium_member') {
     return (
       <div className="max-w-md mx-auto py-12 animate-in fade-in duration-500">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground mb-8 text-center">
-          Admin / Member Dashboard
+        <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display mb-8 text-center">
+          Member Dashboard
         </h1>
-        <div className="rounded-2xl border border-border-subtle bg-surface p-6 shadow-md">
+        <div className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
           {/* Tab Switcher */}
-          <div className="flex border-b border-border-subtle mb-6">
+          <div className="flex border-b border-border mb-6">
             <button
               type="button"
               onClick={() => { setIsRegistering(false); setLoginError(''); }}
-              className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-all ${
+              className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all duration-200 ${
                 !isRegistering
-                  ? 'border-blue-500 text-blue-500 font-semibold'
+                  ? 'border-neon-purple text-neon-purple'
                   : 'border-transparent text-content-muted hover:text-foreground'
               }`}
             >
@@ -338,9 +338,9 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => { setIsRegistering(true); setLoginError(''); }}
-              className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-all ${
+              className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all duration-200 ${
                 isRegistering
-                  ? 'border-blue-500 text-blue-500 font-semibold'
+                  ? 'border-neon-purple text-neon-purple'
                   : 'border-transparent text-content-muted hover:text-foreground'
               }`}
             >
@@ -350,10 +350,10 @@ export default function Settings() {
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1 text-content-muted">Username</label>
+              <label className="block text-xs font-semibold mb-1 text-content-muted uppercase tracking-wider">Username</label>
               <input
                 type="text"
-                className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-content-muted/50"
+                className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all duration-200 placeholder-content-subtle"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 placeholder="Enter username"
@@ -363,10 +363,10 @@ export default function Settings() {
             
             {isRegistering && (
               <div className="animate-in slide-in-from-top-1 duration-200">
-                <label className="block text-sm font-medium mb-1 text-content-muted">Email Address</label>
+                <label className="block text-xs font-semibold mb-1 text-content-muted uppercase tracking-wider">Email Address</label>
                 <input
                   type="email"
-                  className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-content-muted/50"
+                  className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all duration-200 placeholder-content-subtle"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="name@example.com"
@@ -376,10 +376,10 @@ export default function Settings() {
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-1 text-content-muted">Password</label>
+              <label className="block text-xs font-semibold mb-1 text-content-muted uppercase tracking-wider">Password</label>
               <input
                 type="password"
-                className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-content-muted/50"
+                className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all duration-200 placeholder-content-subtle"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -389,10 +389,10 @@ export default function Settings() {
 
             {isRegistering && (
               <div className="animate-in slide-in-from-top-1 duration-200">
-                <label className="block text-sm font-medium mb-1 text-content-muted">Confirm Password</label>
+                <label className="block text-xs font-semibold mb-1 text-content-muted uppercase tracking-wider">Confirm Password</label>
                 <input
                   type="password"
-                  className="w-full bg-surface-strong border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-content-muted/50"
+                  className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all duration-200 placeholder-content-subtle"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
@@ -402,13 +402,13 @@ export default function Settings() {
             )}
 
             {loginError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm font-medium animate-in fade-in duration-200">
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs font-semibold animate-in fade-in duration-200">
                 {loginError}
               </div>
             )}
             
             {msg && msg.type === 'success' && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-sm font-medium animate-in fade-in duration-200">
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-semibold animate-in fade-in duration-200">
                 {msg.text}
               </div>
             )}
@@ -416,7 +416,7 @@ export default function Settings() {
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98]"
+              className="w-full mt-6 bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed glow-purple"
             >
               {loginLoading ? (
                 <span className="flex items-center justify-center gap-2">

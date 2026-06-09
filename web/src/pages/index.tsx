@@ -281,15 +281,26 @@ export default function Queue() {
 
       <div className="space-y-8 animate-in fade-in duration-500">
         <header className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Queue</h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">Queue</h1>
+              {role && (
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                  role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                  role === 'premium_member' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
+                  'bg-content-subtle/10 text-content-muted border border-border'
+                }`}>
+                  {role.replace('_member', '').replace('guest', 'Guest')}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleManualRefresh}
                 disabled={refreshing}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-surface-strong text-sm font-medium hover:bg-surface-subtle transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-subtle/50 text-sm font-medium hover:bg-surface-strong hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
                 title="Refresh jobs manually"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? 'animate-spin' : ''}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? 'animate-spin' : ''}>
                   <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                   <path d="M3 3v5h5" />
                   <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
@@ -297,15 +308,15 @@ export default function Queue() {
                 </svg>
                 <span>Refresh</span>
               </button>
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="Live updates active"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse glow-cyan" title="Live updates active"></div>
             </div>
         </header>
 
         {/* Input Area */}
         <div className="space-y-4">
-            <div className="group relative rounded-xl border border-border bg-surface p-1 shadow-sm focus-within:ring-2 focus-within:ring-foreground/5 transition-all">
+            <div className="group relative rounded-xl border border-border bg-surface p-1 shadow-md focus-within:border-neon-purple/50 focus-within:ring-1 focus-within:ring-neon-purple/30 transition-all duration-300">
                 <textarea
-                className="block w-full rounded-lg border-0 bg-transparent p-4 text-foreground placeholder:text-content-muted focus:ring-0 sm:text-sm resize-none"
+                className="block w-full rounded-lg border-0 bg-transparent p-4 text-foreground placeholder:text-content-subtle focus:ring-0 sm:text-sm resize-none font-sans"
                 placeholder="Paste URLs here (YouTube, TikTok, Instagram – one per line)..."
                 rows={3}
                 value={urls}
@@ -336,7 +347,7 @@ export default function Queue() {
                     <button
                         onClick={handleSubmit}
                         disabled={loading || !urls.trim()}
-                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background shadow-sm hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 px-5 py-2 text-sm font-semibold text-white shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                         {loading ? 'Adding...' : 'Add to Queue'}
                     </button>
@@ -383,99 +394,122 @@ export default function Queue() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {jobs.map((job) => (
-                        <div key={job.id} className="relative overflow-hidden rounded-xl border border-border-subtle bg-surface p-4 shadow-sm transition-all hover:shadow-md">
-                            {/* Progress Background */}
-                            {job.status === 'downloading' && (
-                                <div 
-                                    className="absolute bottom-0 left-0 top-0 bg-blue-50/50 transition-all duration-300 ease-linear"
-                                    style={{ width: `${job.progress || 0}%` }}
-                                ></div>
-                            )}
-                            
-                            <div className="relative z-10 flex items-start justify-between gap-4">
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className={`inline-flex h-2 w-2 rounded-full ${
-                                            job.status === 'done' ? 'bg-emerald-500' :
-                                            job.status === 'downloading' ? 'bg-blue-500' :
-                                            job.status === 'failed' ? 'bg-red-500' :
-                                            job.status === 'missing' ? 'bg-red-500' : 'bg-zinc-300'
-                                        }`} />
-                                        <p className="truncate text-sm font-medium text-foreground" title={job.url}>{job.url}</p>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-3 text-xs text-content-muted">
-                                        <span className="capitalize">{job.status === 'missing' ? 'Expired' : job.status}</span>
-                                        {job.category && role === 'admin' && (
-                                            <>
-                                                <span>•</span>
-                                                <span className="px-1.5 py-0.5 rounded bg-surface-strong text-[10px]">{job.category}</span>
-                                            </>
-                                        )}
-                                        {job.platform && job.platform !== 'unknown' && (
-                                            <>
-                                                <span>•</span>
-                                                <span className={platformBadgeClass(job.platform)}>{platformLabel(job.platform)}</span>
-                                            </>
-                                        )}
-                                        {job.status === 'downloading' && (
-                                            <>
-                                                <span>•</span>
-                                                <span>{job.progress?.toFixed(1)}%</span>
-                                                <span>•</span>
-                                                <span>{job.eta || '--:--'}</span>
-                                            </>
-                                        )}
-                                        {job.filename && (
-                                            <>
-                                                <span>•</span>
-                                                <span className="truncate max-w-[200px]">{job.filename}</span>
-                                            </>
-                                        )}
-                                        {job.expiresAt && job.status === 'done' && (
-                                            <>
-                                                <span>•</span>
-                                                <ExpiryCountdown expiresAt={job.expiresAt} />
-                                            </>
-                                        )}
-                                        {job.error && (
-                                            <span className="text-red-500 truncate max-w-[200px]">{job.error}</span>
-                                        )}
-                                    </div>
-                                </div>
+                    {jobs.map((job) => {
+                        const isYoutube = job.platform === 'youtube';
+                        const isTiktok = job.platform === 'tiktok';
+                        const isInstagram = job.platform === 'instagram';
+                        
+                        let cardGlow = "hover:glow-purple border-purple-500/10";
+                        let progressBg = "bg-purple-500/10";
+                        let statusColor = "bg-purple-500";
+                        if (isYoutube) {
+                          cardGlow = "hover:glow-red border-red-500/15";
+                          progressBg = "bg-red-500/15";
+                          statusColor = "bg-red-500 glow-red";
+                        } else if (isTiktok) {
+                          cardGlow = "hover:glow-cyan border-cyan-500/15";
+                          progressBg = "bg-cyan-500/15";
+                          statusColor = "bg-cyan-500 glow-cyan";
+                        } else if (isInstagram) {
+                          cardGlow = "hover:glow-pink border-pink-500/15";
+                          progressBg = "bg-pink-500/15";
+                          statusColor = "bg-pink-500 glow-pink";
+                        }
 
-                                <div className="flex items-center gap-2">
-                                  {job.status === 'done' && job.filename && (
-                                    <a
-                                      href={getDownloadUrl(getJobDownloadPath(job))}
-                                      className="shrink-0 rounded-md bg-blue-500 px-3 py-1 text-xs font-medium text-white hover:bg-blue-600 transition-colors"
-                                      download
-                                    >
-                                      Download File
-                                    </a>
-                                  )}
-                                  {(job.status === 'queued' || job.status === 'downloading') && (
-                                    <button
-                                      onClick={() => handleCancel(job.id)}
-                                      className="shrink-0 rounded-md bg-surface-subtle px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
-                                    >
-                                      Cancel
-                                    </button>
-                                  )}
-                                  {(job.status === 'failed' || job.status === 'missing') && (
-                                    <button
-                                        onClick={() => handleRetry(job.id)}
-                                        disabled={retryingIds.has(job.id)}
-                                        className="shrink-0 rounded-md bg-surface-subtle px-2 py-1 text-xs font-medium text-foreground hover:bg-surface-strong transition-colors disabled:opacity-50"
-                                    >
-                                        {retryingIds.has(job.id) ? 'Retrying...' : `Retry${job.retries > 0 ? ` (${job.retries})` : ''}`}
-                                    </button>
-                                  )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                        return (
+                          <div key={job.id} className={`relative overflow-hidden rounded-2xl border bg-surface/50 p-4 shadow-md transition-all duration-300 hover-scale glass-premium ${cardGlow}`}>
+                              {/* Progress Background */}
+                              {job.status === 'downloading' && (
+                                  <div 
+                                      className={`absolute bottom-0 left-0 top-0 ${progressBg} transition-all duration-300 ease-linear`}
+                                      style={{ width: `${job.progress || 0}%` }}
+                                  ></div>
+                              )}
+                              
+                              <div className="relative z-10 flex items-start justify-between gap-4">
+                                  <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-2 mb-1">
+                                          <span className={`inline-flex h-2 w-2 rounded-full ${
+                                              job.status === 'done' ? 'bg-emerald-500' :
+                                              job.status === 'downloading' ? statusColor :
+                                              job.status === 'failed' ? 'bg-red-500' :
+                                              job.status === 'missing' ? 'bg-zinc-500' : 'bg-zinc-400'
+                                          }`} />
+                                          <p className="truncate text-sm font-medium text-foreground" title={job.url}>{job.url}</p>
+                                      </div>
+                                      
+                                      <div className="flex items-center gap-3 text-xs text-content-muted">
+                                          <span className="capitalize">{job.status === 'missing' ? 'Expired' : job.status}</span>
+                                          {job.category && role === 'admin' && (
+                                              <>
+                                                  <span>•</span>
+                                                  <span className="px-1.5 py-0.5 rounded bg-surface-strong text-[10px]">{job.category}</span>
+                                              </>
+                                          )}
+                                          {job.platform && job.platform !== 'unknown' && (
+                                              <>
+                                                  <span>•</span>
+                                                  <span className={platformBadgeClass(job.platform)}>{platformLabel(job.platform)}</span>
+                                              </>
+                                          )}
+                                          {job.status === 'downloading' && (
+                                              <>
+                                                  <span>•</span>
+                                                  <span>{job.progress?.toFixed(1)}%</span>
+                                                  <span>•</span>
+                                                  <span>{job.eta || '--:--'}</span>
+                                              </>
+                                          )}
+                                          {job.filename && (
+                                              <>
+                                                  <span>•</span>
+                                                  <span className="truncate max-w-[200px]">{job.filename}</span>
+                                              </>
+                                          )}
+                                          {job.expiresAt && job.status === 'done' && (
+                                              <>
+                                                  <span>•</span>
+                                                  <ExpiryCountdown expiresAt={job.expiresAt} />
+                                              </>
+                                          )}
+                                          {job.error && (
+                                              <span className="text-red-500 truncate max-w-[200px]">{job.error}</span>
+                                          )}
+                                      </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    {job.status === 'done' && job.filename && (
+                                      <a
+                                        href={getDownloadUrl(getJobDownloadPath(job))}
+                                        className="shrink-0 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
+                                        download
+                                      >
+                                        Download File
+                                      </a>
+                                    )}
+                                    {(job.status === 'queued' || job.status === 'downloading') && (
+                                      <button
+                                        onClick={() => handleCancel(job.id)}
+                                        className="shrink-0 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 active:scale-95"
+                                      >
+                                        Cancel
+                                      </button>
+                                    )}
+                                    {(job.status === 'failed' || job.status === 'missing') && (
+                                      <button
+                                          onClick={() => handleRetry(job.id)}
+                                          disabled={retryingIds.has(job.id)}
+                                          className="shrink-0 rounded-lg bg-surface-strong/50 border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
+                                      >
+                                          {retryingIds.has(job.id) ? 'Retrying...' : `Retry${job.retries > 0 ? ` (${job.retries})` : ''}`}
+                                      </button>
+                                    )}
+                                  </div>
+                              </div>
+                          </div>
+                        );
+                    })}
                 </div>
             )}
         </div>

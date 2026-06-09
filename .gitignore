@@ -56,3 +56,6 @@ yarn-debug.log*
 # Local cookies/auth tokens
 server/cookies.txt
 server/cookies_instagram.txt
+
+# Design System Specification
+DESIGN.md

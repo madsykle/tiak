@@ -1,54 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Light Mode - Premium Minimalist */
-  --background: #fcfcfc; /* Very subtle off-white */
-  --foreground: #18181b; /* Zinc 900 */
+  /* Default Theme: Cyber Obsidian Dark */
+  --background: #06050a;
+  --foreground: #f4f4f6;
   
-  --surface: #ffffff;
-  --surface-subtle: #f4f4f5; /* Zinc 100 */
-  --surface-strong: #e4e4e7; /* Zinc 200 */
+  --surface: #0f0d1a;
+  --surface-subtle: #161326;
+  --surface-strong: #231f3c;
 
-  --content: #18181b;
-  --content-muted: #71717a; /* Zinc 500 */
-  --content-subtle: #a1a1aa; /* Zinc 400 */
+  --content: #f4f4f6;
+  --content-muted: #9491ab;
+  --content-subtle: #63607a;
 
-  --border: #e4e4e7; /* Zinc 200 */
-  --border-subtle: #f4f4f5; /* Zinc 100 */
+  --border: #1e1b35;
+  --border-subtle: #121020;
+
+  /* Custom Neon Theme Tokens */
+  --neon-cyan: #00f2fe;
+  --neon-pink: #ff0844;
+  --neon-red: #ff3366;
+  --neon-purple: #8b5cf6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b; /* Zinc 950 */
-    --foreground: #f4f4f5; /* Zinc 100 */
-    
-    --surface: #18181b; /* Zinc 900 */
-    --surface-subtle: #27272a; /* Zinc 800 */
-    --surface-strong: #3f3f46; /* Zinc 700 */
+/* Optional Light Theme Toggle Support */
+[data-theme="light"] {
+  --background: #f7f6f9;
+  --foreground: #110e1c;
+  
+  --surface: #ffffff;
+  --surface-subtle: #f0edf5;
+  --surface-strong: #e2dde9;
 
-    --content: #f4f4f5;
-    --content-muted: #a1a1aa; /* Zinc 400 */
-    --content-subtle: #71717a; /* Zinc 500 */
+  --content: #110e1c;
+  --content-muted: #625f77;
+  --content-subtle: #8e8ba3;
 
-    --border: #27272a; /* Zinc 800 */
-    --border-subtle: #18181b; /* Zinc 900 */
-  }
+  --border: #e2dde9;
+  --border-subtle: #f0edf5;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-geist-sans), sans-serif;
+  font-family: 'Plus Jakarta Sans', var(--font-geist-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.05) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
-/* Custom selection color */
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-strong);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--content-subtle);
+}
+
+/* Selection colors */
 ::selection {
-  background-color: #f4f4f5; /* Light gray selection */
-  color: #18181b;
+  background-color: var(--neon-purple);
+  color: #ffffff;
 }
 
 @layer utilities {
@@ -56,7 +86,57 @@ body {
     text-wrap: balance;
   }
   
-  .glass {
-    @apply bg-surface/80 backdrop-blur-md border-t border-border-subtle;
+  .glass-premium {
+    background: rgba(15, 13, 26, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
+
+  .glass-panel {
+    background: rgba(22, 19, 38, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 242, 254, 0.15);
+  }
+
+  .glow-pink {
+    box-shadow: 0 0 20px rgba(255, 8, 68, 0.15);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+  }
+
+  .text-gradient-purple {
+    background: linear-gradient(135deg, #00f2fe 0%, #8b5cf6 50%, #ff0844 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .text-gradient-cyan {
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-pink {
+    background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* Custom transitions and hover scaling */
+.hover-scale {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: translateY(-2px) scale(1.01);
 }

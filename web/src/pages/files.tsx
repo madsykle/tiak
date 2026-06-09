@@ -427,20 +427,33 @@ export default function FilesEnhanced() {
       </Head>
 
       <div className="space-y-6 animate-in fade-in duration-500">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Files</h1>
-            <p className="text-sm text-content-muted mt-1">
-              {usage ? `${formatBytes(usage.totalSize)} • ${usage.fileCount} files` : 'Loading...'}
-            </p>
+        <header className="flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">Files</h1>
+            {usage ? (
+              <div className="mt-3 space-y-1.5 max-w-[280px]">
+                <div className="flex justify-between text-[11px] font-mono text-content-muted">
+                  <span>{formatBytes(usage.totalSize)} / 50 GB Used</span>
+                  <span>{usage.fileCount} files</span>
+                </div>
+                <div className="h-1.5 w-full bg-surface-strong rounded-full overflow-hidden border border-border/30">
+                  <div 
+                    className="h-full bg-gradient-to-r from-violet-600 to-cyan-500 rounded-full glow-purple transition-all duration-500"
+                    style={{ width: `${Math.min(100, (usage.totalSize / (50 * 1024 * 1024 * 1024)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-content-muted mt-1">Loading space info...</p>
+            )}
           </div>
           <button
             onClick={() => fetchFiles()}
             disabled={loading}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-surface-strong text-sm font-medium hover:bg-surface-subtle transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-subtle/50 text-sm font-medium hover:bg-surface-strong hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
             title="Refresh files manually"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={loading ? 'animate-spin' : ''}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={loading ? 'animate-spin' : ''}>
               <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
               <path d="M3 3v5h5" />
               <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
