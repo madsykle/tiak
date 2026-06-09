@@ -19,9 +19,10 @@ pub fn start_cleanup_worker(db: Db, data_root: String) {
 async fn perform_cleanup(db: &Db, data_root: &str) -> anyhow::Result<()> {
     let now = chrono::Utc::now().timestamp_millis();
     
-    // Find expired jobs
+    // Find expired jobs (exclude active downloads/queue)
     let filter = doc! {
-        "expiresAt": { "$ne": mongodb::bson::Bson::Null, "$lte": now }
+        "expiresAt": { "$ne": mongodb::bson::Bson::Null, "$lte": now },
+        "status": { "$nin": ["queued", "downloading"] }
     };
     
     let mut cursor = db.db.collection::<crate::db::Job>("jobs").find(filter).await?;

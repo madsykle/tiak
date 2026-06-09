@@ -396,7 +396,15 @@ pub(super) async fn retry_job(
         }
     }
 
-    if let Some(job) = state.queue.retry_job(&id).await {
+    let is_admin = user.role == "admin";
+    let is_premium = user.role == "premium_member";
+    let new_expires_at = if !is_admin && !is_premium {
+        Some(chrono::Utc::now().timestamp_millis() + 5 * 60 * 1000)
+    } else {
+        None
+    };
+
+    if let Some(job) = state.queue.retry_job(&id, new_expires_at).await {
         Json(job).into_response()
     } else {
         (
@@ -408,7 +416,7 @@ pub(super) async fn retry_job(
 }
 
 pub(super) async fn redownload_job(
-    user: AuthenticatedUser,
+    user: OptionalUser,
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Response {
@@ -418,9 +426,21 @@ pub(super) async fn redownload_job(
         }
     }
 
-    if let Some(job) = state.queue.redownload_job(&id).await {
+    let is_admin = user.role == "admin";
+    let is_premium = user.role == "premium_member";
+    let new_expires_at = if !is_admin && !is_premium {
+        Some(chrono::Utc::now().timestamp_millis() + 5 * 60 * 1000)
+    } else {
+        None
+    };
+
+    if let Some(job) = state.queue.redownload_job(&id, new_expires_at).await {
         Json(job).into_response()
     } else {
-        (axum::http::StatusCode::NOT_FOUND, "Job not found").into_response()
+        (
+            axum::http::StatusCode::NOT_FOUND,
+            "Job not found or cannot redownload",
+        )
+            .into_response()
     }
 }

@@ -52,3 +52,7 @@ yarn-debug.log*
 # Misc
 2026-*-analyse-*.txt
 .cursor/
+
+# Local cookies/auth tokens
+server/cookies.txt
+server/cookies_instagram.txt

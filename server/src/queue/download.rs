@@ -104,9 +104,10 @@ impl DownloadQueue {
             .arg(&python_path)
             .arg(&yt_dlp_path)
             .arg("--newline")
-            .arg("--impersonate")
-            .arg("chrome")
-            .arg("--no-check-certificates");
+            .arg("--no-check-certificates")
+            .arg("--no-update")
+            .arg("--js-runtimes")
+            .arg("node");
 
         // --- Quality & Preset Logic ---
         let mut quality_applied = false;
@@ -156,6 +157,28 @@ impl DownloadQueue {
         } else if is_instagram {
             cmd.arg("--add-header")
                 .arg("Referer:https://www.instagram.com/");
+        }
+
+        // Auto-detect cookie files for platforms that require auth
+        let cookie_file = if is_instagram && Path::new("cookies_instagram.txt").exists() {
+            Some("cookies_instagram.txt")
+        } else if url.contains("youtube.com") || url.contains("youtu.be") {
+            if Path::new("cookies_youtube.txt").exists() {
+                Some("cookies_youtube.txt")
+            } else if Path::new("cookies.txt").exists() {
+                Some("cookies.txt")
+            } else {
+                None
+            }
+        } else if Path::new("cookies.txt").exists() {
+            Some("cookies.txt")
+        } else {
+            None
+        };
+
+        if let Some(cf) = cookie_file {
+            tracing::info!("Using cookie file: {}", cf);
+            cmd.arg("--cookies").arg(cf);
         }
 
         let mut child = cmd
@@ -228,9 +251,20 @@ impl DownloadQueue {
             }
         });
 
-        tokio::spawn(async move {
+        let stderr_error = Arc::new(Mutex::new(String::new()));
+        let stderr_error_clone = stderr_error.clone();
+
+        let stderr_task = tokio::spawn(async move {
             let mut reader = BufReader::new(stderr).lines();
-            while let Ok(Some(_)) = reader.next_line().await {}
+            while let Ok(Some(line)) = reader.next_line().await {
+                // Capture ERROR lines from yt-dlp for better error reporting
+                if line.contains("ERROR:") {
+                    let mut w = stderr_error_clone.lock().unwrap();
+                    if w.is_empty() {
+                        *w = line.trim().to_string();
+                    }
+                }
+            }
         });
 
         tokio::select! {
@@ -241,6 +275,7 @@ impl DownloadQueue {
             status = child.wait() => {
                 let status = status?;
                 let _ = stdout_task.await;
+                let _ = stderr_task.await;
 
                 if status.success() {
                     let mut full_path_str = found_filename.lock().unwrap().clone();
@@ -301,7 +336,13 @@ impl DownloadQueue {
                         Ok(("unknown.mp4".to_string(), None, None, None))
                     }
                 } else {
-                    Err(anyhow::anyhow!("Process exited with code {}", status.code().unwrap_or(-1)))
+                    // Use captured stderr error if available for a more descriptive message
+                    let stderr_msg = stderr_error.lock().unwrap().clone();
+                    if !stderr_msg.is_empty() {
+                        Err(anyhow::anyhow!("{}", stderr_msg))
+                    } else {
+                        Err(anyhow::anyhow!("Process exited with code {}", status.code().unwrap_or(-1)))
+                    }
                 }
             }
         }

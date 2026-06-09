@@ -7,7 +7,12 @@ mod tests {
     use uuid::Uuid;
 
     async fn create_test_db() -> Result<Db> {
-        dotenv::dotenv().ok();
+        if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+            let dotenv_path = std::path::Path::new(&manifest_dir).parent().unwrap().join(".env");
+            dotenv::from_path(dotenv_path).ok();
+        } else {
+            dotenv::dotenv().ok();
+        }
         let uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".to_string());
         let db_name = format!("tiak-td-{}", &Uuid::new_v4().to_string().replace("-", "")[..15]);
         Db::new_with_db(&uri, &db_name).await

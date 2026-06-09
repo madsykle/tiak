@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { formatBytes } from '../lib/utils';
 
@@ -33,12 +34,31 @@ export default function FilePreviewModal({
   onNext,
   onTogglePlayerType,
 }: FilePreviewModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowLeft' && hasPrev) {
+        onPrev();
+      } else if (e.key === 'ArrowRight' && hasNext) {
+        onNext();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose, onPrev, onNext, hasPrev, hasNext]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
       onClick={onClose}
     >
-      <div className="relative w-full max-w-6xl mx-4">
+      <div
+        className="relative w-full max-w-6xl mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-4">
           <div className="text-white">
             <h3 className="text-lg font-semibold truncate">{file.name}</h3>

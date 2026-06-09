@@ -75,7 +75,7 @@ export default function SearchableSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 z-50 mt-1 w-full min-w-[200px] rounded-xl border border-border bg-surface shadow-xl animate-in fade-in zoom-in-95 duration-100 origin-top">
+        <div className="absolute bottom-full left-0 z-50 mb-1 w-full min-w-[200px] rounded-xl border border-border bg-surface shadow-xl animate-in fade-in zoom-in-95 duration-100 origin-bottom">
           <div className="p-2">
             <div className="relative mb-2">
               <svg

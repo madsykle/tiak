@@ -7,10 +7,8 @@ import FilePreviewModal from './FilePreviewModal';
 jest.mock('next/dynamic', () => ({
   __esModule: true,
   default: () => {
-    return () => {
-      return function MockComponent() {
-        return <div data-testid="mock-video-player">Video Player Mock</div>;
-      };
+    return function MockComponent() {
+      return <div data-testid="mock-video-player">Video Player Mock</div>;
     };
   },
 }));

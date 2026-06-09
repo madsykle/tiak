@@ -15,11 +15,13 @@ interface HistoryTableProps {
 
   onDelete: (id: string) => void;
 
+  retryingIds?: Set<string>;
+
 }
 
 
 
-export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, onDelete }: HistoryTableProps) {
+export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, onDelete, retryingIds = new Set() }: HistoryTableProps) {
 
 
 
@@ -195,11 +197,13 @@ export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, o
 
                         onClick={() => onRetry(job.id)}
 
-                        className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                        disabled={retryingIds.has(job.id)}
+
+                        className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors disabled:opacity-50"
 
                       >
 
-                        Retry
+                        {retryingIds.has(job.id) ? 'Retrying...' : `Retry${job.retries > 0 ? ` (${job.retries})` : ''}`}
 
                       </button>
 
@@ -211,11 +215,13 @@ export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, o
 
                         onClick={() => onRedownload(job.id)}
 
-                        className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded transition-colors"
+                        disabled={retryingIds.has(job.id)}
+
+                        className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded transition-colors disabled:opacity-50"
 
                       >
 
-                        Retry
+                        {retryingIds.has(job.id) ? 'Retrying...' : 'Retry'}
 
                       </button>
 

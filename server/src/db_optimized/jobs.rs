@@ -545,52 +545,72 @@ impl Db {
         Ok(())
     }
 
-    pub async fn increment_retry(&self, id: &str) -> Result<()> {
+    pub async fn increment_retry(&self, id: &str, expires_at: Option<i64>) -> Result<()> {
+        let mut set_doc = doc! {
+            "status": "queued",
+            "progress": 0
+        };
+        let mut unset_doc = doc! {
+            "error": "",
+            "eta": "",
+            "filename": "",
+            "startedAt": "",
+            "completedAt": "",
+            "transcript": "",
+            "hashtags": "",
+            "suggested_category": "",
+            "visual_description": ""
+        };
+
+        if let Some(exp) = expires_at {
+            set_doc.insert("expiresAt", exp);
+        } else {
+            unset_doc.insert("expiresAt", "");
+        }
+
         self.db.collection::<Job>("jobs")
             .update_one(
                 doc! { "_id": id },
                 doc! {
                     "$inc": { "retries": 1 },
-                    "$set": {
-                        "status": "queued",
-                        "progress": 0
-                    },
-                    "$unset": {
-                        "error": "",
-                        "eta": "",
-                        "startedAt": "",
-                        "completedAt": "",
-                        "transcript": "",
-                        "hashtags": "",
-                        "suggested_category": "",
-                        "visual_description": ""
-                    }
+                    "$set": set_doc,
+                    "$unset": unset_doc
                 }
             )
             .await?;
         Ok(())
     }
 
-    pub async fn redownload_job(&self, id: &str) -> Result<()> {
+    pub async fn redownload_job(&self, id: &str, expires_at: Option<i64>) -> Result<()> {
+        let mut set_doc = doc! {
+            "status": "queued",
+            "progress": 0
+        };
+        let mut unset_doc = doc! {
+            "error": "",
+            "eta": "",
+            "filename": "",
+            "startedAt": "",
+            "completedAt": "",
+            "transcript": "",
+            "hashtags": "",
+            "suggested_category": "",
+            "visual_description": ""
+        };
+
+        if let Some(exp) = expires_at {
+            set_doc.insert("expiresAt", exp);
+        } else {
+            unset_doc.insert("expiresAt", "");
+        }
+
         self.db.collection::<Job>("jobs")
             .update_one(
                 doc! { "_id": id },
                 doc! {
                     "$inc": { "retries": 1 },
-                    "$set": {
-                        "status": "queued",
-                        "progress": 0
-                    },
-                    "$unset": {
-                        "eta": "",
-                        "error": "",
-                        "startedAt": "",
-                        "completedAt": "",
-                        "transcript": "",
-                        "hashtags": "",
-                        "suggested_category": "",
-                        "visual_description": ""
-                    }
+                    "$set": set_doc,
+                    "$unset": unset_doc
                 }
             )
             .await?;

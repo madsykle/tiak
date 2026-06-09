@@ -43,8 +43,19 @@ fn admin_token() -> String {
     auth_state.generate_token("admin_user", "admin").unwrap()
 }
 
+fn test_config() -> AppConfig {
+    let mut config = AppConfig::default();
+    config.server.enable_auth = true;
+    config
+}
+
 async fn test_db() -> Db {
-    dotenv::dotenv().ok();
+    if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+        let dotenv_path = std::path::Path::new(&manifest_dir).parent().unwrap().join(".env");
+        dotenv::from_path(dotenv_path).ok();
+    } else {
+        dotenv::dotenv().ok();
+    }
     let uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".to_string());
     let db_name = format!("tiak-tr-{}", &Uuid::new_v4().to_string().replace("-", "")[..15]);
     Db::new_with_db(&uri, &db_name)
@@ -62,7 +73,7 @@ async fn test_router() -> Router {
         queue,
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
-        config: AppConfig::default(),
+        config: test_config(),
         auth_state: Arc::new(crate::auth::AuthState::new()),
     };
 
@@ -147,7 +158,7 @@ async fn queue_list_only_returns_active_jobs() {
         queue,
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
-        config: AppConfig::default(),
+        config: test_config(),
         auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
@@ -202,7 +213,7 @@ async fn queue_history_returns_paginated_shape() {
         queue,
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
-        config: AppConfig::default(),
+        config: test_config(),
         auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
@@ -269,7 +280,7 @@ async fn search_endpoint_only_returns_done_jobs() {
         queue,
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
-        config: AppConfig::default(),
+        config: test_config(),
         auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
@@ -443,7 +454,7 @@ async fn move_file_endpoint_moves_file_and_updates_job_category() {
         queue,
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
-        config: AppConfig::default(),
+        config: test_config(),
         auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 
@@ -519,7 +530,7 @@ async fn timeline_endpoint_excludes_queued_jobs() {
         queue,
         file_index,
         url_cache: Cache::builder().max_capacity(100).build(),
-        config: AppConfig::default(),
+        config: test_config(),
         auth_state: Arc::new(crate::auth::AuthState::new()),
     });
 

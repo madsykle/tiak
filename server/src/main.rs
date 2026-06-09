@@ -1,4 +1,5 @@
-use axum::http::HeaderValue;
+use axum::http::header::{HeaderName, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use axum::http::{HeaderValue, Method};
 use dotenv::dotenv;
 use moka::future::Cache;
 use server::auth::AuthState;
@@ -109,7 +110,22 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // CORS
-    let mut cors_builder = CorsLayer::new().allow_methods(Any).allow_headers(Any);
+    let mut cors_builder = CorsLayer::new()
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+            Method::PATCH,
+        ])
+        .allow_headers([
+            AUTHORIZATION,
+            CONTENT_TYPE,
+            ACCEPT,
+            HeaderName::from_static("x-guest-id"),
+            HeaderName::from_static("ngrok-skip-browser-warning"),
+        ]);
 
     // Configure allowed origins from config
     let mut origins = Vec::new();

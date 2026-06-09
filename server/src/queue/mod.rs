@@ -116,16 +116,16 @@ impl DownloadQueue {
         }
     }
 
-    pub async fn retry_job(&self, id: &str) -> Option<Job> {
-        if self.db.get_job(id).await.is_ok() && self.db.increment_retry(id).await.is_ok() {
+    pub async fn retry_job(&self, id: &str, expires_at: Option<i64>) -> Option<Job> {
+        if self.db.get_job(id).await.is_ok() && self.db.increment_retry(id, expires_at).await.is_ok() {
             self.enqueue_job_id(id.to_string());
             return self.db.get_job(id).await.ok();
         }
         None
     }
 
-    pub async fn redownload_job(&self, id: &str) -> Option<Job> {
-        if self.db.get_job(id).await.is_ok() && self.db.redownload_job(id).await.is_ok() {
+    pub async fn redownload_job(&self, id: &str, expires_at: Option<i64>) -> Option<Job> {
+        if self.db.get_job(id).await.is_ok() && self.db.redownload_job(id, expires_at).await.is_ok() {
             self.enqueue_job_id(id.to_string());
             return self.db.get_job(id).await.ok();
         }

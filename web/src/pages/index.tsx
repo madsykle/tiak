@@ -193,23 +193,41 @@ export default function Queue() {
     }
   };
 
+  const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
+
   const handleRetry = async (id: string) => {
+    setRetryingIds(prev => new Set(prev).add(id));
     try {
       await retryJob(id);
       fetchJobs();
       fetchHistory();
     } catch (error) {
       console.error('Failed to retry job:', error);
+      alert('Failed to retry job');
+    } finally {
+      setRetryingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
   const handleRedownload = async (id: string) => {
+    setRetryingIds(prev => new Set(prev).add(id));
     try {
       await redownloadJob(id);
       fetchJobs();
       fetchHistory();
     } catch (error) {
       console.error('Failed to redownload job:', error);
+      alert('Failed to redownload job');
+    } finally {
+      setRetryingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -448,9 +466,10 @@ export default function Queue() {
                                   {(job.status === 'failed' || job.status === 'missing') && (
                                     <button
                                         onClick={() => handleRetry(job.id)}
-                                        className="shrink-0 rounded-md bg-surface-subtle px-2 py-1 text-xs font-medium text-foreground hover:bg-surface-strong transition-colors"
+                                        disabled={retryingIds.has(job.id)}
+                                        className="shrink-0 rounded-md bg-surface-subtle px-2 py-1 text-xs font-medium text-foreground hover:bg-surface-strong transition-colors disabled:opacity-50"
                                     >
-                                        Retry
+                                        {retryingIds.has(job.id) ? 'Retrying...' : `Retry${job.retries > 0 ? ` (${job.retries})` : ''}`}
                                     </button>
                                   )}
                                 </div>
@@ -473,6 +492,7 @@ export default function Queue() {
                     onRedownload={handleRedownload}
                     onPreview={handlePreview}
                     onDelete={handleDeleteHistory}
+                    retryingIds={retryingIds}
                 />
             </div>
         )}
