@@ -1,5 +1,6 @@
 import React from 'react';
 import LazyThumbnail from './LazyThumbnail';
+import CategoryBadge from './CategoryBadge';
 import { formatBytes, platformBadgeClass, platformLabel } from '../lib/utils';
 import { getThumbnailUrl } from '../lib/api';
 
@@ -101,7 +102,12 @@ export default React.memo(function FileCard({
       </div>
 
       {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden bg-surface-strong">
+      <div className="relative aspect-[9/16] overflow-hidden bg-surface-strong">
+        {/* Category Badge Overlay */}
+        <div className="absolute top-2 right-2 z-20 shadow-md">
+          <CategoryBadge category={file.category} />
+        </div>
+
         <LazyThumbnail
           src={getThumbnailUrl(file.path)}
           alt={file.name}
@@ -123,60 +129,50 @@ export default React.memo(function FileCard({
         )}
 
         {/* File Type Indicator */}
-        <div className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-white">
+        <div className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-white z-10">
           {isVideo ? 'VIDEO' : isImage ? 'IMAGE' : 'FILE'}
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-4 relative z-10">
-        {/* File Name */}
-        <div className="mb-2">
-          <h3 className="line-clamp-2 text-sm font-semibold text-foreground tracking-tight leading-tight">
-            {file.name}
-          </h3>
-        </div>
-
-        {/* Metadata */}
+      <div className="p-4 relative z-10 flex flex-col justify-between" style={{ minHeight: '120px' }}>
         <div className="space-y-2.5 text-xs text-content-muted">
-          {/* Platform Badge */}
-          {file.platform && (
+          {/* Platform and Creator */}
+          {(file.platform || file.creator) && (
             <div className="flex items-center gap-1.5">
-              <span className={platformBadgeClass(file.platform)}>
-                {platformLabel(file.platform)}
-              </span>
+              {file.platform && (
+                <span className={platformBadgeClass(file.platform)}>
+                  {platformLabel(file.platform)}
+                </span>
+              )}
               {file.creator && (
-                <>
-                  <span className="text-content-subtle">•</span>
-                  <span className="truncate font-medium text-content-muted" title={file.creator}>
-                    @{file.creator}
-                  </span>
-                </>
+                <span className="truncate font-medium text-foreground" title={file.creator}>
+                  @{file.creator}
+                </span>
               )}
             </div>
           )}
 
-          {/* Caption Preview */}
-          {file.caption && (
-            <p className="line-clamp-2 text-[11px] leading-relaxed text-content-muted bg-surface-subtle/30 p-2 rounded-lg border border-border/40">
+          {/* Caption or Filename Fallback */}
+          {file.caption ? (
+            <p className="line-clamp-2 text-[11px] leading-relaxed text-content-muted" title={file.caption}>
               {file.caption}
             </p>
-          )}
-
-          {/* File Info */}
-          <div className="flex items-center justify-between border-t border-border/40 pt-2 text-[11px]">
-            <div className="flex items-center gap-1.5 font-mono">
-              <span>{formatBytes(file.size)}</span>
-              <span className="text-content-subtle">•</span>
-              <span>{date}</span>
+          ) : !file.creator ? (
+            <div className="mb-2">
+              <h3 className="line-clamp-2 text-sm font-semibold text-foreground tracking-tight leading-tight" title={file.name}>
+                {file.name}
+              </h3>
             </div>
+          ) : null}
+        </div>
 
-            <div className="flex items-center gap-1">
-              {/* Category Badge */}
-              <span className="rounded-full bg-surface-strong px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-content-muted border border-border/50">
-                {file.category}
-              </span>
-            </div>
+        {/* File Info */}
+        <div className="flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-content-muted mt-2">
+          <div className="flex items-center gap-1.5 font-mono">
+            <span>{formatBytes(file.size)}</span>
+            <span className="text-content-subtle">•</span>
+            <span>{date}</span>
           </div>
         </div>
 
