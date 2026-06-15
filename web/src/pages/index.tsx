@@ -314,18 +314,33 @@ export default function Queue() {
 
         {/* Input Area */}
         <div className="space-y-4">
-            <div className="group relative rounded-xl border border-border bg-surface p-1 shadow-md focus-within:border-neon-purple/50 focus-within:ring-1 focus-within:ring-neon-purple/30 transition-all duration-300">
-                <textarea
-                className="block w-full rounded-lg border-0 bg-transparent p-4 text-foreground placeholder:text-content-subtle focus:ring-0 sm:text-sm resize-none font-sans"
-                placeholder="Paste URLs here (YouTube, TikTok, Instagram – one per line)..."
-                rows={3}
-                value={urls}
-                onChange={(e) => setUrls(e.target.value)}
-                />
-                <div className="flex justify-between items-center border-t border-border-subtle p-2 bg-surface-subtle/30 rounded-b-lg gap-2">
+            <div className="group relative rounded-xl border border-border bg-surface shadow-md focus-within:border-neon-purple/50 focus-within:ring-1 focus-within:ring-neon-purple/30 transition-all duration-300 overflow-hidden">
+                <div className="relative">
+                    <textarea
+                    className="block w-full border-0 bg-transparent p-4 pb-12 text-foreground placeholder:text-content-subtle focus:ring-0 sm:text-sm resize-none font-sans"
+                    placeholder="Paste URLs here (YouTube, TikTok, Instagram – one per line)..."
+                    rows={3}
+                    value={urls}
+                    onChange={(e) => setUrls(e.target.value)}
+                    />
+                    
+                    {/* Platform Autodetect Badge */}
+                    <div className="absolute bottom-3 left-4 flex flex-wrap gap-2 pointer-events-none">
+                        {urls.toLowerCase().includes('youtube') && (
+                            <span className="px-2 py-1 rounded-md bg-red-500/10 text-red-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white"/></svg> YouTube</span>
+                        )}
+                        {urls.toLowerCase().includes('tiktok') && (
+                            <span className="px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.12-3.44-3.17-3.48-5.56-.02-1.38.34-2.73 1.05-3.86 1.11-1.8 3.12-2.9 5.25-3v4.03c-1.12.06-2.19.68-2.79 1.62-.51.81-.66 1.83-.34 2.76.3 1.03 1.11 1.87 2.11 2.23 1.09.43 2.37.28 3.32-.38.7-.51 1.18-1.28 1.34-2.12.1-.57.1-1.16.1-1.74V.02z"/></svg> TikTok</span>
+                        )}
+                        {urls.toLowerCase().includes('instagram') && (
+                            <span className="px-2 py-1 rounded-md bg-pink-500/10 text-pink-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram</span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex justify-between items-center border-t border-border-subtle bg-surface-subtle/30 px-4 py-3">
                     {role === 'admin' ? (
-                      <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xs text-content-muted whitespace-nowrap">Category:</span>
+                      <div className="flex items-center gap-3 min-w-0">
                           <SearchableSelect
                               options={categories}
                               value={selectedCategory}
@@ -335,19 +350,20 @@ export default function Queue() {
                                       setCategories(prev => [...prev, val].sort());
                                   }
                               }}
-                              className="min-w-[140px]"
+                              className="min-w-[160px] text-sm !bg-background !border-border shadow-sm"
                           />
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xs text-content-muted whitespace-nowrap">Auto-deletes in 5 minutes</span>
+                      <div className="flex items-center gap-2 text-xs text-content-muted">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          <span>Auto-deletes in 5 minutes</span>
                       </div>
                     )}
 
                     <button
                         onClick={handleSubmit}
                         disabled={loading || !urls.trim()}
-                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-neon-purple hover:bg-neon-purple/90 px-5 py-2 text-sm font-semibold text-white shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-neon-purple hover:bg-neon-purple/90 px-6 py-2 text-sm font-semibold text-white shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                         {loading ? 'Adding...' : 'Add to Queue'}
                     </button>
@@ -389,8 +405,16 @@ export default function Queue() {
             <h2 className="text-sm font-medium text-content-muted uppercase tracking-wider">Active Downloads</h2>
             
             {jobs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border-subtle bg-surface-subtle/30 py-12 text-center">
-                    <p className="text-sm text-content-muted">Queue is empty</p>
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border-subtle bg-surface-subtle/30 py-16 text-center animate-in fade-in zoom-in-95 duration-500">
+                    <div className="mb-4 rounded-full bg-surface-strong/50 p-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-content-muted">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" x2="12" y1="15" y2="3" />
+                        </svg>
+                    </div>
+                    <h3 className="mb-1 text-base font-semibold text-foreground">Queue is empty</h3>
+                    <p className="text-sm text-content-muted max-w-[250px]">Paste a URL above to start downloading</p>
                 </div>
             ) : (
                 <div className="space-y-3">
