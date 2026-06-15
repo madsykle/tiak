@@ -43,11 +43,9 @@ export default function CloudSyncSection({
 
       <div className="space-y-4">
         {syncStatus.unsyncedCount > 0 && (
-          <div className={`rounded-xl border p-4 text-sm flex items-center justify-between animate-in slide-in-from-top-2 transition-all duration-300 ${syncStatus.status === 'running' ? 'border-zinc-500/20 bg-zinc-500/5 text-zinc-400 opacity-50' : 'border-orange-500/20 bg-orange-500/5 text-orange-400'}`}>
-            <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              <span><strong>{syncStatus.unsyncedCount} new file(s)</strong> waiting to sync.</span>
-            </div>
+          <div className={`flex items-center gap-2 text-xs animate-in slide-in-from-top-2 transition-all duration-300 ${syncStatus.status === 'running' ? 'text-zinc-500 opacity-50' : 'text-content-muted'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncStatus.status === 'running' ? 'text-zinc-500' : 'text-amber-500'}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span><strong className={syncStatus.status === 'running' ? '' : 'text-foreground'}>{syncStatus.unsyncedCount} new file(s)</strong> waiting to sync.</span>
           </div>
         )}
 
@@ -62,7 +60,7 @@ export default function CloudSyncSection({
               value={syncDestination}
               onChange={(e) => onSyncDestinationChange(e.target.value)}
               placeholder="e.g. onedrive:backup"
-              className="block w-full rounded-lg border border-border-subtle bg-surface-subtle/30 p-2 text-sm text-foreground focus:ring-1 focus:ring-foreground focus:border-foreground"
+              className="block w-full rounded-lg border border-border bg-surface/50 p-2 text-sm text-foreground focus:ring-1 focus:ring-foreground focus:border-foreground"
             />
           </div>
           <div>

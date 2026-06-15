@@ -132,12 +132,17 @@ export default function AdminDashboard() {
             {/* User Management */}
             <div className="space-y-8">
               <section className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
-                  <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                      User Directory
-                  </h2>
+                  <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-lg font-bold flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                          User Directory
+                      </h2>
+                      <span className="text-xs font-semibold text-content-muted bg-surface-strong px-2 py-1 rounded-full border border-border/50">
+                        Total Users: {users.filter(u => !u.email.includes('test_') && !u.email.includes('example.com')).length}
+                      </span>
+                  </div>
                   <div className="space-y-4">
-                      {users.map(u => (
+                      {users.filter(u => !u.email.includes('test_') && !u.email.includes('example.com')).map(u => (
                           <div key={u.id} className="flex items-center justify-between p-3 rounded-xl bg-surface/40 border border-border/80">
                               <div className="min-w-0">
                                   <p className="font-semibold truncate text-sm">{u.username}</p>
@@ -146,12 +151,16 @@ export default function AdminDashboard() {
                               <select 
                                   value={u.role}
                                   onChange={(e) => updateUserRole(u.id, e.target.value)}
-                                  className="bg-surface/60 border border-border text-xs font-semibold rounded-xl focus:ring-1 focus:ring-neon-purple focus:border-neon-purple py-1.5 pl-3 pr-8 transition-all duration-200"
+                                  className={`text-xs font-bold rounded-full py-1 pl-3 pr-8 transition-all duration-200 focus:outline-none focus:ring-2 cursor-pointer ${
+                                    u.role === 'admin' ? 'bg-red-500/10 text-red-500 border border-red-500/20 focus:ring-red-500/30' :
+                                    u.role === 'premium_member' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20 focus:ring-purple-500/30' :
+                                    'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 focus:ring-zinc-500/30'
+                                  }`}
                                   disabled={u.username === 'nesbeer'}
                               >
-                                  <option value="guest">Guest</option>
-                                  <option value="premium_member">Premium</option>
-                                  <option value="admin">Admin</option>
+                                  <option value="guest" className="bg-background text-foreground">Guest</option>
+                                  <option value="premium_member" className="bg-background text-foreground">Premium</option>
+                                  <option value="admin" className="bg-background text-foreground">Admin</option>
                               </select>
                           </div>
                       ))}
