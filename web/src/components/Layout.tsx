@@ -91,7 +91,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="flex flex-col h-[100dvh] bg-background text-foreground">
       <main className="flex-1 overflow-y-auto w-full">
-        <div className="max-w-screen-md mx-auto p-6 md:p-8 pb-32">
+        <div className="max-w-screen-md mx-auto px-4 py-6 md:px-8 md:py-8 pb-32">
           {children}
         </div>
       </main>
@@ -104,7 +104,10 @@ export default function Layout({ children }: LayoutProps) {
             {visibleItems.map((item) => {
               const active = isActive(item.href);
               return (
-                <li key={item.href} className="flex-1 h-full">
+                <li key={item.href} className="flex-1 h-full relative">
+                  {active && (
+                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-neon-purple rounded-b-sm shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div>
+                  )}
                   <Link
                     href={item.href}
                     className="flex flex-col items-center justify-center h-full w-full active:scale-95 transition-transform duration-200"

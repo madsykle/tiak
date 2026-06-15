@@ -124,6 +124,23 @@ body {
   .text-gradient-pink {
     color: var(--neon-pink);
   }
+
+  /* Semantic Typography Scale */
+  .type-page-title {
+    @apply text-[28px] font-bold tracking-tight text-foreground;
+  }
+  
+  .type-section-header {
+    @apply text-[18px] font-semibold text-foreground;
+  }
+  
+  .type-body {
+    @apply text-[14px] font-normal text-content;
+  }
+  
+  .type-label {
+    @apply text-[11px] font-bold uppercase tracking-wider text-content-muted;
+  }
 }
 
 /* Custom transitions and hover scaling */
