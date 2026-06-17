@@ -6,47 +6,47 @@
 
 :root {
   /* Default Theme: Cyber Obsidian Dark */
-  --background: #06050a;
-  --foreground: #f4f4f6;
+  --background: 6 5 10; /* #06050a */
+  --foreground: 244 244 246; /* #f4f4f6 */
   
-  --surface: #0f0d1a;
-  --surface-subtle: #161326;
-  --surface-strong: #231f3c;
+  --surface: 15 13 26; /* #0f0d1a */
+  --surface-subtle: 22 19 38; /* #161326 */
+  --surface-strong: 35 31 60; /* #231f3c */
 
-  --content: #f4f4f6;
-  --content-muted: #9491ab;
-  --content-subtle: #63607a;
+  --content: 244 244 246; /* #f4f4f6 */
+  --content-muted: 148 145 171; /* #9491ab */
+  --content-subtle: 99 96 122; /* #63607a */
 
-  --border: #1e1b35;
-  --border-subtle: #121020;
+  --border: 30 27 53; /* #1e1b35 */
+  --border-subtle: 18 16 32; /* #121020 */
 
   /* Custom Neon Theme Tokens */
-  --neon-cyan: #00f2fe;
-  --neon-pink: #ff0844;
-  --neon-red: #ff3366;
-  --neon-purple: #8b5cf6;
+  --neon-cyan: 0 242 254; /* #00f2fe */
+  --neon-pink: 255 8 68; /* #ff0844 */
+  --neon-red: 255 51 102; /* #ff3366 */
+  --neon-purple: 139 92 246; /* #8b5cf6 */
 }
 
 /* Optional Light Theme Toggle Support */
 [data-theme="light"] {
-  --background: #f7f6f9;
-  --foreground: #110e1c;
+  --background: 247 246 249; /* #f7f6f9 */
+  --foreground: 17 14 28; /* #110e1c */
   
-  --surface: #ffffff;
-  --surface-subtle: #f0edf5;
-  --surface-strong: #e2dde9;
+  --surface: 255 255 255; /* #ffffff */
+  --surface-subtle: 240 237 245; /* #f0edf5 */
+  --surface-strong: 226 221 233; /* #e2dde9 */
 
-  --content: #110e1c;
-  --content-muted: #625f77;
-  --content-subtle: #8e8ba3;
+  --content: 17 14 28; /* #110e1c */
+  --content-muted: 98 95 119; /* #625f77 */
+  --content-subtle: 142 139 163; /* #8e8ba3 */
 
-  --border: #e2dde9;
-  --border-subtle: #f0edf5;
+  --border: 226 221 233; /* #e2dde9 */
+  --border-subtle: 240 237 245; /* #f0edf5 */
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: rgb(var(--foreground));
+  background: rgb(var(--background));
   font-family: 'Plus Jakarta Sans', var(--font-geist-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -63,21 +63,21 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: rgb(var(--background));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--surface-strong);
+  background: rgb(var(--surface-strong));
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--content-subtle);
+  background: rgb(var(--content-subtle));
 }
 
 /* Selection colors */
 ::selection {
-  background-color: var(--neon-purple);
+  background-color: rgb(var(--neon-purple));
   color: #ffffff;
 }
 
@@ -114,15 +114,15 @@ body {
   }
 
   .text-gradient-purple {
-    color: var(--neon-purple);
+    color: rgb(var(--neon-purple));
   }
   
   .text-gradient-cyan {
-    color: var(--neon-cyan);
+    color: rgb(var(--neon-cyan));
   }
 
   .text-gradient-pink {
-    color: var(--neon-pink);
+    color: rgb(var(--neon-pink));
   }
 
   /* Semantic Typography Scale */
