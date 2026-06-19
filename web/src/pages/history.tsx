@@ -22,7 +22,7 @@ export default function HistoryPage() {
   const [retryFilter, setRetryFilter] = useState(false);
 
   // Preview Modal State
-  const [previewJob, setPreviewJob] = useState<DownloadJob | null>(null);
+  const [previewJob, setPreviewJob] = useState<(DownloadJob & { _computedPath?: string }) | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');
 
   // Toast State
@@ -116,7 +116,7 @@ export default function HistoryPage() {
     // Note: We are constructing a relative path here assuming standard structure.
     const path = `data/${job.category || 'default'}/${dateFolder}/${job.filename}`;
     setPreviewSrc(getStreamUrl(path));
-    setPreviewJob({ ...job, _computedPath: path } as any);
+    setPreviewJob({ ...job, _computedPath: path });
   };
 
   const closePreview = () => {
@@ -256,7 +256,7 @@ export default function HistoryPage() {
                         src={previewSrc}
                         onClose={closePreview}
                         filename={previewJob.filename || undefined}
-                        path={(previewJob as any)._computedPath}
+                        path={previewJob._computedPath}
                         mode={playerPreference}
                         onTogglePlayerType={togglePlayerPreference}
                       />
