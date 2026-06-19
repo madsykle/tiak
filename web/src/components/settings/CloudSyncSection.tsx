@@ -14,9 +14,10 @@ interface CloudSyncSectionProps {
   syncMode: string;
   syncStatus: SyncStatus;
   saving: boolean;
-  onSyncDestinationChange: (value: string) => void;
-  onSyncModeChange: (value: string) => void;
+  onSyncDestinationChange: (dest: string) => void;
+  onSyncModeChange: (mode: string) => void;
   onSync: () => void;
+  onSave?: (overrides?: { syncDest?: string; sMode?: string }) => void;
 }
 
 export default function CloudSyncSection({
@@ -27,6 +28,7 @@ export default function CloudSyncSection({
   onSyncDestinationChange,
   onSyncModeChange,
   onSync,
+  onSave,
 }: CloudSyncSectionProps) {
   const [showPicker, setShowPicker] = useState(false);
 
@@ -136,6 +138,10 @@ export default function CloudSyncSection({
           onSelect={(path) => {
             onSyncDestinationChange(path);
             setShowPicker(false);
+            if (onSave) {
+              // Wrap in setTimeout to ensure state is updated before saving
+              setTimeout(() => onSave({ syncDest: path }), 0);
+            }
           }}
         />
       )}

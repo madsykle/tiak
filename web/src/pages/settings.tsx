@@ -160,7 +160,7 @@ export default function Settings() {
 
   useVisibilityPolling(fetchSyncStatus, 10000, { runImmediately: true });
 
-  const handleSave = async () => {
+  const handleSave = async (overrides?: { syncDest?: string; sMode?: string }) => {
     setSaving(true);
     setMsg(null);
     try {
@@ -173,7 +173,11 @@ export default function Settings() {
           'ngrok-skip-browser-warning': 'true',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ maxConcurrent, syncDestination, syncMode }),
+        body: JSON.stringify({ 
+          maxConcurrent, 
+          syncDestination: overrides?.syncDest ?? syncDestination, 
+          syncMode: overrides?.sMode ?? syncMode 
+        }),
       });
 
       if (res.ok) {
@@ -514,6 +518,7 @@ export default function Settings() {
                 onSyncDestinationChange={setSyncDestination}
                 onSyncModeChange={setSyncMode}
                 onSync={handleSync}
+                onSave={handleSave}
               />
 
               <PlayerPreferencesSection
@@ -530,7 +535,7 @@ export default function Settings() {
                   )}
                 </div>
                 <button
-                  onClick={handleSave}
+                  onClick={() => handleSave()}
                   disabled={saving}
                   className="inline-flex items-center justify-center rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background shadow-sm hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
