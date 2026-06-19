@@ -66,14 +66,15 @@ export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, o
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle bg-surface">
-            {jobs.map((job) => {
-              const isExpanded = expandedRows.has(job.id);
+            {jobs.map((job, index) => {
+              const uniqueKey = job.id ? `${job.id}-${index}` : `fallback-${index}`;
+              const isExpanded = expandedRows.has(uniqueKey);
               
               return (
-                <React.Fragment key={job.id}>
+                <React.Fragment key={uniqueKey}>
                   <tr 
                     className="hover:bg-surface-subtle/50 transition-colors cursor-pointer"
-                    onClick={() => toggleExpand(job.id)}
+                    onClick={() => toggleExpand(uniqueKey)}
                   >
                     <td className="px-4 py-3 text-content-muted font-mono text-xs">
                       {formatDate(job.createdAt)}
