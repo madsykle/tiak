@@ -60,13 +60,13 @@ export default function CategorySettingsSection({
             placeholder="New Category Name"
             value={newCatName}
             onChange={(e) => onNewCatNameChange(e.target.value)}
-            className="flex-1 rounded-md border border-border-subtle bg-transparent px-3 py-1.5 text-sm"
+            className="flex-1 min-w-0 rounded-md border border-border-subtle bg-transparent px-3 py-1.5 text-sm"
             onKeyDown={(e) => e.key === 'Enter' && onAddCategory()}
           />
           <button
             onClick={onAddCategory}
             disabled={!newCatName.trim()}
-            className="bg-neon-purple text-white px-4 py-1.5 rounded-md text-sm font-semibold shadow-sm shadow-neon-purple/20 hover:bg-neon-purple/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 whitespace-nowrap bg-neon-purple text-white px-4 py-1.5 rounded-md text-sm font-semibold shadow-sm shadow-neon-purple/20 hover:bg-neon-purple/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Add Category
           </button>
@@ -96,17 +96,17 @@ export default function CategorySettingsSection({
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-neon-purple/20 to-neon-purple/5 flex items-center justify-center border border-neon-purple/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" className="text-neon-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                <div className="flex items-center gap-3 min-w-0 pr-2">
+                  <div className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-neon-purple/20 to-neon-purple/5 flex items-center justify-center border border-neon-purple/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" className="text-neon-purple shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-foreground tracking-tight">{cat}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-foreground tracking-tight truncate block" title={cat}>{cat}</span>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+              <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 shrink-0">
                 {editingCat?.original !== cat && (
                   <div className="flex items-center mr-2 bg-surface-strong rounded-md p-0.5">
                     <button 
