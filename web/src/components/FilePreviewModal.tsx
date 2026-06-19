@@ -1,7 +1,4 @@
-import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { formatBytes } from '../lib/utils';
-
 const CustomVideoPlayer = dynamic(() => import('./CustomVideoPlayer'), { ssr: false });
 
 type FilePreviewItem = {
