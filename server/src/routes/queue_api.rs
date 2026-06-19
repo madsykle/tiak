@@ -3,7 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::{detect_platform, done_job_file_exists, normalize_url, resolve_url, AppState};
 use crate::{db::Job, storage::DATA_ROOT, auth::{AuthenticatedUser, OptionalUser}};
@@ -160,6 +160,61 @@ pub(super) async fn list_queue(
             "Failed to fetch jobs",
         )
             .into_response()
+    }
+}
+
+#[derive(Deserialize)]
+pub(super) struct RcloneLsQuery {
+    path: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub(super) struct RcloneLsEntry {
+    #[serde(rename = "Path")]
+    path: String,
+    #[serde(rename = "Name")]
+    name: String,
+    #[serde(rename = "IsDir")]
+    is_dir: bool,
+}
+
+pub(super) async fn rclone_ls(
+    user: OptionalUser,
+    Query(query): Query<RcloneLsQuery>,
+) -> Response {
+    if user.role != "admin" {
+        return (
+            axum::http::StatusCode::FORBIDDEN,
+            "Forbidden",
+        ).into_response();
+    }
+
+    let mut cmd = std::process::Command::new("rclone");
+    cmd.args(&["lsjson", &query.path, "--dirs-only"]);
+
+    match cmd.output() {
+        Ok(output) => {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let entries: Result<Vec<RcloneLsEntry>, _> = serde_json::from_str(&stdout);
+                match entries {
+                    Ok(e) => Json(serde_json::json!({ "entries": e })).into_response(),
+                    Err(_) => (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to parse rclone output",
+                    ).into_response()
+                }
+            } else {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    String::from_utf8_lossy(&output.stderr).to_string(),
+                ).into_response()
+            }
+        }
+        Err(e) => (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to execute rclone: {}", e),
+        ).into_response(),
     }
 }
 

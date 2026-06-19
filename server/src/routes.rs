@@ -97,6 +97,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/sync/run", post(queue_api::sync_run))
         .route("/api/sync/status", get(queue_api::sync_status))
         .route("/api/admin/stats", get(maintenance_api::get_stats_endpoint))
+        .route("/api/rclone/ls", get(queue_api::rclone_ls))
         .route("/api/admin/users", get(crate::auth::list_users_handler))
         .route("/api/admin/users/create", post(crate::auth::create_user_handler))
         .route("/api/admin/users/:id/role", post(crate::auth::update_role_handler))

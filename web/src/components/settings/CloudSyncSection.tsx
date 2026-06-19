@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import CloudPathPicker from './CloudPathPicker';
+
 interface SyncStatus {
   status: string;
   lastRun: string | null;
@@ -25,6 +28,8 @@ export default function CloudSyncSection({
   onSyncModeChange,
   onSync,
 }: CloudSyncSectionProps) {
+  const [showPicker, setShowPicker] = useState(false);
+
   return (
     <div className="pt-6 border-t border-border-subtle">
       <div className="flex items-center justify-between mb-4">
@@ -54,14 +59,23 @@ export default function CloudSyncSection({
             <label htmlFor="syncDest" className="block text-xs font-medium text-content-muted uppercase tracking-wider mb-2">
               Destination Path
             </label>
-            <input
-              type="text"
-              id="syncDest"
-              value={syncDestination}
-              onChange={(e) => onSyncDestinationChange(e.target.value)}
-              placeholder="e.g. onedrive:backup"
-              className="block w-full rounded-lg border border-border bg-surface/50 p-2 text-sm text-foreground focus:ring-1 focus:ring-foreground focus:border-foreground"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                id="syncDest"
+                value={syncDestination}
+                onChange={(e) => onSyncDestinationChange(e.target.value)}
+                placeholder="e.g. onedrive:backup"
+                className="block flex-1 rounded-lg border border-border bg-surface/50 p-2 text-sm text-foreground focus:ring-1 focus:ring-foreground focus:border-foreground"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPicker(true)}
+                className="px-3 py-2 rounded-lg bg-surface-strong border border-border-subtle text-sm font-medium hover:border-foreground transition-colors"
+              >
+                Browse
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-content-muted uppercase tracking-wider mb-2">Sync Mode</label>
@@ -114,6 +128,17 @@ export default function CloudSyncSection({
           </button>
         </div>
       </div>
+
+      {showPicker && (
+        <CloudPathPicker
+          currentPath={syncDestination}
+          onClose={() => setShowPicker(false)}
+          onSelect={(path) => {
+            onSyncDestinationChange(path);
+            setShowPicker(false);
+          }}
+        />
+      )}
     </div>
   );
 }
