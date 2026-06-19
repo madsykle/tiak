@@ -3,7 +3,7 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import HistoryTable from '../components/HistoryTable';
 import HistoryToolbar from '../components/HistoryToolbar';
-import { getHistory, retryJob, redownloadJob, deleteJob, DownloadJob, getPreviewUrl } from '../lib/api';
+import { getHistory, retryJob, redownloadJob, deleteJob, DownloadJob, getStreamUrl } from '../lib/api';
 
 const CustomVideoPlayer = dynamic(() => import('../components/CustomVideoPlayer'), { ssr: false });
 
@@ -27,6 +27,22 @@ export default function HistoryPage() {
 
   // Toast State
   const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
+
+  // Player Preference
+  const [playerPreference, setPlayerPreference] = useState<'custom' | 'native'>('custom');
+
+  useEffect(() => {
+    const pref = localStorage.getItem('player_preference');
+    if (pref === 'custom' || pref === 'native') {
+      setPlayerPreference(pref);
+    }
+  }, []);
+
+  const togglePlayerPreference = () => {
+    const newPref = playerPreference === 'custom' ? 'native' : 'custom';
+    setPlayerPreference(newPref);
+    localStorage.setItem('player_preference', newPref);
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -98,9 +114,9 @@ export default function HistoryPage() {
     const dateFolder = `${yyyy}-${mm}-${dd}`;
 
     // Note: We are constructing a relative path here assuming standard structure.
-    // The backend's resolve() will handle this relative to its CWD.
-    setPreviewSrc(getPreviewUrl(dateFolder, job.filename));
-    setPreviewJob(job);
+    const path = `data/${job.category || 'default'}/${dateFolder}/${job.filename}`;
+    setPreviewSrc(getStreamUrl(path));
+    setPreviewJob({ ...job, _computedPath: path } as any);
   };
 
   const closePreview = () => {
@@ -239,6 +255,10 @@ export default function HistoryPage() {
                       <CustomVideoPlayer 
                         src={previewSrc}
                         onClose={closePreview}
+                        filename={previewJob.filename || undefined}
+                        path={(previewJob as any)._computedPath}
+                        mode={playerPreference}
+                        onTogglePlayerType={togglePlayerPreference}
                       />
                     )}
                   </div>
