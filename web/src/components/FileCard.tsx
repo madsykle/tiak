@@ -102,7 +102,7 @@ export default React.memo(function FileCard({
       </div>
 
       {/* Thumbnail */}
-      <div className="relative aspect-[9/16] overflow-hidden bg-surface-strong">
+      <div className="relative aspect-[4/5] overflow-hidden bg-surface-strong">
         {/* Category Badge Overlay */}
         <div className="absolute top-2 right-2 z-20 shadow-md">
           <CategoryBadge category={file.category} />
@@ -177,16 +177,16 @@ export default React.memo(function FileCard({
         </div>
 
         {/* Actions - visible by default on mobile, hover-only on desktop */}
-        <div className="mt-4 flex items-center gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+        <div className="mt-4 flex flex-col gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
           <button
             onClick={handlePreviewClick}
-            className="flex-1 rounded-xl border border-border bg-surface-subtle/50 px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
+            className="w-full rounded-xl border border-border bg-surface-subtle/50 px-2 py-2 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           >
             Preview
           </button>
           <button
             onClick={handleDownloadClick}
-            className="flex-1 rounded-xl bg-neon-purple hover:bg-neon-purple/90 px-3 py-2 text-xs font-bold text-white shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
+            className="w-full rounded-xl bg-neon-purple hover:bg-neon-purple/90 px-2 py-2 text-xs font-bold text-white shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           >
             Download
           </button>

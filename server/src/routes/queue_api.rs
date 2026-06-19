@@ -306,7 +306,7 @@ pub(super) struct HistoryQuery {
 }
 
 pub(super) async fn queue_history(
-    user: AuthenticatedUser,
+    user: OptionalUser,
     State(state): State<AppState>,
     Query(q): Query<HistoryQuery>,
 ) -> Response {

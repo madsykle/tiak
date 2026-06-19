@@ -90,7 +90,8 @@ export async function login(username: string, password: string): Promise<{ token
   });
   
   if (!res.ok) {
-    throw new Error('Invalid credentials');
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Login failed');
   }
   
   const data = await res.json();

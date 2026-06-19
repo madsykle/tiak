@@ -38,7 +38,7 @@ export default memo(function FileDateSection({
 
   return (
     <div>
-      <div className="sticky top-20 z-10 bg-background/95 backdrop-blur-sm py-3 px-2 -mx-2 mb-4 border-b border-border-subtle">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 px-2 -mx-2 mb-4 border-b border-border-subtle">
         <div className="flex items-baseline justify-between">
           <div className="flex items-baseline gap-3">
             <h2 className="text-lg font-semibold text-foreground tracking-tight">

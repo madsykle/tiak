@@ -45,7 +45,6 @@ impl DownloadQueue {
 
             let mut child = cmd
                 .arg(&data_dir)
-                .arg("--")
                 .arg(&dest_clone)
                 .arg("--ignore-existing")
                 .arg("--transfers=4")

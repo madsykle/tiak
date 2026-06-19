@@ -89,14 +89,6 @@ impl FromRequestParts<crate::routes::AppState> for AuthenticatedUser {
     type Rejection = AuthError;
 
     async fn from_request_parts(parts: &mut Parts, state: &crate::routes::AppState) -> Result<Self, Self::Rejection> {
-        // If auth is disabled in configuration, bypass validation and grant full admin access
-        if !state.config.server.enable_auth {
-            return Ok(AuthenticatedUser {
-                username: "admin_bypass".to_string(),
-                role: "admin".to_string(),
-            });
-        }
-
         let mut token = None;
 
         // 1. Try to extract token from Authorization header
@@ -123,21 +115,29 @@ impl FromRequestParts<crate::routes::AppState> for AuthenticatedUser {
             }
         }
 
-        let token = token.ok_or(AuthError::MissingToken)?;
+        if let Some(token) = token {
+            let auth_state = parts
+                .extensions
+                .get::<Arc<AuthState>>()
+                .ok_or(AuthError::MissingAuthState)?;
 
-        let auth_state = parts
-            .extensions
-            .get::<Arc<AuthState>>()
-            .ok_or(AuthError::MissingAuthState)?;
+            if let Ok(claims) = auth_state.verify_token(&token) {
+                return Ok(AuthenticatedUser {
+                    username: claims.sub,
+                    role: claims.role,
+                });
+            }
+        }
 
-        let claims = auth_state
-            .verify_token(&token)
-            .map_err(|_| AuthError::InvalidToken)?;
+        // If auth is disabled in configuration, bypass validation and grant full admin access
+        if !state.config.server.enable_auth {
+            return Ok(AuthenticatedUser {
+                username: "admin_bypass".to_string(),
+                role: "admin".to_string(),
+            });
+        }
 
-        Ok(AuthenticatedUser {
-            username: claims.sub,
-            role: claims.role,
-        })
+        Err(AuthError::MissingToken)
     }
 }
 
@@ -152,7 +152,28 @@ impl FromRequestParts<crate::routes::AppState> for OptionalUser {
     type Rejection = std::convert::Infallible;
 
     async fn from_request_parts(parts: &mut Parts, state: &crate::routes::AppState) -> Result<Self, Self::Rejection> {
-        // If auth is disabled, default to admin bypass
+        // 1. Try to find a real authenticated user first
+        if let Ok(user) = AuthenticatedUser::from_request_parts(parts, state).await {
+            return Ok(OptionalUser {
+                username: user.username,
+                role: user.role,
+            });
+        }
+
+        // 2. Try to identify as a guest via X-Guest-ID header
+        let guest_id = parts.headers
+            .get("X-Guest-ID")
+            .and_then(|h| h.to_str().ok())
+            .map(|s| s.to_string());
+
+        if let Some(uid) = guest_id {
+            return Ok(OptionalUser {
+                username: uid,
+                role: "guest".to_string(),
+            });
+        }
+
+        // 3. If auth is disabled, default to admin bypass (only if no guest ID was provided)
         if !state.config.server.enable_auth {
             return Ok(OptionalUser {
                 username: "admin_bypass".to_string(),
@@ -160,23 +181,11 @@ impl FromRequestParts<crate::routes::AppState> for OptionalUser {
             });
         }
 
-        if let Ok(user) = AuthenticatedUser::from_request_parts(parts, state).await {
-            Ok(OptionalUser {
-                username: user.username,
-                role: user.role,
-            })
-        } else {
-            let guest_id = parts.headers
-                .get("X-Guest-ID")
-                .and_then(|h| h.to_str().ok())
-                .unwrap_or("guest")
-                .to_string();
-
-            Ok(OptionalUser {
-                username: guest_id,
-                role: "guest".to_string(),
-            })
-        }
+        // 4. Final fallback to generic guest
+        Ok(OptionalUser {
+            username: "guest".to_string(),
+            role: "guest".to_string(),
+        })
     }
 }
 
@@ -301,13 +310,14 @@ pub async fn login_handler(
                         }
                         (headers, Json(serde_json::json!({ "token": token, "role": user.role }))).into_response()
                     }
-                    Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to generate token").into_response()
+                    Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"message": "Failed to generate token"}))).into_response()
                 }
             } else {
-                (StatusCode::UNAUTHORIZED, "Invalid credentials").into_response()
+                (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"message": "Incorrect password"}))).into_response()
             }
         }
-        _ => (StatusCode::UNAUTHORIZED, "Invalid credentials").into_response()
+        Ok(None) => (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"message": "User doesn't exist"}))).into_response(),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"message": "Database error"}))).into_response()
     }
 }
 
@@ -337,7 +347,7 @@ pub async fn signup_handler(
 
     if let Ok(count) = existing {
         if count > 0 {
-            return (StatusCode::CONFLICT, "Username or email already exists").into_response();
+            return (StatusCode::CONFLICT, Json(serde_json::json!({"message": "Username or email already exists"}))).into_response();
         }
     }
 
@@ -345,7 +355,7 @@ pub async fn signup_handler(
     let argon2 = Argon2::default();
     let password_hash = match argon2.hash_password(payload.password.as_bytes(), &salt) {
         Ok(h) => h.to_string(),
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Hashing failed").into_response()
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"message": "Hashing failed"}))).into_response()
     };
 
     let user = crate::db_optimized::models::User {
@@ -358,8 +368,8 @@ pub async fn signup_handler(
     };
 
     match db.db.collection::<crate::db_optimized::models::User>("users").insert_one(user).await {
-        Ok(_) => (StatusCode::CREATED, "User created successfully").into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create user").into_response()
+        Ok(_) => (StatusCode::CREATED, Json(serde_json::json!({"message": "User created successfully"}))).into_response(),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"message": "Failed to create user"}))).into_response()
     }
 }
 

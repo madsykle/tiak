@@ -74,7 +74,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/files/stream", get(files_api::stream_file))
         .route("/api/files/thumbnail", get(files_api::get_thumbnail))
         .route("/api/files/info", get(files_api::get_file_info))
-        .route("/api/files/resolve", post(queue_api::resolve_url_endpoint));
+        .route("/api/files/resolve", post(queue_api::resolve_url_endpoint))
+        .route("/api/queue/history", get(queue_api::queue_history));
 
     let admin_routes = Router::new()
         .route("/", get(core_api::root))
@@ -89,7 +90,6 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/settings", get(queue_api::get_settings).post(queue_api::set_settings))
         .route("/api/timeline", get(crate::timeline::get_timeline))
         .route("/api/timeline/posted", post(crate::timeline::mark_posted))
-        .route("/api/queue/history", get(queue_api::queue_history))
         .route("/api/queue/export", get(queue_api::export_queue))
         .route("/api/queue/import", post(queue_api::import_queue))
         .route("/api/queue/retry/:id", post(queue_api::retry_job))

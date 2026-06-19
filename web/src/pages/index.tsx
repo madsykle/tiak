@@ -314,10 +314,10 @@ export default function Queue() {
 
         {/* Input Area */}
         <div className="space-y-4">
-            <div className="group relative rounded-xl border border-border bg-surface shadow-md focus-within:border-neon-purple/50 focus-within:ring-1 focus-within:ring-neon-purple/30 transition-all duration-300 overflow-hidden">
+            <div className="group relative rounded-xl border border-border bg-surface shadow-md focus-within:border-neon-purple/50 focus-within:ring-1 focus-within:ring-neon-purple/30 transition-all duration-300">
                 <div className="relative">
                     <textarea
-                    className="block w-full border-0 bg-transparent p-4 pb-12 text-foreground placeholder:text-content-subtle focus:ring-0 sm:text-sm resize-none font-sans"
+                    className="block w-full border-0 bg-transparent p-4 pb-12 text-foreground placeholder:text-content-subtle focus:ring-0 sm:text-sm resize-none font-sans rounded-t-xl"
                     placeholder="Paste URLs here (YouTube, TikTok, Instagram – one per line)..."
                     rows={3}
                     value={urls}
@@ -338,9 +338,9 @@ export default function Queue() {
                     </div>
                 </div>
 
-                <div className="flex justify-between items-center border-t border-border-subtle bg-surface-subtle/30 px-4 py-3">
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-t border-border-subtle bg-surface-subtle/30 px-4 py-3 rounded-b-xl">
                     {role === 'admin' ? (
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
                           <SearchableSelect
                               options={categories}
                               value={selectedCategory}
@@ -350,7 +350,7 @@ export default function Queue() {
                                       setCategories(prev => [...prev, val].sort());
                                   }
                               }}
-                              className="min-w-[160px] text-sm !bg-background !border-border shadow-sm"
+                              className="w-full sm:min-w-[160px]"
                           />
                       </div>
                     ) : (

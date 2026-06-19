@@ -53,6 +53,13 @@ export default function FilesEnhanced() {
   const [playerType, setPlayerType] = useState<'native' | 'custom'>('custom');
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
+  useEffect(() => {
+    const storedPlayer = localStorage.getItem('player_preference');
+    if (storedPlayer === 'native' || storedPlayer === 'custom') {
+      setPlayerType(storedPlayer);
+    }
+  }, []);
+
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const showFeedback = useCallback((type: 'success' | 'error', text: string) => {
@@ -568,7 +575,11 @@ export default function FilesEnhanced() {
           onClose={closePreview}
           onPrev={() => navigatePreview('prev')}
           onNext={() => navigatePreview('next')}
-          onTogglePlayerType={() => setPlayerType(playerType === 'custom' ? 'native' : 'custom')}
+          onTogglePlayerType={() => {
+            const next = playerType === 'custom' ? 'native' : 'custom';
+            setPlayerType(next);
+            localStorage.setItem('player_preference', next);
+          }}
         />
       )}
     </>
