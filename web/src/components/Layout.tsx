@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useRef } from 'react';
 import InstallPrompt from './InstallPrompt';
 import { getRole, checkAuthSession } from '../lib/api';
 
@@ -21,6 +21,11 @@ export default function Layout({ children }: LayoutProps) {
     window.addEventListener('auth-change', handleAuthChange);
     return () => window.removeEventListener('auth-change', handleAuthChange);
   }, []);
+
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [router.pathname]);
 
   const isActive = (href: string) => {
     if (href === '/' && router.pathname === '/') return true;
@@ -90,7 +95,7 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-background text-foreground">
-      <main className="flex-1 overflow-y-auto w-full">
+      <main ref={mainRef} className="flex-1 overflow-y-auto w-full">
         <div className="max-w-screen-md mx-auto px-4 py-6 md:px-8 md:py-8 pb-32">
           {children}
         </div>

@@ -13,6 +13,7 @@ type Props = {
   mode?: 'native' | 'custom';
   filename?: string;
   path?: string;
+  onTogglePlayerType?: () => void;
 };
 
 export default function CustomVideoPlayer({ 
@@ -24,7 +25,8 @@ export default function CustomVideoPlayer({
   hasPrev, 
   mode = 'custom',
   filename,
-  path
+  path,
+  onTogglePlayerType
 }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playerRef = useRef<Plyr | null>(null);
@@ -57,7 +59,10 @@ export default function CustomVideoPlayer({
 
   useEffect(() => {
     if (path) {
-        getFileInfo(path).then(setInfo).catch(e => console.error("Info fetch failed", e));
+        getFileInfo(path).then(setInfo).catch(e => {
+            console.error("Info fetch failed", e);
+            setInfo({} as FileInfo);
+        });
     } else {
         setInfo(null);
     }
@@ -140,7 +145,24 @@ export default function CustomVideoPlayer({
         <div className="absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-start pointer-events-none">
             <h3 className="text-white/80 font-medium text-sm md:text-base drop-shadow-md truncate max-w-md pointer-events-auto">{filename}</h3>
             <div className="flex items-center gap-2 pointer-events-auto">
-                {info && (
+                {path && (
+                    <button 
+                        onClick={handleDownload}
+                        className="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/10 rounded-full px-3 py-2 transition-colors backdrop-blur-md flex items-center gap-1.5 text-xs font-medium shadow-sm"
+                        title="Download Video"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download
+                    </button>
+                )}
+                <button 
+                    onClick={() => setShowInfo(!showInfo)}
+                    className={`text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors backdrop-blur-md ${showInfo ? 'bg-white/30 text-white' : ''}`}
+                    title="Info & Analysis"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </button>
+                {info && Object.keys(info).length > 0 && (
                     <button 
                         onClick={copyIGCaption}
                         className={`text-xs font-medium px-3 py-2 rounded-full transition-colors backdrop-blur-md flex items-center gap-1.5 shadow-sm
@@ -160,24 +182,17 @@ export default function CustomVideoPlayer({
                         )}
                     </button>
                 )}
-                {path && (
+                <div className="w-px h-6 bg-white/20 mx-1"></div>
+                {onTogglePlayerType && (
                     <button 
-                        onClick={handleDownload}
-                        className="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/10 rounded-full px-3 py-2 transition-colors backdrop-blur-md flex items-center gap-1.5 text-xs font-medium shadow-sm"
-                        title="Download Video"
+                        onClick={onTogglePlayerType}
+                        className="text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full px-3 py-2 transition-colors backdrop-blur-md flex items-center gap-1.5 text-xs font-medium shadow-sm"
+                        title={`Switch to ${mode === 'custom' ? 'Native' : 'Custom'} Player`}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Download
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        {mode === 'custom' ? 'Native' : 'Custom'}
                     </button>
                 )}
-                <div className="w-px h-6 bg-white/20 mx-1"></div>
-                <button 
-                    onClick={() => setShowInfo(!showInfo)}
-                    className={`text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors backdrop-blur-md ${showInfo ? 'bg-white/30 text-white' : ''}`}
-                    title="Info & Analysis"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                </button>
                 <button 
                     onClick={onClose}
                     className="text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors backdrop-blur-md"
