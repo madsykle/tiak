@@ -1,5 +1,5 @@
 use tokio::time::{interval, Duration};
-use crate::db::Db;
+use crate::db_optimized::Db;
 use std::path::Path;
 use mongodb::bson::doc;
 use futures::stream::StreamExt;
@@ -25,7 +25,7 @@ async fn perform_cleanup(db: &Db, data_root: &str) -> anyhow::Result<()> {
         "status": { "$nin": ["queued", "downloading"] }
     };
     
-    let mut cursor = db.db.collection::<crate::db::Job>("jobs").find(filter).await?;
+    let mut cursor = db.db.collection::<crate::db_optimized::Job>("jobs").find(filter).await?;
     let mut expired_jobs = Vec::new();
     while let Some(res) = cursor.next().await {
         expired_jobs.push(res?);
@@ -62,7 +62,7 @@ async fn perform_cleanup(db: &Db, data_root: &str) -> anyhow::Result<()> {
         }
         
         // 2. Instead of deleting the job, mark it as missing so history is preserved
-        let _ = db.db.collection::<crate::db::Job>("jobs")
+        let _ = db.db.collection::<crate::db_optimized::Job>("jobs")
             .update_one(
                 doc! { "_id": &job.id },
                 doc! { 

@@ -1,7 +1,7 @@
 mod download;
 mod sync;
 
-use crate::db::{Db, Job};
+use crate::db_optimized::{Db, Job};
 use crate::storage::FileIndex;
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;

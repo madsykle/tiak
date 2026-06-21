@@ -1,4 +1,4 @@
-use crate::db::Job;
+use crate::db_optimized::Job;
 use crate::routes::AppState;
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};

@@ -16,7 +16,7 @@ use std::path::Path as StdPath;
 use std::sync::{Arc, OnceLock};
 
 use crate::config::AppConfig;
-use crate::db::{Db, Job};
+use crate::db_optimized::{Db, Job};
 use crate::queue::DownloadQueue;
 use crate::storage::FileIndex;
 

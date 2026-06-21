@@ -1,4 +1,4 @@
-use crate::db::Db;
+use crate::db_optimized::Db;
 use crate::storage::{FileIndex, DATA_ROOT};
 use chrono::{DateTime, Utc};
 use std::path::Path;

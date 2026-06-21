@@ -9,44 +9,32 @@ pub struct Job {
     pub progress: i64,
     pub eta: Option<i64>,
     pub filename: Option<String>,
-    #[sqlx(rename = "createdAt")]
     #[serde(rename = "createdAt")]
     pub created_at: i64,
-    #[sqlx(rename = "startedAt")]
     #[serde(rename = "startedAt")]
     pub started_at: Option<i64>,
-    #[sqlx(rename = "completedAt")]
     #[serde(rename = "completedAt")]
     pub completed_at: Option<i64>,
     pub retries: i64,
     pub error: Option<String>,
-    #[sqlx(default)]
+    #[serde(default)]
     pub category: String,
-    #[sqlx(default)]
     #[serde(default)]
     pub creator_name: Option<String>,
-    #[sqlx(default)]
     #[serde(default)]
     pub creator_avatar: Option<String>,
-    #[sqlx(default)]
     #[serde(default)]
     pub caption: Option<String>,
-    #[sqlx(default)]
     #[serde(default)]
     pub transcript: Option<String>,
-    #[sqlx(default)]
     #[serde(default)]
     pub hashtags: Option<String>,
-    #[sqlx(default)]
     #[serde(default)]
     pub suggested_category: Option<String>,
-    #[sqlx(default)]
     #[serde(default)]
     pub visual_description: Option<String>,
-    #[sqlx(default)]
     #[serde(default)]
     pub platform: Option<String>,
-    #[sqlx(rename = "expiresAt")]
     #[serde(rename = "expiresAt")]
     pub expires_at: Option<i64>,
     pub user_id: Option<String>,

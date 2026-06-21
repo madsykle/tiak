@@ -5,7 +5,7 @@ use moka::future::Cache;
 use server::auth::AuthState;
 use server::cleanup::{fix_job_categories, run_cleanup, scan_for_missing_files};
 use server::config::AppConfig;
-use server::db::Db;
+use server::db_optimized::Db;
 use server::queue::DownloadQueue;
 use server::routes::{create_router, AppState};
 use server::storage::FileIndex;

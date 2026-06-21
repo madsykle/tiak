@@ -12,13 +12,13 @@ A high-performance, self-hosted media management and download platform for TikTo
 - **High-Performance Streaming**: Rust-powered backend with range-request support for smooth, zero-buffer playback.
 - **Admin Dashboard**: Real-time server metrics, platform distribution charts, and manual user onboarding.
 - **Custom Presets**: Premium members can define custom `yt-dlp` arguments for specialized formats or qualities.
-- **Ephemeral Library**: Automatic background cleanup worker that wipes guest media and database records every 60 seconds.
+- **Ephemeral Library**: Automatic background cleanup worker that deletes guest files after 5 minutes; database records are marked as "missing" to preserve history.
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Rust (Axum, Tokio, MongoDB, SQLx for migration)
+- **Backend**: Rust (Axum, Tokio, MongoDB)
 - **Frontend**: Next.js 14 (TypeScript, Tailwind CSS, Plyr)
-- **Database**: MongoDB (Primary), SQLite (Legacy/Migration source)
+- **Database**: MongoDB (Primary), SQLite (Legacy migration source)
 - **Processing**: yt-dlp, FFmpeg
 - **Deployment**: Vercel (Frontend), Ubuntu/Linux VPS (Backend), Nginx (Reverse Proxy)
 

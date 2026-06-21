@@ -57,7 +57,7 @@ The `web/` directory is pre-configured for Vercel.
 ## 🧹 Maintenance
 
 ### Cleanup Worker
-The server includes a background worker that purges guest downloads every 60 seconds. Ensure the `DATA_ROOT` directory has write permissions so the server can delete these files.
+The server includes a background worker that deletes guest files every 60 seconds. Database records are marked as "missing" (not deleted) to preserve download history. Ensure the `DATA_ROOT` directory has write permissions so the server can delete these files.
 
 ### Database Backup
 Since Tiak uses MongoDB, you can use `mongodump` or Atlas's built-in snapshot features to keep your library metadata safe.
