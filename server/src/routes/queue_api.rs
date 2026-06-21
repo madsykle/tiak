@@ -6,7 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use super::{detect_platform, done_job_file_exists, normalize_url, resolve_url, AppState};
-use crate::{db::Job, storage::DATA_ROOT, auth::{AuthenticatedUser, OptionalUser}};
+use crate::{db_optimized::Job, storage::DATA_ROOT, auth::{AuthenticatedUser, OptionalUser}};
 
 #[derive(Deserialize)]
 pub(super) struct ResolvePayload {

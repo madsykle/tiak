@@ -1,4 +1,4 @@
-use crate::db::Db;
+use crate::db_optimized::Db;
 use crate::storage::{get_today_folder, THUMBNAILS_ROOT};
 use regex::Regex;
 use std::path::{Path, PathBuf};
