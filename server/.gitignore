@@ -14,6 +14,13 @@
 .env.*
 !.env.example
 
+# Generated files
+*.sqlite
+*.sqlite.migrated
+.thumbnails/
+queue_settings.json
+timeline.json
+
 # Logs
 *.log
 npm-debug.log*

@@ -112,7 +112,6 @@ pub(super) async fn set_settings(
         state.queue.set_sync_mode(mode).await;
     }
     state.queue.save_settings().await;
-    state.queue.save_settings().await;
 
     let max = state.queue.get_max_concurrent().await;
     let sync_dest = state.queue.get_sync_destination().await;
