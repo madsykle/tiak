@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -194,41 +194,64 @@ export default function Queue() {
   };
 
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
+  const retryPromises = useRef<Map<string, Promise<void>>>(new Map());
 
   const handleRetry = async (id: string) => {
+    if (retryingIds.has(id)) return;
+
+    const existingPromise = retryPromises.current.get(id);
+    if (existingPromise) return existingPromise;
+
     setRetryingIds(prev => new Set(prev).add(id));
-    try {
-      await retryJob(id);
-      fetchJobs();
-      fetchHistory();
-    } catch (error) {
-      console.error('Failed to retry job:', error);
-      alert('Failed to retry job');
-    } finally {
-      setRetryingIds(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
+
+    const promise = (async () => {
+      try {
+        await retryJob(id);
+        await Promise.all([fetchJobs(), fetchHistory()]);
+      } catch (error) {
+        console.error('Failed to retry job:', error);
+        alert('Failed to retry job');
+      } finally {
+        setRetryingIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        retryPromises.current.delete(id);
+      }
+    })();
+
+    retryPromises.current.set(id, promise);
+    return promise;
   };
 
   const handleRedownload = async (id: string) => {
+    if (retryingIds.has(id)) return;
+
+    const existingPromise = retryPromises.current.get(id);
+    if (existingPromise) return existingPromise;
+
     setRetryingIds(prev => new Set(prev).add(id));
-    try {
-      await redownloadJob(id);
-      fetchJobs();
-      fetchHistory();
-    } catch (error) {
-      console.error('Failed to redownload job:', error);
-      alert('Failed to redownload job');
-    } finally {
-      setRetryingIds(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
+
+    const promise = (async () => {
+      try {
+        await redownloadJob(id);
+        await Promise.all([fetchJobs(), fetchHistory()]);
+      } catch (error) {
+        console.error('Failed to redownload job:', error);
+        alert('Failed to redownload job');
+      } finally {
+        setRetryingIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        retryPromises.current.delete(id);
+      }
+    })();
+
+    retryPromises.current.set(id, promise);
+    return promise;
   };
 
   const handleCancel = async (id: string) => {
