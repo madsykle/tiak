@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Plyr from "plyr";
 import "plyr/dist/plyr.css";
 import { getFileInfo, FileInfo, getThumbnailUrl, getDownloadUrl } from '../lib/api';
+import { triggerInvisibleDownload } from '../lib/utils';
 
 type Props = {
   src: string;
@@ -49,7 +50,7 @@ export default function CustomVideoPlayer({
 
   const handleDownload = () => {
     if (!path) return;
-    window.open(getDownloadUrl(path), '_blank');
+    triggerInvisibleDownload(getDownloadUrl(path));
   };
 
   useEffect(() => {

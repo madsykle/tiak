@@ -6,7 +6,7 @@ import BatchOperations from '../components/BatchOperations';
 import EnhancedFilters from '../components/EnhancedFilters';
 import FileDateSection from '../components/FileDateSection';
 import FilePreviewModal from '../components/FilePreviewModal';
-import { formatBytes } from '../lib/utils';
+import { formatBytes, triggerInvisibleDownload } from '../lib/utils';
 import { useVisibilityPolling } from '../hooks/useVisibilityPolling';
 
 import type { FileItem, JobInfo, SortOption, SortDirection } from '../lib/types';
@@ -243,7 +243,7 @@ export default function FilesEnhanced() {
 
   const handleDownload = useCallback((path: string) => {
     const url = getDownloadUrl(path);
-    window.open(url, '_blank');
+    triggerInvisibleDownload(url);
   }, []);
 
   const openPreview = useCallback((file: FileItem) => {

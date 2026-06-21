@@ -6,7 +6,7 @@ import { deleteJob, DownloadJob, AddJobResponse, listCategories, getRole, getDow
 import { API_BASE } from '../lib/config';
 import SearchableSelect from '../components/SearchableSelect';
 import HistoryTable from '../components/HistoryTable';
-import { platformLabel, platformBadgeClass } from '../lib/utils';
+import { platformLabel, platformBadgeClass, triggerInvisibleDownload } from '../lib/utils';
 import { useVisibilityPolling } from '../hooks/useVisibilityPolling';
 
 const CustomVideoPlayer = dynamic(() => import('../components/CustomVideoPlayer'), { ssr: false });
@@ -385,14 +385,15 @@ export default function Queue() {
                                     <span className="font-medium">{s.reason}</span>
                                 </span>
                                 {s.filename && s.category && s.dateFolder && (
-                                    <a
-                                      href={getDownloadUrl(`data/${s.category}/${s.dateFolder}/${s.filename}`)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        triggerInvisibleDownload(getDownloadUrl(`data/${s.category}/${s.dateFolder}/${s.filename}`));
+                                      }}
                                       className="shrink-0 rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-sm transition-colors"
                                     >
                                       Download Now
-                                    </a>
+                                    </button>
                                 )}
                             </li>
                         ))}
@@ -505,14 +506,16 @@ export default function Queue() {
 
                                   <div className="flex items-center gap-2">
                                     {job.status === 'done' && job.filename && (
-                                      <a
-                                        href={getDownloadUrl(getJobDownloadPath(job))}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                      <button
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          triggerInvisibleDownload(getDownloadUrl(getJobDownloadPath(job)));
+                                        }}
                                         className="shrink-0 rounded-lg bg-neon-purple hover:bg-neon-purple/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
                                       >
                                         Download File
-                                      </a>
+                                      </button>
                                     )}
                                     {(job.status === 'queued' || job.status === 'downloading') && (
                                       <button

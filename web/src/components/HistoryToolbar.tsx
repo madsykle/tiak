@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { getExportUrl, importHistory } from '../lib/api';
+import { triggerInvisibleDownload } from '../lib/utils';
 
 interface HistoryToolbarProps {
   onImportSuccess: (msg: string) => void;
@@ -11,8 +12,8 @@ export default function HistoryToolbar({ onImportSuccess, onImportError }: Histo
   const [importing, setImporting] = useState(false);
 
   const handleExport = () => {
-    // Trigger download
-    window.open(getExportUrl(), '_blank');
+    // Trigger download invisibly
+    triggerInvisibleDownload(getExportUrl());
   };
 
   const handleImportClick = () => {
