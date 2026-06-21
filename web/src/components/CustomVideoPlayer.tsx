@@ -49,12 +49,7 @@ export default function CustomVideoPlayer({
 
   const handleDownload = () => {
     if (!path) return;
-    const link = document.createElement('a');
-    link.href = getDownloadUrl(path);
-    link.download = filename || path.split('/').pop() || 'video.mp4';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.open(getDownloadUrl(path), '_blank');
   };
 
   useEffect(() => {

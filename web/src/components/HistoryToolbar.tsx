@@ -12,7 +12,7 @@ export default function HistoryToolbar({ onImportSuccess, onImportError }: Histo
 
   const handleExport = () => {
     // Trigger download
-    window.location.href = getExportUrl();
+    window.open(getExportUrl(), '_blank');
   };
 
   const handleImportClick = () => {

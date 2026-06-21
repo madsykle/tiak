@@ -387,8 +387,9 @@ export default function Queue() {
                                 {s.filename && s.category && s.dateFolder && (
                                     <a
                                       href={getDownloadUrl(`data/${s.category}/${s.dateFolder}/${s.filename}`)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
                                       className="shrink-0 rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 shadow-sm transition-colors"
-                                      download
                                     >
                                       Download Now
                                     </a>
@@ -506,8 +507,9 @@ export default function Queue() {
                                     {job.status === 'done' && job.filename && (
                                       <a
                                         href={getDownloadUrl(getJobDownloadPath(job))}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="shrink-0 rounded-lg bg-neon-purple hover:bg-neon-purple/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
-                                        download
                                       >
                                         Download File
                                       </a>

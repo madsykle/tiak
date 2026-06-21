@@ -243,12 +243,7 @@ export default function FilesEnhanced() {
 
   const handleDownload = useCallback((path: string) => {
     const url = getDownloadUrl(path);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = path.split('/').pop() || 'download';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    window.open(url, '_blank');
   }, []);
 
   const openPreview = useCallback((file: FileItem) => {
