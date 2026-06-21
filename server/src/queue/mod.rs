@@ -5,7 +5,7 @@ use crate::db::{Db, Job};
 use crate::storage::FileIndex;
 use chrono::{DateTime, Utc};
 use dashmap::DashMap;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{Notify, RwLock};
@@ -50,7 +50,42 @@ pub struct DownloadQueue {
 
 pub(super) const SYNC_MARKER_FILE: &str = "data/.last_sync";
 
+
+#[derive(Serialize, Deserialize)]
+struct QueueSettings {
+    max_concurrent: usize,
+    sync_destination: String,
+    sync_mode: String,
+}
+
 impl DownloadQueue {
+    fn load_settings_sync(&self) {
+        if let Ok(data) = std::fs::read_to_string("data/queue_settings.json") {
+            if let Ok(settings) = serde_json::from_str::<QueueSettings>(&data) {
+                if let Ok(mut max) = self.max_concurrent.try_write() {
+                    *max = settings.max_concurrent;
+                }
+                if let Ok(mut dest) = self.sync_destination.try_write() {
+                    *dest = settings.sync_destination.clone();
+                }
+                if let Ok(mut mode) = self.sync_mode.try_write() {
+                    *mode = settings.sync_mode.clone();
+                }
+            }
+        }
+    }
+
+    pub async fn save_settings(&self) {
+        let settings = QueueSettings {
+            max_concurrent: *self.max_concurrent.read().await,
+            sync_destination: self.sync_destination.read().await.clone(),
+            sync_mode: self.sync_mode.read().await.clone(),
+        };
+        if let Ok(data) = serde_json::to_string(&settings) {
+            let _ = std::fs::write("data/queue_settings.json", data);
+        }
+    }
+
     pub fn new(db: Db, file_index: Arc<FileIndex>) -> Arc<Self> {
         let queue = Arc::new(Self {
             db,
@@ -64,6 +99,8 @@ impl DownloadQueue {
             notify: Arc::new(Notify::new()),
         });
 
+        queue.load_settings_sync();
+        
         let q = queue.clone();
         tokio::spawn(async move {
             loop {

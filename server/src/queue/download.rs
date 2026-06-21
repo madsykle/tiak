@@ -105,6 +105,7 @@ impl DownloadQueue {
             .arg(&yt_dlp_path)
             .arg("--newline")
             .arg("--no-check-certificates")
+            .arg("--no-mtime")
             .arg("--no-update")
             .arg("--js-runtimes")
             .arg("node");
@@ -181,11 +182,17 @@ impl DownloadQueue {
             cmd.arg("--cookies").arg(cf);
         }
 
+        let actual_url = if is_tiktok && url.contains("/photo/") {
+            url.replace("/photo/", "/video/")
+        } else {
+            url.to_string()
+        };
+
         let mut child = cmd
             .arg("-o")
             .arg(template)
             .arg("--")
-            .arg(url)
+            .arg(&actual_url)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true)

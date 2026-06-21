@@ -111,6 +111,8 @@ pub(super) async fn set_settings(
     if let Some(mode) = payload.sync_mode {
         state.queue.set_sync_mode(mode).await;
     }
+    state.queue.save_settings().await;
+    state.queue.save_settings().await;
 
     let max = state.queue.get_max_concurrent().await;
     let sync_dest = state.queue.get_sync_destination().await;
@@ -145,6 +147,7 @@ pub(super) async fn sync_status(
     if user.role != "admin" {
         return (axum::http::StatusCode::FORBIDDEN, "Admin access required").into_response();
     }
+    let _ = state.file_index.build_index_if_stale(std::time::Duration::from_secs(30)).await;
     Json(state.queue.get_sync_state().await).into_response()
 }
 
