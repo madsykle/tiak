@@ -4,33 +4,33 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = { version = "0.7", features = ["multipart"] }
-tokio = { version = "1", features = ["full"] }
+axum = { version = "0.7", features = ["multipart"], default-features = false }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "io-util", "process", "signal"], default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "sqlite"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "sqlite"], default-features = false }
 tower = { version = "0.5", features = ["util"] }
-tower-http = { version = "0.6", features = ["cors", "trace", "fs", "limit", "compression-gzip", "compression-br"] }
+tower-http = { version = "0.6", features = ["cors", "fs", "limit"], default-features = false }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1"
 walkdir = "2"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"], default-features = false }
 uuid = { version = "1", features = ["v4", "serde"] }
-zip = "2"
+zip = { version = "2", default-features = false, features = ["deflate"] }
 dotenv = "0.15"
-regex = "1"
+regex = { version = "1", default-features = false, features = ["std", "perf"] }
 dashmap = "6"
-tokio-util = { version = "0.7", features = ["io"] }
-moka = { version = "0.12", features = ["future"] }
+tokio-util = { version = "0.7", features = ["io"], default-features = false }
+moka = { version = "0.12", features = ["future"], default-features = false }
 jsonwebtoken = { version = "10", features = ["rust_crypto"] }
 time = "0.3"
 lazy_static = "1"
 argon2 = "0.5.3"
 password-hash = "0.6.1"
-mongodb = "3.6.0"
+mongodb = { version = "3.6.0", default-features = false, features = ["rustls-tls"] }
 futures = "0.3.32"
-rand = "0.8"
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng", "getrandom"] }
 
 [dev-dependencies]
 tempfile = "3"
@@ -38,6 +38,7 @@ tempfile = "3"
 [profile.dev]
 incremental = false
 debug = 0
+strip = true
 
 [profile.release]
 opt-level = "z"
@@ -45,3 +46,8 @@ strip = true
 lto = true
 codegen-units = 1
 panic = "abort"
+
+[profile.release-small]
+inherits = "release"
+opt-level = "s"
+lto = "thin"
