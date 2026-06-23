@@ -158,7 +158,14 @@ export default function Settings() {
     }
   }, [role]);
 
-  useVisibilityPolling(fetchSyncStatus, 10000, { runImmediately: true });
+  // Fetch sync status immediately when role becomes 'admin'
+  useEffect(() => {
+    if (role === 'admin') {
+      fetchSyncStatus();
+    }
+  }, [role, fetchSyncStatus]);
+
+  useVisibilityPolling(fetchSyncStatus, 10000, { runImmediately: false });
 
   const handleSave = async (overrides?: { syncDest?: string; sMode?: string }) => {
     setSaving(true);
