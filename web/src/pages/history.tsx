@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import HistoryTable from '../components/HistoryTable';
@@ -61,22 +61,65 @@ export default function HistoryPage() {
     fetchData();
   }, [fetchData]);
 
+  const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
+  const retryPromises = useRef<Map<string, Promise<void>>>(new Map());
+
   const handleRetry = async (id: string) => {
-    try {
-      await retryJob(id);
-      fetchData();
-    } catch {
-      showToast('Failed to retry job', 'error');
-    }
+    if (retryingIds.has(id)) return;
+
+    const existingPromise = retryPromises.current.get(id);
+    if (existingPromise) return existingPromise;
+
+    setRetryingIds(prev => new Set(prev).add(id));
+
+    const promise = (async () => {
+      try {
+        await retryJob(id);
+        fetchData();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to retry job';
+        showToast(message, 'error');
+      } finally {
+        setRetryingIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        retryPromises.current.delete(id);
+      }
+    })();
+
+    retryPromises.current.set(id, promise);
+    return promise;
   };
 
   const handleRedownload = async (id: string) => {
-    try {
-      await redownloadJob(id);
-      fetchData();
-    } catch {
-      showToast('Failed to redownload job', 'error');
-    }
+    if (retryingIds.has(id)) return;
+
+    const existingPromise = retryPromises.current.get(id);
+    if (existingPromise) return existingPromise;
+
+    setRetryingIds(prev => new Set(prev).add(id));
+
+    const promise = (async () => {
+      try {
+        await redownloadJob(id);
+        fetchData();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to redownload job';
+        showToast(message, 'error');
+      } finally {
+        setRetryingIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        retryPromises.current.delete(id);
+      }
+    })();
+
+    retryPromises.current.set(id, promise);
+    return promise;
   };
 
   const handleDelete = async (id: string) => {
@@ -220,12 +263,13 @@ export default function HistoryPage() {
             </div>
         ) : (
             <>
-                <HistoryTable 
-                  jobs={filteredJobs} 
-                  onRetry={handleRetry} 
-                  onRedownload={handleRedownload} 
+                <HistoryTable
+                  jobs={filteredJobs}
+                  onRetry={handleRetry}
+                  onRedownload={handleRedownload}
                   onPreview={handlePreview}
                   onDelete={handleDelete}
+                  retryingIds={retryingIds}
                 />
                 
                 {/* Pagination Controls */}

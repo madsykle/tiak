@@ -147,6 +147,14 @@ export default function Queue() {
     fetchHistory();
   }, [fetchHistory]);
 
+  // Auto-dismiss retry error after 5 seconds
+  useEffect(() => {
+    if (retryError) {
+      const timer = setTimeout(() => setRetryError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [retryError]);
+
   useVisibilityPolling(fetchJobs, 5000, { runImmediately: true });
   useVisibilityPolling(fetchHistory, 15000, { runImmediately: false });
 
@@ -195,6 +203,7 @@ export default function Queue() {
 
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
   const retryPromises = useRef<Map<string, Promise<void>>>(new Map());
+  const [retryError, setRetryError] = useState<{ id: string; message: string } | null>(null);
 
   const handleRetry = async (id: string) => {
     if (retryingIds.has(id)) return;
@@ -203,14 +212,15 @@ export default function Queue() {
     if (existingPromise) return existingPromise;
 
     setRetryingIds(prev => new Set(prev).add(id));
+    setRetryError(null);
 
     const promise = (async () => {
       try {
         await retryJob(id);
         await Promise.all([fetchJobs(), fetchHistory()]);
       } catch (error) {
-        console.error('Failed to retry job:', error);
-        alert('Failed to retry job');
+        const message = error instanceof Error ? error.message : 'Failed to retry job';
+        setRetryError({ id, message });
       } finally {
         setRetryingIds(prev => {
           const next = new Set(prev);
@@ -232,14 +242,15 @@ export default function Queue() {
     if (existingPromise) return existingPromise;
 
     setRetryingIds(prev => new Set(prev).add(id));
+    setRetryError(null);
 
     const promise = (async () => {
       try {
         await redownloadJob(id);
         await Promise.all([fetchJobs(), fetchHistory()]);
       } catch (error) {
-        console.error('Failed to redownload job:', error);
-        alert('Failed to redownload job');
+        const message = error instanceof Error ? error.message : 'Failed to redownload job';
+        setRetryError({ id, message });
       } finally {
         setRetryingIds(prev => {
           const next = new Set(prev);
@@ -421,6 +432,20 @@ export default function Queue() {
                             </li>
                         ))}
                     </ul>
+                </div>
+            )}
+
+            {/* Retry Error Toast */}
+            {retryError && (
+                <div className="rounded-lg border border-red-500/30 bg-red-500/10 backdrop-blur-md p-4 text-sm text-red-400 animate-in slide-in-from-top-2 shadow-lg flex items-start gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <div className="flex-1">
+                        <p className="font-semibold mb-1">Retry failed</p>
+                        <p className="text-red-300/90 break-words">{retryError.message}</p>
+                    </div>
+                    <button onClick={() => setRetryError(null)} className="shrink-0 text-red-400 hover:text-red-300 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
                 </div>
             )}
         </div>
