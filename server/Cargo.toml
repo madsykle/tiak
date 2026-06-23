@@ -4,50 +4,54 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = { version = "0.7", features = ["multipart"], default-features = false }
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs", "io-util", "process", "signal"], default-features = false }
+axum = { version = "0.7", features = ["multipart"] }
+tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "sqlite"], default-features = false }
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "sqlite"] }
 tower = { version = "0.5", features = ["util"] }
-tower-http = { version = "0.6", features = ["cors", "fs", "limit"], default-features = false }
+tower-http = { version = "0.6", features = ["cors", "trace", "fs", "limit", "compression-gzip", "compression-br"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1"
 walkdir = "2"
-chrono = { version = "0.4", features = ["serde"], default-features = false }
+chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = "2"
 dotenv = "0.15"
-regex = { version = "1", default-features = false, features = ["std", "perf"] }
+regex = "1"
 dashmap = "6"
-tokio-util = { version = "0.7", features = ["io"], default-features = false }
-moka = { version = "0.12", features = ["future"], default-features = false }
+tokio-util = { version = "0.7", features = ["io"] }
+moka = { version = "0.12", features = ["future"] }
 jsonwebtoken = { version = "10", features = ["rust_crypto"] }
 time = "0.3"
 lazy_static = "1"
 argon2 = "0.5.3"
 password-hash = "0.6.1"
-mongodb = { version = "3.6.0", default-features = false, features = ["rustls-tls"] }
+mongodb = "3.6.0"
 futures = "0.3.32"
-rand = { version = "0.8", default-features = false, features = ["std", "std_rng", "getrandom"] }
+rand = "0.8"
 
 [dev-dependencies]
 tempfile = "3"
 
+# ============================================
+# PROFILE SETTINGS FOR SMALL BINARY SIZE
+# ============================================
+
 [profile.dev]
 incremental = false
 debug = 0
-strip = true
+strip = true              # Strip symbols even in dev builds
 
 [profile.release]
-opt-level = "z"
-strip = true
-lto = true
-codegen-units = 1
-panic = "abort"
+opt-level = "z"           # Optimize for size
+strip = true              # Strip debug symbols
+lto = "thin"              # Thin LTO = good size/speed tradeoff
+codegen-units = 1         # Better optimization
+panic = "abort"           # Smaller than unwinding
 
-[profile.release-small]
+[profile.release-fast]
 inherits = "release"
-opt-level = "s"
-lto = "thin"
+lto = false               # Faster compile, slightly larger
+codegen-units = 4
