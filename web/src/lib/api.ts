@@ -178,7 +178,8 @@ export async function retryJob(id: string): Promise<DownloadJob> {
     method: 'POST',
   });
   if (!res.ok) {
-    throw new Error('Failed to retry job');
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || errorData.error || 'Failed to retry job');
   }
   return res.json();
 }
@@ -188,7 +189,8 @@ export async function redownloadJob(id: string): Promise<DownloadJob> {
     method: 'POST',
   });
   if (!res.ok) {
-    throw new Error('Failed to redownload job');
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || errorData.error || 'Failed to redownload job');
   }
   return res.json();
 }

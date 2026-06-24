@@ -35,13 +35,23 @@ rand = "0.8"
 [dev-dependencies]
 tempfile = "3"
 
+# ============================================
+# PROFILE SETTINGS FOR SMALL BINARY SIZE
+# ============================================
+
 [profile.dev]
 incremental = false
 debug = 0
+strip = true              # Strip symbols even in dev builds
 
 [profile.release]
-opt-level = "z"
-strip = true
-lto = true
-codegen-units = 1
-panic = "abort"
+opt-level = "z"           # Optimize for size
+strip = true              # Strip debug symbols
+lto = "thin"              # Thin LTO = good size/speed tradeoff
+codegen-units = 1         # Better optimization
+panic = "abort"           # Smaller than unwinding
+
+[profile.release-fast]
+inherits = "release"
+lto = false               # Faster compile, slightly larger
+codegen-units = 4
