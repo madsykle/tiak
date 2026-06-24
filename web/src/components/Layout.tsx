@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ReactNode, useEffect, useState, useRef } from 'react';
-import InstallPrompt from './InstallPrompt';
 import { getRole, checkAuthSession } from '../lib/api';
 
 interface LayoutProps {
@@ -100,9 +99,7 @@ export default function Layout({ children }: LayoutProps) {
           {children}
         </div>
       </main>
-      
-      <InstallPrompt />
-      
+
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface/80 backdrop-blur-xl border-t border-border-subtle safe-area-pb">
         <div className="max-w-screen-md mx-auto">
           <ul className="flex justify-around items-center h-20 md:h-24">

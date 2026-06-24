@@ -56,6 +56,7 @@ export default function Queue() {
   const [selectedCategory, setSelectedCategory] = useState('default');
   const [refreshing, setRefreshing] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<{ id: string; message: string } | null>(null);
 
   // Preview Modal State
   const [previewJob, setPreviewJob] = useState<DownloadJob | null>(null);
@@ -203,7 +204,6 @@ export default function Queue() {
 
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
   const retryPromises = useRef<Map<string, Promise<void>>>(new Map());
-  const [retryError, setRetryError] = useState<{ id: string; message: string } | null>(null);
 
   const handleRetry = async (id: string) => {
     if (retryingIds.has(id)) return;

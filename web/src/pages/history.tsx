@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import HistoryTable from '../components/HistoryTable';
-import HistoryToolbar from '../components/HistoryToolbar';
-import { getHistory, retryJob, redownloadJob, deleteJob, DownloadJob, getStreamUrl } from '../lib/api';
+import { getHistory, retryJob, redownloadJob, deleteJob, DownloadJob, getStreamUrl, getExportUrl, importHistory } from '../lib/api';
 
 const CustomVideoPlayer = dynamic(() => import('../components/CustomVideoPlayer'), { ssr: false });
 
@@ -140,7 +139,40 @@ export default function HistoryPage() {
 
   const handleImportSuccess = (msg: string) => {
     showToast(msg, 'success');
-    fetchData(); // Refresh list
+    fetchData();
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+
+  const handleExport = () => {
+    const a = document.createElement('a');
+    a.href = getExportUrl();
+    a.download = 'history-export.json';
+    a.click();
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const result = await importHistory(file);
+      handleImportSuccess(`Imported: ${result.imported}, Skipped: ${result.skipped}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Import failed';
+      showToast(message, 'error');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handlePreview = (job: DownloadJob) => {
@@ -207,7 +239,17 @@ export default function HistoryPage() {
             <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">History</h1>
             <p className="mt-1 text-sm text-content-muted">View past download jobs.</p>
           </div>
-          <HistoryToolbar onImportSuccess={handleImportSuccess} onImportError={(msg) => showToast(msg, 'error')} />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input type="file" accept=".json" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+            <button onClick={handleExport} className="inline-flex items-center justify-center gap-2 rounded-xl bg-surface border border-border px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-surface-subtle transition-all active:scale-95">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export</span>
+            </button>
+            <button onClick={handleImportClick} disabled={importing} className="inline-flex items-center justify-center gap-2 rounded-xl bg-surface border border-border px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-surface-subtle transition-all active:scale-95 disabled:opacity-50">
+              {importing ? <div className="h-4 w-4 border-2 border-foreground border-t-transparent rounded-full animate-spin"></div> : <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>}
+              <span>{importing ? 'Importing...' : 'Import'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Filters */}

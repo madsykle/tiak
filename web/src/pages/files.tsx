@@ -4,10 +4,10 @@ import { getSystemUsage, DiskUsage, getDownloadUrl, listCategories, moveFile, ge
 import { API_BASE } from '../lib/config';
 import BatchOperations from '../components/BatchOperations';
 import EnhancedFilters from '../components/EnhancedFilters';
-import FileDateSection from '../components/FileDateSection';
-import FilePreviewModal from '../components/FilePreviewModal';
+import CustomVideoPlayer from '../components/CustomVideoPlayer';
 import { formatBytes, triggerInvisibleDownload } from '../lib/utils';
 import { useVisibilityPolling } from '../hooks/useVisibilityPolling';
+import FileCard from '../components/FileCard';
 
 import type { FileItem, JobInfo, SortOption, SortDirection } from '../lib/types';
 
@@ -520,33 +520,48 @@ export default function FilesEnhanced() {
           </div>
         ) : (
           <div className="space-y-12">
-            {paginatedFiles.map(({ date, items }) => (
-              <FileDateSection
-                key={date}
-                title={formatDateHeader(date)}
-                items={items}
-                totalCount={groupedFiles.groups[date].length}
-                selectedPaths={selectedPaths}
-                onToggleDateSelection={(dateItems) => {
-                  const datePaths = dateItems.map(file => file.path);
-                  const allSelected = datePaths.every(path => selectedPaths.has(path));
-                  setSelectedPaths(prev => {
-                    const next = new Set(prev);
-                    datePaths.forEach(path => {
-                      if (allSelected) {
-                        next.delete(path);
-                      } else {
-                        next.add(path);
-                      }
-                    });
-                    return next;
-                  });
-                }}
-                onToggleFileSelection={togglePathSelection}
-                onPreview={openPreview}
-                onDownload={handleDownload}
-              />
-            ))}
+            {paginatedFiles.map(({ date, items }) => {
+              const allSelected = items.length > 0 && items.every(file => selectedPaths.has(file.path));
+              return (
+                <div key={date}>
+                  <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 px-2 -mx-2 mb-4 border-b border-border-subtle">
+                    <div className="flex items-baseline justify-between">
+                      <div className="flex items-baseline gap-3">
+                        <h2 className="text-lg font-semibold text-foreground tracking-tight">{formatDateHeader(date)}</h2>
+                        <span className="text-xs text-content-muted font-medium">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const datePaths = items.map(file => file.path);
+                          const next = new Set(selectedPaths);
+                          if (allSelected) {
+                            datePaths.forEach(path => next.delete(path));
+                          } else {
+                            datePaths.forEach(path => next.add(path));
+                          }
+                          setSelectedPaths(next);
+                        }}
+                        className="text-xs font-medium text-blue-600 hover:text-blue-800"
+                      >
+                        {allSelected ? 'Deselect all' : 'Select all'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    {items.map((file) => (
+                      <FileCard
+                        key={file.path}
+                        file={file}
+                        isSelected={selectedPaths.has(file.path)}
+                        onSelect={togglePathSelection}
+                        onPreview={openPreview}
+                        onDownload={handleDownload}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
 
             {/* Load more */}
             {hasNext && (
@@ -561,15 +576,16 @@ export default function FilesEnhanced() {
 
       {/* Video Preview Modal */}
       {previewFile && (
-        <FilePreviewModal
-          file={previewFile}
+        <CustomVideoPlayer
           src={previewSrc}
-          playerType={playerType}
-          hasPrev={hasPrevPreview}
-          hasNext={hasNextPreview}
           onClose={closePreview}
-          onPrev={() => navigatePreview('prev')}
           onNext={() => navigatePreview('next')}
+          onPrev={() => navigatePreview('prev')}
+          hasNext={hasNextPreview}
+          hasPrev={hasPrevPreview}
+          filename={previewFile.name}
+          path={previewFile.path}
+          mode={playerType}
           onTogglePlayerType={() => {
             const next = playerType === 'custom' ? 'native' : 'custom';
             setPlayerType(next);

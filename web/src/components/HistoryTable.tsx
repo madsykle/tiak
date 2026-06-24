@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { DownloadJob, getDownloadUrl } from '../lib/api';
-import StatusBadge from './StatusBadge';
 import { platformLabel, platformBadgeClass } from '../lib/utils';
 import CategoryBadge from './CategoryBadge';
 
@@ -11,6 +10,30 @@ interface HistoryTableProps {
   onPreview: (job: DownloadJob) => void;
   onDelete: (id: string) => void;
   retryingIds?: Set<string>;
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    queued: 'bg-zinc-100 text-zinc-600',
+    downloading: 'bg-blue-50 text-blue-700',
+    done: 'bg-emerald-50 text-emerald-700',
+    completed: 'bg-emerald-50 text-emerald-700',
+    failed: 'bg-red-50 text-red-700',
+    missing: 'bg-orange-50 text-orange-700',
+    imported: 'bg-indigo-50 text-indigo-700',
+  };
+  const labels: Record<string, string> = {
+    queued: 'Queued',
+    downloading: 'Downloading',
+    done: 'Completed',
+    completed: 'Completed',
+    failed: 'Failed',
+    missing: 'Expired',
+    imported: 'Imported',
+  };
+  const style = styles[status] || styles.queued;
+  const label = labels[status] || status;
+  return <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${style}`}>{label}</span>;
 }
 
 export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, onDelete, retryingIds = new Set() }: HistoryTableProps) {
