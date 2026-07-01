@@ -65,19 +65,9 @@ export default React.memo(function FileCard({
     onPreview(file);
   };
 
-  const isYoutube = file.platform === 'youtube';
-  const isTiktok = file.platform === 'tiktok';
-  const isInstagram = file.platform === 'instagram';
-
-  let cardStyle = "border-border/60 bg-surface/40 hover:border-purple-500/30 hover:glow-purple";
+  let cardStyle = "border-border/60 bg-surface/40 hover:border-accent/30 hover:glow-accent";
   if (isSelected) {
-    cardStyle = "border-neon-purple bg-neon-purple/10 ring-1 ring-neon-purple/40 glow-purple";
-  } else if (isYoutube) {
-    cardStyle = "border-border/60 bg-surface/40 hover:border-red-500/30 hover:glow-red";
-  } else if (isTiktok) {
-    cardStyle = "border-border/60 bg-surface/40 hover:border-cyan-500/30 hover:glow-cyan";
-  } else if (isInstagram) {
-    cardStyle = "border-border/60 bg-surface/40 hover:border-pink-500/30 hover:glow-pink";
+    cardStyle = "border-accent bg-accent/10 ring-1 ring-accent/40 glow-accent";
   }
 
   return (
@@ -87,7 +77,7 @@ export default React.memo(function FileCard({
     >
       {/* Selection Overlay */}
       {isSelected && (
-        <div className="absolute inset-0 bg-neon-purple/5 z-0"></div>
+        <div className="absolute inset-0 bg-accent/5 z-0"></div>
       )}
 
       {/* Checkbox */}
@@ -97,7 +87,7 @@ export default React.memo(function FileCard({
           checked={isSelected}
           onChange={() => onSelect(file.path)}
           onClick={handleCheckboxClick}
-          className="h-4 w-4 rounded border-border bg-surface text-neon-purple focus:ring-neon-purple/30 focus:ring-1"
+          className="h-4 w-4 rounded border-border bg-surface text-accent focus:ring-accent/30 focus:ring-1"
         />
       </div>
 
@@ -186,7 +176,7 @@ export default React.memo(function FileCard({
           </button>
           <button
             onClick={handleDownloadClick}
-            className="w-full rounded-xl bg-neon-purple hover:bg-neon-purple/90 px-2 py-2 text-xs font-bold text-white shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
+            className="w-full rounded-xl bg-accent hover:bg-accent/90 px-2 py-2 text-xs font-bold text-white shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           >
             Download
           </button>

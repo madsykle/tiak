@@ -9,7 +9,7 @@ export default function CategoryBadge({ category, className = '' }: CategoryBadg
   // Generate a consistent border color based on the category name
   const getBorderColor = (str: string) => {
     const colors = [
-      'border-l-neon-purple',
+      'border-l-accent',
       'border-l-neon-cyan',
       'border-l-neon-pink',
       'border-l-neon-red',

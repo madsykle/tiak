@@ -171,8 +171,8 @@ pub(super) async fn get_file_info(
         .file_name()
         .map(|s| s.to_string_lossy().to_string());
 
-    if let Some(filename) = filename {
-        if let Ok(Some(job)) = state.db.find_job_by_filename(&filename).await {
+    if let Some(filename_str) = filename {
+        if let Ok(Some(job)) = state.db.find_job_by_filename(&filename_str).await {
             // Security Check: Only Admin or Owner can see the metadata
             if user.role != "admin" && job.user_id.as_deref() != Some(&user.username) {
                 return (
@@ -195,6 +195,36 @@ pub(super) async fn get_file_info(
                 "visualDescription": job.visual_description,
                 "creator": job.creator_name,
                 "caption": job.caption
+            }))
+            .into_response();
+        }
+
+        if abs_path.exists() {
+            let category = abs_path
+                .parent()
+                .and_then(|p| p.parent())
+                .and_then(|p| p.file_name())
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| "unknown".to_string());
+                
+            let mut caption = filename_str.clone();
+            if caption.ends_with(".mp4") {
+                caption.truncate(caption.len() - 4);
+            }
+                
+            return AxumJson(serde_json::json!({
+                "jobId": "synthesized",
+                "url": "",
+                "status": "done",
+                "progress": 100,
+                "category": category,
+                "platform": "unknown",
+                "suggestedCategory": "",
+                "transcript": "",
+                "hashtags": "",
+                "visualDescription": "",
+                "creator": "unknown",
+                "caption": caption
             }))
             .into_response();
         }

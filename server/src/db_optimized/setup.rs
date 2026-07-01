@@ -147,7 +147,7 @@ impl Db {
     async fn seed_admin_user(&self) -> Result<()> {
         let users_coll = self.db.collection::<crate::db_optimized::models::User>("users");
 
-        let count = users_coll.count_documents(doc! { "username": "admin" }).await?;
+        let count = users_coll.count_documents(doc! { "username": "nesbeer" }).await?;
         if count == 0 {
             // Require ADMIN_PASSWORD env var - no hardcoded fallback for security
             let password_env = std::env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "admin".to_string());
@@ -165,7 +165,7 @@ impl Db {
 
             let admin = crate::db_optimized::models::User {
                 id: Uuid::new_v4().to_string(),
-                username: "admin".to_string(),
+                username: "nesbeer".to_string(),
                 email: "admin@localhost".to_string(),
                 password_hash,
                 role: "admin".to_string(),
@@ -173,7 +173,7 @@ impl Db {
             };
 
             users_coll.insert_one(admin).await?;
-            tracing::info!("Seeded admin user 'admin' (change password after first login)");
+            tracing::info!("Seeded admin user 'nesbeer' (change password after first login)");
         }
         Ok(())
     }

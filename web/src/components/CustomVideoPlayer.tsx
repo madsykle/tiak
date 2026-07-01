@@ -238,6 +238,27 @@ export default function CustomVideoPlayer({
                             </div>
                         )}
 
+                        {info.hashtags && (
+                            <div className="mb-5">
+                                <span className="text-[10px] text-white/50 uppercase tracking-wider font-semibold block mb-1">Hashtags</span>
+                                <p className="text-sm leading-relaxed text-white/90">{info.hashtags}</p>
+                            </div>
+                        )}
+
+                        {info.transcript && (
+                            <div className="mb-5">
+                                <span className="text-[10px] text-white/50 uppercase tracking-wider font-semibold block mb-1">Transcript</span>
+                                <p className="text-sm leading-relaxed text-white/90 max-h-32 overflow-y-auto pr-2 custom-scrollbar">{info.transcript}</p>
+                            </div>
+                        )}
+
+                        {info.visualDescription && (
+                            <div className="mb-5">
+                                <span className="text-[10px] text-white/50 uppercase tracking-wider font-semibold block mb-1">Visual Description</span>
+                                <p className="text-sm leading-relaxed text-white/90">{info.visualDescription}</p>
+                            </div>
+                        )}
+
                         <div className="text-[10px] text-white/30 font-mono mt-8 pt-4 border-t border-white/10">
                             ID: {info.jobId}
                         </div>

@@ -195,8 +195,8 @@ export default function HistoryPage() {
         {toast && (
            <div className={`fixed top-4 right-4 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold animate-in slide-in-from-top-2 fade-in border backdrop-blur-md ${
              toast.type === 'success' 
-               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 glow-cyan' 
-               : 'bg-red-500/10 border-red-500/30 text-red-400 glow-pink'
+               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 glow-accent' 
+               : 'bg-accent/10 border-accent/30 text-red-400 glow-accent'
            }`}>
              {toast.msg}
            </div>
@@ -204,7 +204,7 @@ export default function HistoryPage() {
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">History</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display">History</h1>
             <p className="mt-1 text-sm text-content-muted">View past download jobs.</p>
           </div>
           <HistoryToolbar onImportSuccess={handleImportSuccess} onImportError={(msg) => showToast(msg, 'error')} />
@@ -222,7 +222,7 @@ export default function HistoryPage() {
                         placeholder="Search URL or filename..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="block w-full rounded-xl border-border bg-surface/40 pl-10 pr-3 py-2.5 text-sm text-foreground shadow-sm placeholder:text-content-subtle focus:border-neon-purple focus:ring-1 focus:ring-neon-purple/30 transition-all duration-200"
+                        className="block w-full rounded-xl border-border bg-surface/40 pl-10 pr-3 py-2.5 text-sm text-foreground shadow-sm placeholder:text-content-subtle focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all duration-200"
                     />
                 </div>
             </div>
@@ -231,7 +231,7 @@ export default function HistoryPage() {
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                    className="block w-full rounded-xl border-border bg-surface/40 py-2.5 pl-3 pr-8 text-sm text-foreground shadow-sm focus:border-neon-purple focus:ring-1 focus:ring-neon-purple/30 transition-all duration-200"
+                    className="block w-full rounded-xl border-border bg-surface/40 py-2.5 pl-3 pr-8 text-sm text-foreground shadow-sm focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all duration-200"
                 >
                     <option value="all">All Status</option>
                     <option value="done">Done</option>
@@ -246,12 +246,12 @@ export default function HistoryPage() {
                     onClick={() => setRetryFilter(!retryFilter)}
                     className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200 ${
                         retryFilter 
-                        ? 'bg-neon-purple/20 border-neon-purple/40 text-foreground glow-purple' 
+                        ? 'bg-accent/20 border-accent/40 text-foreground glow-accent' 
                         : 'bg-surface/40 border-border text-content-muted hover:bg-surface-subtle hover:text-foreground'
                     }`}
                 >
                     <span>Retried</span>
-                    {retryFilter && <span className="h-1.5 w-1.5 rounded-full bg-neon-purple animate-pulse"></span>}
+                    {retryFilter && <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse"></span>}
                 </button>
             </div>
         </div>

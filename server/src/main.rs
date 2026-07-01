@@ -127,19 +127,12 @@ async fn main() -> anyhow::Result<()> {
             HeaderName::from_static("ngrok-skip-browser-warning"),
         ]);
 
-    // Configure allowed origins from config
-    let mut origins = Vec::new();
-    for origin in &config.server.cors_origins {
-        if let Ok(header) = origin.parse::<HeaderValue>() {
-            origins.push(header);
-        }
-    }
-
-    if !origins.is_empty() {
-        cors_builder = cors_builder.allow_origin(origins).allow_credentials(true);
-    } else {
-        cors_builder = cors_builder.allow_origin(Any);
-    }
+    // Dynamically allow any origin and allow credentials for Vercel
+    cors_builder = cors_builder
+        .allow_origin(tower_http::cors::AllowOrigin::predicate(
+            |_, _| true,
+        ))
+        .allow_credentials(true);
 
     // Router
     let app = create_router(app_state)

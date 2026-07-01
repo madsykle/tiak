@@ -142,12 +142,12 @@ export default function EnhancedFilters({
         {/* Active Filters Indicator */}
         {hasActiveFilters && (
           <>
-            <div className="flex items-center gap-2 rounded-xl bg-neon-purple/10 border border-neon-purple/30 px-3 py-1.5 text-xs font-semibold text-neon-purple">
-              <span className="flex h-2 w-2 rounded-full bg-neon-purple animate-pulse"></span>
+            <div className="flex items-center gap-2 rounded-xl bg-accent/10 border border-accent/30 px-3 py-1.5 text-xs font-semibold text-accent">
+              <span className="flex h-2 w-2 rounded-full bg-accent animate-pulse"></span>
               <span>{fileCount} result{fileCount !== 1 ? 's' : ''}</span>
               <button
                 onClick={onClearFilters}
-                className="ml-1 text-neon-purple hover:text-neon-purple/80 transition-colors"
+                className="ml-1 text-accent hover:text-accent/80 transition-colors"
                 title="Clear all filters"
               >
                 <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

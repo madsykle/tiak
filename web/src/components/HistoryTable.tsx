@@ -168,7 +168,7 @@ export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, o
                           </div>
                           {job.error && (
                             <div className="grid grid-cols-[80px_1fr] gap-2">
-                              <span className="font-semibold text-red-500">Error:</span>
+                              <span className="font-semibold text-accent">Error:</span>
                               <span className="text-red-600 break-words">{job.error}</span>
                             </div>
                           )}

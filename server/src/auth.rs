@@ -420,3 +420,12 @@ pub async fn update_role_handler(
     }
 }
 
+pub async fn me_handler(
+    user: AuthenticatedUser,
+) -> impl IntoResponse {
+    Json(serde_json::json!({
+        "username": user.username,
+        "role": user.role
+    })).into_response()
+}
+
