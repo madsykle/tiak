@@ -111,7 +111,7 @@ export default function Layout({ children }: LayoutProps) {
               return (
                 <li key={item.href} className="flex-1 h-full relative">
                   {active && (
-                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-neon-purple rounded-b-sm shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div>
+                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-accent rounded-b-sm shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div>
                   )}
                   <Link
                     href={item.href}

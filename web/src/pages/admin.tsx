@@ -105,7 +105,7 @@ export default function AdminDashboard() {
   if (role !== 'admin') {
     return (
       <div className="flex h-[80vh] flex-col items-center justify-center text-center">
-        <h1 className="text-4xl font-bold text-red-500 mb-4">403</h1>
+        <h1 className="text-4xl font-bold text-accent mb-4">403</h1>
         <p className="text-xl text-content-muted">Access Denied. Admins only.</p>
       </div>
     );
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
       <Head><title>Admin Dashboard - Tiak</title></Head>
       <div className="space-y-8 animate-in fade-in duration-500 pb-20">
         <header>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">System Dashboard</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display">System Dashboard</h1>
           <p className="text-content-muted mt-1">Global oversight and user management.</p>
         </header>
 
@@ -124,8 +124,8 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard title="Total Jobs" value={stats?.total_jobs || 0} icon="📊" />
           <StatCard title="Storage" value={usage ? formatBytes(usage.totalSize) : '...'} icon="💾" />
-          <StatCard title="In Queue" value={stats?.queue_size || 0} color="text-gradient-cyan" icon="⏳" />
-          <StatCard title="Failed" value={stats?.failed_jobs || 0} color="text-gradient-pink" icon="❌" />
+          <StatCard title="In Queue" value={stats?.queue_size || 0} color="text-gradient-accent" icon="⏳" />
+          <StatCard title="Failed" value={stats?.failed_jobs || 0} color="text-gradient-accent" icon="❌" />
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -152,8 +152,8 @@ export default function AdminDashboard() {
                                   value={u.role}
                                   onChange={(e) => updateUserRole(u.id, e.target.value)}
                                   className={`text-xs font-bold rounded-full py-1 pl-3 pr-8 transition-all duration-200 focus:outline-none focus:ring-2 cursor-pointer ${
-                                    u.role === 'admin' ? 'bg-red-500/10 text-red-500 border border-red-500/20 focus:ring-red-500/30' :
-                                    u.role === 'premium_member' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20 focus:ring-purple-500/30' :
+                                    u.role === 'admin' ? 'bg-accent text-white border border-accent focus:ring-accent/30' :
+                                    u.role === 'premium_member' ? 'bg-accent/10 text-accent border border-accent/20 focus:ring-accent/30' :
                                     'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 focus:ring-zinc-500/30'
                                   }`}
                                   disabled={u.username === 'nesbeer'}
@@ -173,34 +173,40 @@ export default function AdminDashboard() {
                     Create New User
                   </h2>
                   <form onSubmit={handleCreateUser} className="space-y-4">
-                      <input
-                        type="text"
-                        placeholder="Username"
-                        className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all placeholder-content-subtle"
-                        value={newUsername}
-                        onChange={e => setNewUsername(e.target.value)}
-                        required
-                      />
-                      <input
-                        type="email"
-                        placeholder="Email"
-                        className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all placeholder-content-subtle"
-                        value={newEmail}
-                        onChange={e => setNewEmail(e.target.value)}
-                        required
-                      />
-                      <input
-                        type="password"
-                        placeholder="Password"
-                        className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all placeholder-content-subtle"
-                        value={newPassword}
-                        onChange={e => setNewPassword(e.target.value)}
-                        required
-                      />
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-content-muted uppercase tracking-wider block">Username</label>
+                        <input
+                          type="text"
+                          className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all placeholder-content-subtle"
+                          value={newUsername}
+                          onChange={e => setNewUsername(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-content-muted uppercase tracking-wider block">Email</label>
+                        <input
+                          type="email"
+                          className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all placeholder-content-subtle"
+                          value={newEmail}
+                          onChange={e => setNewEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-content-muted uppercase tracking-wider block">Password</label>
+                        <input
+                          type="password"
+                          className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all placeholder-content-subtle"
+                          value={newPassword}
+                          onChange={e => setNewPassword(e.target.value)}
+                          required
+                        />
+                      </div>
                       <button
                         type="submit"
                         disabled={creating}
-                        className="w-full bg-neon-purple hover:bg-neon-purple/90 text-white font-bold py-2.5 rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 glow-purple"
+                        className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-2.5 rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 glow-accent mt-2"
                       >
                         {creating ? 'Creating...' : 'Create Premium User'}
                       </button>
@@ -222,10 +228,10 @@ export default function AdminDashboard() {
                             <div className="h-2 w-full bg-surface-strong rounded-full overflow-hidden border border-border/30">
                                 <div 
                                     className={`h-full transition-all duration-1000 ${
-                                      p === 'youtube' ? 'bg-red-500 glow-red' :
-                                      p === 'tiktok' ? 'bg-cyan-500 glow-cyan' :
-                                      p === 'instagram' ? 'bg-pink-500 glow-pink' :
-                                      'bg-neon-purple glow-purple'
+                                      p === 'youtube' ? 'bg-accent glow-accent' :
+                                      p === 'tiktok' ? 'bg-accent glow-accent' :
+                                      p === 'instagram' ? 'bg-accent glow-accent' :
+                                      'bg-accent glow-accent'
                                     }`} 
                                     style={{ width: `${(count / (stats.done_jobs || 1)) * 100}%` }}
                                 ></div>
@@ -242,7 +248,7 @@ export default function AdminDashboard() {
 
 function StatCard({ title, value, color = "text-foreground", icon }: { title: string, value: string | number, color?: string, icon: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface/40 p-5 shadow-md glass-premium hover-scale transition-all duration-300 hover:border-purple-500/30 hover:glow-purple">
+    <div className="rounded-2xl border border-border bg-surface/40 p-5 shadow-md glass-premium hover-scale transition-all duration-300 hover:border-accent/30 hover:glow-accent">
       <div className="text-2xl mb-2">{icon}</div>
       <p className="text-xs font-semibold text-content-muted uppercase tracking-wider">{title}</p>
       <p className={`text-2xl font-extrabold mt-1 tracking-tight ${color}`}>{value}</p>

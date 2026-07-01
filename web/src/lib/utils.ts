@@ -7,8 +7,8 @@ export function platformBadgeClass(platform: string): string {
   const base = 'px-1.5 py-0.5 rounded text-[10px]';
   const colors: Record<string, string> = {
     tiktok: 'bg-zinc-900 text-white',
-    instagram: 'bg-pink-500/15 text-pink-600',
-    youtube: 'bg-red-500/15 text-red-600',
+    instagram: 'bg-accent/15 text-pink-600',
+    youtube: 'bg-accent/15 text-red-600',
   };
   return `${base} ${colors[platform] ?? 'bg-surface-strong'}`;
 }

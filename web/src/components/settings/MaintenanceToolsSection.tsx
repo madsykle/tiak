@@ -71,7 +71,7 @@ interface ToolRowProps {
 }
 
 function ToolRow({ color, title, description, running, idleLabel, runningLabel, onClick, icon }: ToolRowProps) {
-  const colorClass = color === 'blue' ? 'bg-blue-500/10 text-blue-500' : color === 'purple' ? 'bg-purple-500/10 text-purple-500' : 'bg-orange-500/10 text-orange-500';
+  const colorClass = color === 'blue' ? 'bg-blue-500/10 text-blue-500' : color === 'purple' ? 'bg-accent/10 text-accent' : 'bg-orange-500/10 text-orange-500';
 
   return (
     <div className="flex items-center justify-between p-4 rounded-xl border border-border-subtle bg-surface-subtle/50 hover:bg-surface-subtle transition-colors group">

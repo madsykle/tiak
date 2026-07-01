@@ -21,6 +21,10 @@
 queue_settings.json
 timeline.json
 
+# Recovery/backfill runtime state
+backfill_progress.json
+backfill_failures.json
+
 # Logs
 *.log
 npm-debug.log*

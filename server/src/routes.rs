@@ -68,6 +68,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/auth/login", post(crate::auth::login_handler))
         .route("/api/auth/logout", post(crate::auth::logout_handler))
         .route("/api/auth/signup", post(crate::auth::signup_handler))
+        .route("/api/auth/me", get(crate::auth::me_handler))
         .route("/api/queue/add", post(queue_api::add_to_queue))
         .route("/api/queue/list", get(queue_api::list_queue))
         .route("/api/files/download", get(files_api::download_file))

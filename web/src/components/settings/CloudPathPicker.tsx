@@ -94,9 +94,9 @@ export default function CloudPathPicker({ currentPath, onSelect, onClose }: Clou
             type="text"
             value={path}
             onChange={(e) => setPath(e.target.value)}
-            className="flex-1 rounded-lg border border-border bg-surface/50 p-2 text-sm text-foreground focus:ring-1 focus:ring-neon-purple focus:border-neon-purple"
+            className="flex-1 rounded-lg border border-border bg-surface/50 p-2 text-sm text-foreground focus:ring-1 focus:ring-accent focus:border-accent"
           />
-          <button onClick={() => fetchDirectory(path)} className="p-2 rounded-lg bg-neon-purple/10 text-neon-purple hover:bg-neon-purple/20 transition-colors">
+          <button onClick={() => fetchDirectory(path)} className="p-2 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           </button>
         </div>
@@ -108,7 +108,7 @@ export default function CloudPathPicker({ currentPath, onSelect, onClose }: Clou
               <span className="text-sm">Loading directories...</span>
             </div>
           ) : error ? (
-            <div className="p-4 m-2 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <div className="p-4 m-2 text-sm text-red-400 bg-accent/10 border border-accent/20 rounded-xl">
               {error}
             </div>
           ) : entries.length === 0 ? (
@@ -121,10 +121,10 @@ export default function CloudPathPicker({ currentPath, onSelect, onClose }: Clou
                 <button
                   key={entry.Path}
                   onClick={() => handleNavigate(entry.Name)}
-                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-strong hover:text-neon-purple transition-colors text-left group"
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-strong hover:text-accent transition-colors text-left group"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" className="text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-                  <span className="text-sm font-medium text-foreground group-hover:text-neon-purple transition-colors">{entry.Name}</span>
+                  <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">{entry.Name}</span>
                 </button>
               ))}
             </div>
@@ -140,7 +140,7 @@ export default function CloudPathPicker({ currentPath, onSelect, onClose }: Clou
           </button>
           <button
             onClick={() => onSelect(path)}
-            className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-neon-purple hover:bg-neon-purple/90 shadow-lg shadow-neon-purple/20 transition-all active:scale-95"
+            className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20 transition-all active:scale-95"
           >
             Select Here
           </button>

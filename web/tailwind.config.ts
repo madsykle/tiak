@@ -15,7 +15,6 @@ const config: Config = {
       colors: {
         background: "rgb(var(--background) / <alpha-value>)",
         foreground: "rgb(var(--foreground) / <alpha-value>)",
-        // Premium neutral palette (Zinc-like)
         surface: {
           DEFAULT: "rgb(var(--surface) / <alpha-value>)",
           subtle: "rgb(var(--surface-subtle) / <alpha-value>)",
@@ -30,11 +29,8 @@ const config: Config = {
           DEFAULT: "rgb(var(--border) / <alpha-value>)",
           subtle: "rgb(var(--border-subtle) / <alpha-value>)",
         },
-        neon: {
-          cyan: "rgb(var(--neon-cyan) / <alpha-value>)",
-          pink: "rgb(var(--neon-pink) / <alpha-value>)",
-          red: "rgb(var(--neon-red) / <alpha-value>)",
-          purple: "rgb(var(--neon-purple) / <alpha-value>)",
+        accent: {
+          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
         },
       },
     },

@@ -371,16 +371,18 @@ pub(super) async fn queue_history(
     let limit = q.limit.unwrap_or(50).max(1);
     let offset = (page - 1) * limit;
 
-    if let Ok((items, total)) = state.db.get_job_history(limit, offset, Some(&user.username), Some(&user.role)).await {
-        Json(serde_json::json!({
+    match state.db.get_job_history(limit, offset, Some(&user.username), Some(&user.role)).await {
+        Ok((items, total)) => Json(serde_json::json!({
             "items": items,
             "total": total,
             "page": page,
             "limit": limit
         }))
-        .into_response()
-    } else {
-        (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed").into_response()
+        .into_response(),
+        Err(e) => {
+            tracing::error!("get_job_history error: {:?}", e);
+            (axum::http::StatusCode::INTERNAL_SERVER_ERROR, format!("Failed: {}", e)).into_response()
+        }
     }
 }
 

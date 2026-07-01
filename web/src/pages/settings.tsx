@@ -329,7 +329,7 @@ export default function Settings() {
   if (role !== 'admin' && role !== 'premium_member') {
     return (
       <div className="max-w-md mx-auto py-12 animate-in fade-in duration-500">
-        <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display mb-8 text-center">
+        <h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display mb-8 text-center">
           Member Dashboard
         </h1>
         <div className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
@@ -340,7 +340,7 @@ export default function Settings() {
               onClick={() => { setIsRegistering(false); setLoginError(''); }}
               className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all duration-200 ${
                 !isRegistering
-                  ? 'border-neon-purple text-neon-purple'
+                  ? 'border-accent text-accent'
                   : 'border-transparent text-content-muted hover:text-foreground'
               }`}
             >
@@ -351,7 +351,7 @@ export default function Settings() {
               onClick={() => { setIsRegistering(true); setLoginError(''); }}
               className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all duration-200 ${
                 isRegistering
-                  ? 'border-neon-purple text-neon-purple'
+                  ? 'border-accent text-accent'
                   : 'border-transparent text-content-muted hover:text-foreground'
               }`}
             >
@@ -364,7 +364,7 @@ export default function Settings() {
               <label className="block text-xs font-semibold mb-1 text-content-muted uppercase tracking-wider">Username</label>
               <input
                 type="text"
-                className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all duration-200 placeholder-content-subtle"
+                className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all duration-200 placeholder-content-subtle"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 placeholder="Enter username"
@@ -377,7 +377,7 @@ export default function Settings() {
                 <label className="block text-xs font-semibold mb-1 text-content-muted uppercase tracking-wider">Email Address</label>
                 <input
                   type="email"
-                  className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all duration-200 placeholder-content-subtle"
+                  className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all duration-200 placeholder-content-subtle"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="name@example.com"
@@ -390,7 +390,7 @@ export default function Settings() {
               <label className="block text-xs font-semibold mb-1 text-content-muted uppercase tracking-wider">Password</label>
               <input
                 type="password"
-                className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all duration-200 placeholder-content-subtle"
+                className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all duration-200 placeholder-content-subtle"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -403,7 +403,7 @@ export default function Settings() {
                 <label className="block text-xs font-semibold mb-1 text-content-muted uppercase tracking-wider">Confirm Password</label>
                 <input
                   type="password"
-                  className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple/30 focus:border-neon-purple transition-all duration-200 placeholder-content-subtle"
+                  className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all duration-200 placeholder-content-subtle"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
@@ -413,7 +413,7 @@ export default function Settings() {
             )}
 
             {loginError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs font-semibold animate-in fade-in duration-200">
+              <div className="p-3 bg-accent/10 border border-accent/20 text-red-400 rounded-xl text-xs font-semibold animate-in fade-in duration-200">
                 {loginError}
               </div>
             )}
@@ -427,7 +427,7 @@ export default function Settings() {
              <button
               type="submit"
               disabled={loginLoading}
-              className="w-full mt-6 bg-neon-purple hover:bg-neon-purple/90 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed glow-purple"
+              className="w-full mt-6 bg-accent hover:bg-accent/90 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed glow-accent"
             >
               {loginLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -455,7 +455,7 @@ export default function Settings() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
           <button
             onClick={logout}
-            className="text-sm font-medium text-red-500 hover:text-red-700 transition-colors"
+            className="text-sm font-medium text-accent hover:text-red-700 transition-colors"
           >
             Sign Out
           </button>

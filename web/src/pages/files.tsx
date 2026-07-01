@@ -431,7 +431,7 @@ export default function FilesEnhanced() {
       <div className="space-y-6 animate-in fade-in duration-500">
         <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">Files</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display">Files</h1>
             {usage ? (
               <div className="mt-3 space-y-1.5 max-w-[280px]">
                 <div className="flex justify-between text-[11px] font-mono text-content-muted">
@@ -440,7 +440,7 @@ export default function FilesEnhanced() {
                 </div>
                 <div className="h-1.5 w-full bg-surface-strong rounded-full overflow-hidden border border-border/30">
                   <div 
-                    className="h-full bg-neon-purple rounded-full glow-purple transition-all duration-500"
+                    className="h-full bg-accent rounded-full glow-accent transition-all duration-500"
                     style={{ width: `${Math.min(100, (usage.totalSize / (50 * 1024 * 1024 * 1024)) * 100)}%` }}
                   />
                 </div>

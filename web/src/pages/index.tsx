@@ -21,7 +21,7 @@ function ExpiryCountdown({ expiresAt }: { expiresAt: number }) {
     return () => clearInterval(timer);
   }, [expiresAt]);
 
-  if (timeLeft <= 0) return <span className="text-[10px] text-red-500 font-medium italic">Expired</span>;
+  if (timeLeft <= 0) return <span className="text-[10px] text-accent font-medium italic">Expired</span>;
 
   const totalDuration = 5 * 60 * 1000; // 5 minutes
   const percentage = Math.max(0, Math.min(100, (timeLeft / totalDuration) * 100));
@@ -33,7 +33,7 @@ function ExpiryCountdown({ expiresAt }: { expiresAt: number }) {
     <div className="flex items-center gap-2 min-w-[80px]">
         <div className="h-1 w-12 bg-surface-strong rounded-full overflow-hidden">
             <div 
-                className={`h-full transition-all duration-1000 ease-linear ${percentage < 20 ? 'bg-red-500' : 'bg-orange-400'}`}
+                className={`h-full transition-all duration-1000 ease-linear ${percentage < 20 ? 'bg-accent' : 'bg-orange-400'}`}
                 style={{ width: `${percentage}%` }}
             />
         </div>
@@ -56,7 +56,7 @@ export default function Queue() {
   const [selectedCategory, setSelectedCategory] = useState('default');
   const [refreshing, setRefreshing] = useState(false);
   const [role, setRole] = useState<string | null>(null);
-
+  const [retryError, setRetryError] = useState<{ id: string; message: string } | null>(null);
   // Preview Modal State
   const [previewJob, setPreviewJob] = useState<DownloadJob | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');
@@ -203,7 +203,6 @@ export default function Queue() {
 
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
   const retryPromises = useRef<Map<string, Promise<void>>>(new Map());
-  const [retryError, setRetryError] = useState<{ id: string; message: string } | null>(null);
 
   const handleRetry = async (id: string) => {
     if (retryingIds.has(id)) return;
@@ -316,11 +315,11 @@ export default function Queue() {
       <div className="space-y-8 animate-in fade-in duration-500">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-extrabold tracking-tight text-gradient-purple font-display">Queue</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display">Queue</h1>
               {role && (
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                  role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                  role === 'premium_member' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
+                  role === 'admin' ? 'bg-accent text-white border border-accent' :
+                  role === 'premium_member' ? 'bg-accent/10 text-accent border border-accent/20' :
                   'bg-content-subtle/10 text-content-muted border border-border'
                 }`}>
                   {role.replace('_member', '').replace('guest', 'Guest')}
@@ -342,13 +341,13 @@ export default function Queue() {
                 </svg>
                 <span>Refresh</span>
               </button>
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse glow-cyan" title="Live updates active"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse glow-accent" title="Live updates active"></div>
             </div>
         </header>
 
         {/* Input Area */}
         <div className="space-y-4">
-            <div className="group relative rounded-xl border border-border bg-surface shadow-md focus-within:border-neon-purple/50 focus-within:ring-1 focus-within:ring-neon-purple/30 transition-all duration-300">
+            <div className="group relative rounded-xl border border-border bg-surface shadow-md focus-within:border-accent/50 focus-within:ring-1 focus-within:ring-accent/30 transition-all duration-300">
                 <div className="relative">
                     <textarea
                     className="block w-full border-0 bg-transparent p-4 pb-12 text-foreground placeholder:text-content-subtle focus:ring-0 sm:text-sm resize-none font-sans rounded-t-xl"
@@ -361,13 +360,13 @@ export default function Queue() {
                     {/* Platform Autodetect Badge */}
                     <div className="absolute bottom-3 left-4 flex flex-wrap gap-2 pointer-events-none">
                         {urls.toLowerCase().includes('youtube') && (
-                            <span className="px-2 py-1 rounded-md bg-red-500/10 text-red-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white"/></svg> YouTube</span>
+                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white"/></svg> YouTube</span>
                         )}
                         {urls.toLowerCase().includes('tiktok') && (
-                            <span className="px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.12-3.44-3.17-3.48-5.56-.02-1.38.34-2.73 1.05-3.86 1.11-1.8 3.12-2.9 5.25-3v4.03c-1.12.06-2.19.68-2.79 1.62-.51.81-.66 1.83-.34 2.76.3 1.03 1.11 1.87 2.11 2.23 1.09.43 2.37.28 3.32-.38.7-.51 1.18-1.28 1.34-2.12.1-.57.1-1.16.1-1.74V.02z"/></svg> TikTok</span>
+                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.12-3.44-3.17-3.48-5.56-.02-1.38.34-2.73 1.05-3.86 1.11-1.8 3.12-2.9 5.25-3v4.03c-1.12.06-2.19.68-2.79 1.62-.51.81-.66 1.83-.34 2.76.3 1.03 1.11 1.87 2.11 2.23 1.09.43 2.37.28 3.32-.38.7-.51 1.18-1.28 1.34-2.12.1-.57.1-1.16.1-1.74V.02z"/></svg> TikTok</span>
                         )}
                         {urls.toLowerCase().includes('instagram') && (
-                            <span className="px-2 py-1 rounded-md bg-pink-500/10 text-pink-500 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram</span>
+                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram</span>
                         )}
                     </div>
                 </div>
@@ -397,7 +396,7 @@ export default function Queue() {
                     <button
                         onClick={handleSubmit}
                         disabled={loading || !urls.trim()}
-                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-neon-purple hover:bg-neon-purple/90 px-6 py-2 text-sm font-semibold text-white shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-accent hover:bg-accent/90 px-6 py-2 text-sm font-semibold text-white shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                         {loading ? 'Adding...' : 'Add to Queue'}
                     </button>
@@ -437,7 +436,7 @@ export default function Queue() {
 
             {/* Retry Error Toast */}
             {retryError && (
-                <div className="rounded-lg border border-red-500/30 bg-red-500/10 backdrop-blur-md p-4 text-sm text-red-400 animate-in slide-in-from-top-2 shadow-lg flex items-start gap-3">
+                <div className="rounded-lg border border-accent/30 bg-accent/10 backdrop-blur-md p-4 text-sm text-red-400 animate-in slide-in-from-top-2 shadow-lg flex items-start gap-3">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <div className="flex-1">
                         <p className="font-semibold mb-1">Retry failed</p>
@@ -469,26 +468,9 @@ export default function Queue() {
             ) : (
                 <div className="space-y-3">
                     {jobs.map((job) => {
-                        const isYoutube = job.platform === 'youtube';
-                        const isTiktok = job.platform === 'tiktok';
-                        const isInstagram = job.platform === 'instagram';
-                        
-                        let cardGlow = "hover:glow-purple border-purple-500/10";
-                        let progressBg = "bg-purple-500/10";
-                        let statusColor = "bg-purple-500";
-                        if (isYoutube) {
-                          cardGlow = "hover:glow-red border-red-500/15";
-                          progressBg = "bg-red-500/15";
-                          statusColor = "bg-red-500 glow-red";
-                        } else if (isTiktok) {
-                          cardGlow = "hover:glow-cyan border-cyan-500/15";
-                          progressBg = "bg-cyan-500/15";
-                          statusColor = "bg-cyan-500 glow-cyan";
-                        } else if (isInstagram) {
-                          cardGlow = "hover:glow-pink border-pink-500/15";
-                          progressBg = "bg-pink-500/15";
-                          statusColor = "bg-pink-500 glow-pink";
-                        }
+                        const cardGlow = "hover:border-accent/30 border-transparent";
+                        const progressBg = "bg-accent/10";
+                        const statusColor = "bg-accent";
 
                         return (
                           <div key={job.id} className={`relative overflow-hidden rounded-2xl border bg-surface/50 p-4 shadow-md transition-all duration-300 hover-scale glass-premium ${cardGlow}`}>
@@ -506,7 +488,7 @@ export default function Queue() {
                                           <span className={`inline-flex h-2 w-2 rounded-full ${
                                               job.status === 'done' ? 'bg-emerald-500' :
                                               job.status === 'downloading' ? statusColor :
-                                              job.status === 'failed' ? 'bg-red-500' :
+                                              job.status === 'failed' ? 'bg-accent' :
                                               job.status === 'missing' ? 'bg-zinc-500' : 'bg-zinc-400'
                                           }`} />
                                           <p className="truncate text-sm font-medium text-foreground" title={job.url}>{job.url}</p>
@@ -547,7 +529,7 @@ export default function Queue() {
                                               </>
                                           )}
                                           {job.error && (
-                                              <span className="text-red-500 truncate max-w-[200px]">{job.error}</span>
+                                              <span className="text-accent truncate max-w-[200px]">{job.error}</span>
                                           )}
                                       </div>
                                   </div>
@@ -560,7 +542,7 @@ export default function Queue() {
                                           e.stopPropagation();
                                           triggerInvisibleDownload(getDownloadUrl(getJobDownloadPath(job)));
                                         }}
-                                        className="shrink-0 rounded-lg bg-neon-purple hover:bg-neon-purple/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
+                                        className="shrink-0 rounded-lg bg-accent hover:bg-accent/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
                                       >
                                         Download File
                                       </button>
@@ -568,7 +550,7 @@ export default function Queue() {
                                     {(job.status === 'queued' || job.status === 'downloading') && (
                                       <button
                                         onClick={() => handleCancel(job.id)}
-                                        className="shrink-0 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all duration-200 active:scale-95"
+                                        className="shrink-0 rounded-lg bg-accent/10 border border-accent/20 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-accent/20 hover:text-red-300 transition-all duration-200 active:scale-95"
                                       >
                                         Cancel
                                       </button>

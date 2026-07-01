@@ -30,7 +30,11 @@ export interface FileInfo {
   platform?: string | null;
   creator?: string;
   caption?: string;
+  hashtags?: string;
+  transcript?: string;
+  visualDescription?: string;
 }
+
 
 export function getToken(): string | null {
   if (typeof window !== 'undefined') {

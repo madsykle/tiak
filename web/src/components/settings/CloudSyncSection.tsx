@@ -41,7 +41,7 @@ export default function CloudSyncSection({
         </h2>
         <div className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
           syncStatus.status === 'running' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 animate-pulse' :
-          syncStatus.status === 'error' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+          syncStatus.status === 'error' ? 'bg-accent/10 text-accent border-accent/20' :
           'bg-zinc-500/10 text-zinc-500 border-zinc-500/20'
         }`}>
           {syncStatus.status === 'running' ? 'Syncing...' : syncStatus.status === 'idle' ? 'Idle' : 'Error'}
@@ -100,7 +100,7 @@ export default function CloudSyncSection({
             </span>
           </div>
           {syncStatus.error && (
-            <div className="text-red-400 text-xs bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+            <div className="text-red-400 text-xs bg-accent/10 p-2 rounded-lg border border-accent/20">
               <strong>Error:</strong> {syncStatus.error}
             </div>
           )}
