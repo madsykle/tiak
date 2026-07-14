@@ -5,8 +5,8 @@ const path = require("path");
 
 const MONGO_URI = "mongodb://localhost:27017/tiak";
 const YT_DLP = path.join(__dirname, "../bin/yt-dlp");
-const PROGRESS_FILE = path.join(__dirname, "recover_progress.json");
-const FAILURES_FILE = path.join(__dirname, "recover_failures.json");
+const PROGRESS_FILE = path.join(__dirname, "avatar_progress.json");
+const FAILURES_FILE = path.join(__dirname, "avatar_failures.json");
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -40,19 +40,8 @@ function saveFailure(id, filename, reason) {
   fs.writeFileSync(FAILURES_FILE, JSON.stringify(failures, null, 2), "utf8");
 }
 
-function tiktokIdFromFilename(filename) {
-  const match = filename.match(/^(\d{15,21})\.mp4$/i);
-  return match ? match[1] : null;
-}
-
-function buildTikTokUrl(filename) {
-  const videoId = tiktokIdFromFilename(filename);
-  if (!videoId) return null;
-  return `https://www.tiktok.com/@placeholder/video/${videoId}`;
-}
-
 function fetchMetadata(url) {
-  const cmd = `"${YT_DLP}" --dump-json --no-warnings --no-playlist --extractor-retries 3 --retry-sleep extractor:1 --proxy socks5://127.0.0.1:9746 "${url}"`;
+  const cmd = `"${YT_DLP}" --dump-json --no-warnings --no-playlist --extractor-retries 2 --proxy socks5://127.0.0.1:9746 "${url}"`;
   const output = execSync(cmd, {
     encoding: "utf-8",
     timeout: 45000,
@@ -62,44 +51,29 @@ function fetchMetadata(url) {
 }
 
 async function processJob(jobs, job, done, idx, total) {
-  let url = job.url;
+  if (!job.url) {
+    console.log(`  [${idx}/${total}] SKIP (no URL): ${job.filename}`);
+    done.add(job._id);
+    saveProgress(done);
+    return;
+  }
 
-  if (!url || url === "recovered-from-disk" || url === "") {
-    if (job.platform === "tiktok") {
-      url = buildTikTokUrl(job.filename);
-    }
-    if (!url) {
-      console.log(`  [${idx}/${total}] SKIP (no URL and not TikTok): ${job.filename}`);
+  process.stdout.write(`  [${idx}/${total}] ${job.filename} … `);
+
+  try {
+    const data = fetchMetadata(job.url);
+
+    const creatorAvatar = data.uploader_thumbnail || data.channel_thumbnail || data.avatar || data.thumbnail || null;
+
+    if (!creatorAvatar) {
+      console.log(`⊘ no avatar in metadata`);
       done.add(job._id);
       saveProgress(done);
       return;
     }
-  }
 
-  process.stdout.write(`  [${idx}/${total}] ${job.category}/${job.filename} … `);
-
-  try {
-    const data = fetchMetadata(url);
-
-    const creatorName = data.uploader || data.creator || data.channel || null;
-    const creatorAvatar = data.uploader_thumbnail || data.channel_thumbnail || data.avatar || data.thumbnail || null;
-    const caption = data.description || data.title || job.caption || null;
-    const hashtags = Array.isArray(data.tags) && data.tags.length
-      ? data.tags
-      : (caption ? (caption.match(/#\w+/g) || null) : null);
-    const realUrl = data.webpage_url || url;
-
-    const update = {
-      url: realUrl,
-      creator_name: creatorName,
-      creator_avatar: creatorAvatar,
-      caption: caption,
-      hashtags: hashtags,
-    };
-
-    await jobs.updateOne({ _id: job._id }, { $set: update });
-
-    console.log(`✓ ${creatorName || "unknown"}`);
+    await jobs.updateOne({ _id: job._id }, { $set: { creator_avatar: creatorAvatar } });
+    console.log(`✓ got avatar`);
     done.add(job._id);
     saveProgress(done);
   } catch (err) {
@@ -127,13 +101,8 @@ async function run() {
     const pending = await jobs
       .find({
         platform: "tiktok",
+        creator_name: { $nin: [null, "", "unknown"] },
         $or: [
-          { url: "recovered-from-disk" },
-          { url: null },
-          { url: "" },
-          { creator_name: null },
-          { creator_name: "" },
-          { creator_name: "unknown" },
           { creator_avatar: null },
           { creator_avatar: "" },
         ],
@@ -143,14 +112,14 @@ async function run() {
     const done = loadProgress();
     const remaining = pending.filter((j) => !done.has(j._id));
 
-    console.log(`Total TikTok jobs : ${pending.length}`);
+    console.log(`Missing avatar     : ${pending.length}`);
     console.log(`Already done      : ${done.size}`);
     console.log(`To process        : ${remaining.length}`);
     console.log(`Concurrency       : 1 (serial)`);
-    console.log(`Delay between req : 2000ms\n`);
+    console.log(`Delay between req : 3000ms\n`);
 
     if (remaining.length === 0) {
-      console.log("Nothing to do — all TikTok jobs already processed.");
+      console.log("Nothing to do — all have avatars.");
       return;
     }
 
@@ -160,19 +129,19 @@ async function run() {
     for (let i = 0; i < remaining.length; i++) {
       await processJob(jobs, remaining[i], done, ++idx, total);
       if (i + 1 < remaining.length) {
-        await sleep(2000);
+        await sleep(3000);
       }
     }
 
     const failures = loadFailures();
-    const updated = await jobs.countDocuments({
+    const goodAvatar = await jobs.countDocuments({
       platform: "tiktok",
-      url: { $nin: ["recovered-from-disk", null, ""] },
+      creator_avatar: { $nin: [null, ""] },
     });
 
     console.log("\n════════════════════════════════");
     console.log(`  Processed : ${remaining.length}`);
-    console.log(`  Updated   : ${updated} total with real URL`);
+    console.log(`  Good avatar: ${goodAvatar}`);
     console.log(`  Failures  : ${failures.length}`);
     if (failures.length > 0) {
       console.log(`  → See ${FAILURES_FILE} for details`);

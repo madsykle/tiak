@@ -51,7 +51,7 @@ Edit `.env` and provide your `MONGODB_URI` and a secure `JWT_SECRET`.
 The server handles the core logic and media processing.
 ```bash
 cd server
-# Setup Python virtual environment for yt-dlp
+# Setup Python virtual environment and download the yt-dlp binary
 ./install_deps.sh
 # Run the server
 cargo run
@@ -117,7 +117,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 ## 🌐 Deployment
 
 ### 1. Reverse Proxy (Nginx)
-Use the provided `nginx.conf.example`. It includes critical rules for **Proxy Buffering Off** (required for smooth streaming) and large body sizes.
+Use the provided `nginx.conf.example`. It includes critical rules for **Proxy Buffering Off** (required for smooth streaming) and large body sizes. To ensure lag-free streaming, you must set `proxy_buffering off;` in your Nginx configuration, particularly for the stream endpoint.
 
 ### 2. Frontend (Vercel)
 The `web` directory is optimized for Vercel. Ensure your `NEXT_PUBLIC_API_BASE` in the Vercel dashboard points to your VPS domain.

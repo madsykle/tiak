@@ -74,9 +74,6 @@ async fn fetch_metadata(
         .arg("--dump-json")
         .arg("--no-playlist")
         .arg("--no-warnings")
-        .arg("--impersonate")
-        .arg("chrome")
-        .arg("--no-check-certificates") // sometimes needed
         .arg(url)
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
