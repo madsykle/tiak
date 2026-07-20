@@ -42,8 +42,13 @@ pub(super) async fn zip_files(
     let res = tokio::task::spawn_blocking(move || -> Result<Vec<u8>, anyhow::Error> {
         let mut buffer = Vec::new();
         let mut zip = zip::ZipWriter::new(std::io::Cursor::new(&mut buffer));
-        let options =
+        let default_options =
             SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+        let stored_options =
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+        // ponytail: video formats are already compressed, deflating wastes CPU for ~0 gain
+        let no_compress_exts = [".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v", ".flv", ".ogg", ".opus", ".mp3", ".wav", ".flac"];
 
         for p in paths {
             match validate_data_path(&p) {
@@ -55,6 +60,13 @@ pub(super) async fn zip_files(
                         .unwrap_or_else(|_| {
                             abs_path.file_name().unwrap().to_string_lossy().into_owned()
                         });
+
+                    let ext = abs_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                    let options = if no_compress_exts.iter().any(|e| e.eq_ignore_ascii_case(&format!(".{ext}"))) {
+                        stored_options
+                    } else {
+                        default_options
+                    };
 
                     zip.start_file(relative_name, options)?;
                     let content = std::fs::read(&abs_path)?;

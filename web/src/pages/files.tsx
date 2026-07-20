@@ -46,6 +46,7 @@ export default function FilesEnhanced() {
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [displayLimit, setDisplayLimit] = useState(50);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [zipping, setZipping] = useState(false);
 
   // Preview State
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
@@ -191,6 +192,7 @@ export default function FilesEnhanced() {
   };
 
   const handleBatchZip = async () => {
+    setZipping(true);
     try {
       const paths = Array.from(selectedPaths);
       const blob = await zipFiles(paths);
@@ -207,6 +209,8 @@ export default function FilesEnhanced() {
     } catch (err) {
       console.error('Batch ZIP failed', err);
       showFeedback('error', 'Failed to create ZIP');
+    } finally {
+      setZipping(false);
     }
   };
 
@@ -493,6 +497,7 @@ export default function FilesEnhanced() {
           onSelectAll={handleSelectAll}
           onClearSelection={handleClearSelection}
           isLoading={loading}
+          isZipping={zipping}
         />
 
         {feedback && (
