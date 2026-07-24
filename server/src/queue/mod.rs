@@ -42,6 +42,7 @@ pub struct DownloadQueue {
     pub(super) queue: Arc<Mutex<VecDeque<String>>>,
     pub(super) active_jobs: Arc<DashMap<String, CancellationToken>>,
     pub(super) max_concurrent: Arc<RwLock<usize>>,
+    pub(super) max_retry_count: Arc<RwLock<u32>>,
     pub(super) sync_destination: Arc<RwLock<String>>,
     pub(super) sync_mode: Arc<RwLock<String>>,
     pub(super) sync_state: Arc<RwLock<SyncState>>,
@@ -86,13 +87,14 @@ impl DownloadQueue {
         }
     }
 
-    pub fn new(db: Db, file_index: Arc<FileIndex>) -> Arc<Self> {
+    pub fn new(db: Db, file_index: Arc<FileIndex>, max_retry_count: u32) -> Arc<Self> {
         let queue = Arc::new(Self {
             db,
             file_index,
             queue: Arc::new(Mutex::new(VecDeque::new())),
             active_jobs: Arc::new(DashMap::new()),
             max_concurrent: Arc::new(RwLock::new(2)),
+            max_retry_count: Arc::new(RwLock::new(max_retry_count)),
             sync_destination: Arc::new(RwLock::new("onedrive:others/Edits".to_string())),
             sync_mode: Arc::new(RwLock::new("copy".to_string())),
             sync_state: Arc::new(RwLock::new(SyncState::default())),
@@ -153,20 +155,42 @@ impl DownloadQueue {
         }
     }
 
-    pub async fn retry_job(&self, id: &str, expires_at: Option<i64>) -> Option<Job> {
-        if self.db.get_job(id).await.is_ok() && self.db.increment_retry(id, expires_at).await.is_ok() {
-            self.enqueue_job_id(id.to_string());
-            return self.db.get_job(id).await.ok();
+    pub async fn retry_job(&self, id: &str, expires_at: Option<i64>) -> Result<Job, String> {
+        let max_retries = *self.max_retry_count.read().await;
+        
+        if self.db.get_job(id).await.is_err() {
+            return Err("Job not found".to_string());
         }
-        None
+        
+        match self.db.increment_retry(id, max_retries, expires_at).await {
+            Ok(_new_retry_count) => {
+                self.enqueue_job_id(id.to_string());
+                match self.db.get_job(id).await {
+                    Ok(job) => Ok(job),
+                    Err(e) => Err(format!("Failed to fetch job: {}", e)),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        }
     }
 
-    pub async fn redownload_job(&self, id: &str, expires_at: Option<i64>) -> Option<Job> {
-        if self.db.get_job(id).await.is_ok() && self.db.redownload_job(id, expires_at).await.is_ok() {
-            self.enqueue_job_id(id.to_string());
-            return self.db.get_job(id).await.ok();
+    pub async fn redownload_job(&self, id: &str, expires_at: Option<i64>) -> Result<Job, String> {
+        let max_retries = *self.max_retry_count.read().await;
+        
+        if self.db.get_job(id).await.is_err() {
+            return Err("Job not found".to_string());
         }
-        None
+        
+        match self.db.redownload_job(id, max_retries, expires_at).await {
+            Ok(_) => {
+                self.enqueue_job_id(id.to_string());
+                match self.db.get_job(id).await {
+                    Ok(job) => Ok(job),
+                    Err(e) => Err(format!("Failed to fetch job: {}", e)),
+                }
+            }
+            Err(e) => Err(e.to_string()),
+        }
     }
 
     pub fn enqueue_job_id(&self, id: String) {

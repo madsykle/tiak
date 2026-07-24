@@ -26,6 +26,10 @@ backfill_progress.json
 backfill_failures.json
 avatar_progress.json
 avatar_failures.json
+metadata_progress.json
+metadata_failures.json
+recover_progress.json
+recover_failures.json
 
 # Logs
 *.log
@@ -41,3 +45,4 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
+.vercel

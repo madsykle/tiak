@@ -270,6 +270,7 @@ export default function HistoryPage() {
                   onPreview={handlePreview}
                   onDelete={handleDelete}
                   retryingIds={retryingIds}
+                  maxRetries={5}
                 />
                 
                 {/* Pagination Controls */}

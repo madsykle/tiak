@@ -47,6 +47,7 @@ function ExpiryCountdown({ expiresAt }: { expiresAt: number }) {
 export default function Queue() {
   const router = useRouter();
   const [urls, setUrls] = useState('');
+  const lastClipboardContent = useRef<string>('');
   const [jobs, setJobs] = useState<DownloadJob[]>([]);
   const [historyJobs, setHistoryJobs] = useState<DownloadJob[]>([]);
   const [loading, setLoading] = useState(false);
@@ -60,6 +61,33 @@ export default function Queue() {
   // Preview Modal State
   const [previewJob, setPreviewJob] = useState<DownloadJob | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');
+
+  // Auto-fetch clipboard on page visibility change
+  const autoFetchClipboard = useCallback(async () => {
+     if (typeof navigator === 'undefined' || 
+        typeof navigator.clipboard === 'undefined' ||
+        typeof navigator.clipboard.readText !== 'function') {
+      return;
+    }
+    
+    try {
+      const text = await navigator.clipboard.readText();
+      const trimmedText = text.trim();
+      
+      // Only paste if it's new content and looks like a URL
+      if (trimmedText && trimmedText !== lastClipboardContent.current && 
+          (trimmedText.startsWith('http://') || trimmedText.startsWith('https://'))) {
+        lastClipboardContent.current = trimmedText;
+        setUrls(prev => prev ? `${prev}\n${trimmedText}` : trimmedText);
+      }
+    } catch (error) {
+      // Silently fail - user might have denied permission
+      console.debug('Clipboard access not available:', error);
+    }
+  }, []);
+
+  // Use visibility polling to auto-fetch clipboard
+  useVisibilityPolling(autoFetchClipboard, 1000, { runImmediately: true });
 
   useEffect(() => {
     setRole(getRole());
@@ -586,6 +614,7 @@ export default function Queue() {
                     onPreview={handlePreview}
                     onDelete={handleDeleteHistory}
                     retryingIds={retryingIds}
+                    maxRetries={5}
                 />
             </div>
         )}

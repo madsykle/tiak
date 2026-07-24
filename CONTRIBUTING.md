@@ -4,10 +4,9 @@ First off, thank you for considering contributing to Tiak! This project thrives 
 
 ## 🛠️ The Monorepo Structure
 
-Tiak is organized into three main areas:
+Tiak is organized into two main areas:
 - `server/`: Rust backend (Axum + MongoDB).
 - `web/`: Next.js frontend (TypeScript + Tailwind).
-- `android_native/`: Native Android app.
 
 ## 🧪 How Can I Contribute?
 

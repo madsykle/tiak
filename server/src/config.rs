@@ -8,6 +8,7 @@ pub struct ServerConfig {
     pub data_root: String,
     pub mongodb_uri: String,
     pub max_concurrent_downloads: u8,
+    pub max_retry_count: u32,
     pub cors_origins: Vec<String>,
     pub jwt_secret: String,
     pub jwt_expiry_hours: i64,
@@ -30,6 +31,10 @@ impl Default for ServerConfig {
                 .ok()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(4),
+            max_retry_count: env::var("MAX_RETRY_COUNT")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(5),
             cors_origins: parse_cors_origins(),
             jwt_secret: env::var("JWT_SECRET").unwrap_or_else(|_| {
                 // In production, this should be a proper secret

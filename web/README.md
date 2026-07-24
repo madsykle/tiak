@@ -25,9 +25,9 @@ A high-performance, responsive web dashboard for Tiak. Built with Next.js 14, Ty
    ```
 
 2. **Environment Configuration**:
-   The frontend uses the monorepo `.env` file via a symbolic link. Ensure `NEXT_PUBLIC_API_BASE` is set.
+   The frontend uses its own `.env` file in the `web/` directory. Set `NEXT_PUBLIC_API_BASE`:
    ```bash
-   # In the root .env
+   # In web/.env
    NEXT_PUBLIC_API_BASE=https://your-api-domain.com/api
    ```
 
