@@ -463,14 +463,29 @@ pub(super) async fn retry_job(
         None
     };
 
-    if let Some(job) = state.queue.retry_job(&id, new_expires_at).await {
-        Json(job).into_response()
-    } else {
-        (
-            axum::http::StatusCode::NOT_FOUND,
-            "Job not found or cannot retry",
-        )
-            .into_response()
+    let max_retries = state.config.server.max_retry_count;
+
+    match state.queue.retry_job(&id, new_expires_at).await {
+        Ok(job) => {
+            let remaining = max_retries.saturating_sub(job.retries as u32);
+            Json(serde_json::json!({
+                "job": job,
+                "remainingRetries": remaining,
+                "maxRetries": max_retries,
+            })).into_response()
+        }
+        Err(e) => {
+            if e.contains("Max retries") {
+                (
+                    axum::http::StatusCode::CONFLICT,
+                    Json(serde_json::json!({ "error": e, "maxRetries": max_retries })),
+                ).into_response()
+            } else if e.contains("not found") {
+                (axum::http::StatusCode::NOT_FOUND, e).into_response()
+            } else {
+                (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e).into_response()
+            }
+        }
     }
 }
 
@@ -493,13 +508,28 @@ pub(super) async fn redownload_job(
         None
     };
 
-    if let Some(job) = state.queue.redownload_job(&id, new_expires_at).await {
-        Json(job).into_response()
-    } else {
-        (
-            axum::http::StatusCode::NOT_FOUND,
-            "Job not found or cannot redownload",
-        )
-            .into_response()
+    let max_retries = state.config.server.max_retry_count;
+
+    match state.queue.redownload_job(&id, new_expires_at).await {
+        Ok(job) => {
+            let remaining = max_retries.saturating_sub(job.retries as u32);
+            Json(serde_json::json!({
+                "job": job,
+                "remainingRetries": remaining,
+                "maxRetries": max_retries,
+            })).into_response()
+        }
+        Err(e) => {
+            if e.contains("Max retries") {
+                (
+                    axum::http::StatusCode::CONFLICT,
+                    Json(serde_json::json!({ "error": e, "maxRetries": max_retries })),
+                ).into_response()
+            } else if e.contains("not found") {
+                (axum::http::StatusCode::NOT_FOUND, e).into_response()
+            } else {
+                (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e).into_response()
+            }
+        }
     }
 }

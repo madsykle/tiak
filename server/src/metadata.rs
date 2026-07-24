@@ -69,11 +69,26 @@ async fn fetch_metadata(
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|_| cwd.join("bin/yt-dlp"));
 
-    let child = Command::new(python_path)
-        .arg(yt_dlp_path)
+    // Optional SOCKS/HTTP proxy used only for Instagram URLs (e.g. Termux tunnel on port 9746)
+    let instagram_proxy: Option<String> = std::env::var("INSTAGRAM_PROXY")
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+
+    let mut cmd = Command::new(python_path);
+    cmd.arg(yt_dlp_path)
         .arg("--dump-json")
         .arg("--no-playlist")
-        .arg("--no-warnings")
+        .arg("--no-warnings");
+
+    if url.contains("instagram.com") {
+        if let Some(proxy) = &instagram_proxy {
+            info!("Using Instagram proxy: {}", proxy);
+            cmd.arg("--proxy").arg(proxy);
+        }
+    }
+
+    let child = cmd
         .arg(url)
         .stdout(Stdio::piped())
         .stderr(Stdio::null())

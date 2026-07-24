@@ -92,6 +92,11 @@ impl DownloadQueue {
         let output_folder = get_today_folder(Some(category));
         let is_tiktok = url.contains("tiktok.com");
         let is_instagram = url.contains("instagram.com");
+        // Optional SOCKS/HTTP proxy used only for Instagram URLs (e.g. Termux tunnel on port 9746)
+        let instagram_proxy: Option<String> = std::env::var("INSTAGRAM_PROXY")
+            .ok()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
         let template = if is_instagram || is_tiktok {
             output_folder.join("%(id)s.%(ext)s")
         } else {
@@ -158,6 +163,10 @@ impl DownloadQueue {
         } else if is_instagram {
             cmd.arg("--add-header")
                 .arg("Referer:https://www.instagram.com/");
+            if let Some(proxy) = &instagram_proxy {
+                tracing::info!("Using Instagram proxy: {}", proxy);
+                cmd.arg("--proxy").arg(proxy);
+            }
         }
 
         // Auto-detect cookie files for platforms that require auth
@@ -328,7 +337,19 @@ impl DownloadQueue {
                         if json_path.exists() {
                             if let Ok(content) = tokio::fs::read_to_string(&json_path).await {
                                 if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-                                    creator = json.get("uploader").and_then(|v| v.as_str()).map(|s| s.to_string());
+                                    // Try multiple fields for creator name (platforms vary)
+                                    creator = json.get("uploader")
+                                        .or_else(|| json.get("creator"))
+                                        .or_else(|| json.get("channel"))
+                                        .or_else(|| json.get("uploader_id"))
+                                        .and_then(|v| v.as_str())
+                                        .map(|s| s.to_string());
+                                    // For TikTok, uploader_id is often the @handle
+                                    if creator.is_none() {
+                                        if let Some(uid) = json.get("uploader_id").and_then(|v| v.as_str()) {
+                                            creator = Some(format!("@{}", uid));
+                                        }
+                                    }
                                     caption = json.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
                                     if caption.is_none() {
                                         caption = json.get("title").and_then(|v| v.as_str()).map(|s| s.to_string());

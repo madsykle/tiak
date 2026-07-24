@@ -205,6 +205,79 @@ pub fn is_private_ip(ip: std::net::IpAddr) -> bool {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorKind {
+    Transient,
+    Permanent,
+}
+
+/// Classifies a download error as transient (retryable) or permanent (not retryable).
+pub fn classify_error(error: &str) -> ErrorKind {
+    let lower = error.to_lowercase();
+
+    // Permanent errors - don't retry these
+    let permanent_patterns = [
+        "video not available",
+        "video not found",
+        "private video",
+        "this video is private",
+        "content not available",
+        "content has been removed",
+        "this post is private",
+        "login required",
+        "sign in to confirm",
+        "not found in this location",
+        "unable to extract",
+        "unsupported url",
+        "no video formats found",
+        "http error 403",
+        "http error 404",
+        "forbidden",
+    ];
+
+    for pattern in &permanent_patterns {
+        if lower.contains(pattern) {
+            return ErrorKind::Permanent;
+        }
+    }
+
+    // Transient errors - safe to retry
+    let transient_patterns = [
+        "connection refused",
+        "connection reset",
+        "connection timed out",
+        "timed out",
+        "timeout",
+        "network is unreachable",
+        "no route to host",
+        "temporary failure",
+        "try again",
+        "server returned nothing",
+        "http error 429",
+        "http error 502",
+        "http error 503",
+        "http error 504",
+        "rate limit",
+        "too many requests",
+        "service unavailable",
+        "gateway timeout",
+        "ssl",
+        "tls",
+        "eof",
+        "broken pipe",
+        "reset by peer",
+    ];
+
+    for pattern in &transient_patterns {
+        if lower.contains(pattern) {
+            return ErrorKind::Transient;
+        }
+    }
+
+    // Default: treat unknown errors as transient (give them a chance)
+    ErrorKind::Transient
+}
+
 pub fn is_safe_ytdlp_arg(arg: &str) -> bool {
     let lower = arg.to_lowercase();
     

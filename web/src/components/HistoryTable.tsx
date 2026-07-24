@@ -11,9 +11,10 @@ interface HistoryTableProps {
   onPreview: (job: DownloadJob) => void;
   onDelete: (id: string) => void;
   retryingIds?: Set<string>;
+  maxRetries?: number;
 }
 
-export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, onDelete, retryingIds = new Set() }: HistoryTableProps) {
+export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, onDelete, retryingIds = new Set(), maxRetries = 5 }: HistoryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const toggleExpand = (id: string) => {
@@ -113,10 +114,19 @@ export default function HistoryTable({ jobs, onRetry, onRedownload, onPreview, o
                         {job.status === 'failed' && (
                           <button
                             onClick={(e) => { e.stopPropagation(); onRetry(job.id); }}
-                            disabled={retryingIds.has(job.id)}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors disabled:opacity-50"
+                            disabled={retryingIds.has(job.id) || job.retries >= maxRetries}
+                            className={`text-xs font-medium px-2 py-1 rounded transition-colors disabled:opacity-50 ${
+                              job.retries >= maxRetries
+                                ? 'text-gray-400 cursor-not-allowed'
+                                : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
+                            }`}
+                            title={job.retries >= maxRetries ? `Max retries (${maxRetries}) reached` : `Retry (${job.retries}/${maxRetries})`}
                           >
-                            {retryingIds.has(job.id) ? 'Retrying...' : `Retry${job.retries > 0 ? ` (${job.retries})` : ''}`}
+                            {retryingIds.has(job.id) 
+                              ? 'Retrying...' 
+                              : job.retries >= maxRetries 
+                                ? `Max (${job.retries})`
+                                : `Retry (${job.retries}/${maxRetries})`}
                           </button>
                         )}
                         {job.status === 'missing' && (

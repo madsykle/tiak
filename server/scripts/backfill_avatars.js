@@ -3,7 +3,17 @@ const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-const MONGO_URI = "mongodb://localhost:27017/tiak";
+function loadMongoUri() {
+  const envPath = path.resolve(__dirname, "../.env");
+  if (fs.existsSync(envPath)) {
+    const env = fs.readFileSync(envPath, "utf8");
+    const match = env.match(/^MONGODB_URI=(.+)$/m);
+    if (match) return match[1].trim();
+  }
+  return process.env.MONGODB_URI || "mongodb://localhost:27017/tiak";
+}
+
+const MONGO_URI = loadMongoUri();
 const YT_DLP = path.join(__dirname, "../bin/yt-dlp");
 const PROGRESS_FILE = path.join(__dirname, "avatar_progress.json");
 const FAILURES_FILE = path.join(__dirname, "avatar_failures.json");

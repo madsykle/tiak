@@ -177,7 +177,13 @@ export async function getHistory(page: number = 1, limit: number = 50): Promise<
   return res.json();
 }
 
-export async function retryJob(id: string): Promise<DownloadJob> {
+export interface RetryResponse {
+  job: DownloadJob;
+  remainingRetries: number;
+  maxRetries: number;
+}
+
+export async function retryJob(id: string): Promise<RetryResponse> {
   const res = await fetchWithAuth(`${API_BASE}/queue/retry/${id}`, {
     method: 'POST',
   });
@@ -188,7 +194,7 @@ export async function retryJob(id: string): Promise<DownloadJob> {
   return res.json();
 }
 
-export async function redownloadJob(id: string): Promise<DownloadJob> {
+export async function redownloadJob(id: string): Promise<RetryResponse> {
   const res = await fetchWithAuth(`${API_BASE}/queue/redownload/${id}`, {
     method: 'POST',
   });

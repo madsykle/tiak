@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // Queue
-    let queue = DownloadQueue::new(db.clone(), file_index.clone());
+    let queue = DownloadQueue::new(db.clone(), file_index.clone(), config.server.max_retry_count);
     queue.load_initial_state().await;
     info!("Queue initialized");
 

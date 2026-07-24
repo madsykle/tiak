@@ -170,19 +170,6 @@ impl Db {
         Ok(())
     }
 
-    pub async fn update_job_error(&self, id: &str, error: &str) -> Result<()> {
-        self.db.collection::<Job>("jobs")
-            .update_one(
-                doc! { "_id": id }, 
-                doc! { 
-                    "$set": { "error": error },
-                    "$inc": { "retries": 1 }
-                }
-            )
-            .await?;
-        Ok(())
-    }
-
     pub async fn update_job_metadata(
         &self,
         id: &str,
@@ -545,7 +532,22 @@ impl Db {
         Ok(())
     }
 
-    pub async fn increment_retry(&self, id: &str, expires_at: Option<i64>) -> Result<()> {
+    pub async fn increment_retry(&self, id: &str, max_retries: u32, expires_at: Option<i64>) -> Result<u32> {
+        // Check current retry count
+        let job = self.db.collection::<Job>("jobs")
+            .find_one(doc! { "_id": id })
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("Job not found"))?;
+
+        let current_retries = job.retries as u32;
+        if current_retries >= max_retries {
+            return Err(anyhow::anyhow!(
+                "Max retries ({}) reached for job {}",
+                max_retries,
+                id
+            ));
+        }
+
         let mut set_doc = doc! {
             "status": "queued",
             "progress": 0
@@ -578,43 +580,12 @@ impl Db {
                 }
             )
             .await?;
-        Ok(())
+        Ok(current_retries + 1)
     }
 
-    pub async fn redownload_job(&self, id: &str, expires_at: Option<i64>) -> Result<()> {
-        let mut set_doc = doc! {
-            "status": "queued",
-            "progress": 0
-        };
-        let mut unset_doc = doc! {
-            "error": "",
-            "eta": "",
-            "filename": "",
-            "startedAt": "",
-            "completedAt": "",
-            "transcript": "",
-            "hashtags": "",
-            "suggested_category": "",
-            "visual_description": ""
-        };
-
-        if let Some(exp) = expires_at {
-            set_doc.insert("expiresAt", exp);
-        } else {
-            unset_doc.insert("expiresAt", "");
-        }
-
-        self.db.collection::<Job>("jobs")
-            .update_one(
-                doc! { "_id": id },
-                doc! {
-                    "$inc": { "retries": 1 },
-                    "$set": set_doc,
-                    "$unset": unset_doc
-                }
-            )
-            .await?;
-        Ok(())
+    pub async fn redownload_job(&self, id: &str, max_retries: u32, expires_at: Option<i64>) -> Result<u32> {
+        // Redownload uses the same retry logic
+        self.increment_retry(id, max_retries, expires_at).await
     }
 
     pub async fn check_job_exists(&self, id: &str) -> Result<bool> {
