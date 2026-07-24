@@ -191,7 +191,7 @@ async function main() {
   const jobs = db.collection("jobs");
 
   // Build query: jobs missing metadata
-  const query = { status: "done" };
+  const query = { status: { $in: ["done", "completed"] } };
   if (opts.platform) query.platform = opts.platform;
 
   if (!opts.force) {
