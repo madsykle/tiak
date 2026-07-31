@@ -163,3 +163,29 @@ export interface WithCategories {
 	selectedCategory?: string;
 	onCategoryChange?: (category: string) => void;
 }
+
+export interface UserInfo {
+	id: string;
+	username: string;
+	email: string;
+	role: string;
+}
+
+export interface AdminStats {
+	total_jobs: number;
+	done_jobs: number;
+	failed_jobs: number;
+	queue_size: number;
+	categories: [string, number][];
+	platforms: [string | null, number][];
+}
+
+export interface CreateUserRequest {
+	username: string;
+	email: string;
+	password: string;
+}
+
+export interface UpdateUserRoleRequest {
+	role: string;
+}

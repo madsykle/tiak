@@ -16,6 +16,8 @@ import type {
 	FileResponse,
 	SyncStatus,
 	AppSettings,
+	UserInfo,
+	CreateUserRequest,
 } from "./types";
 
 // ============================================
@@ -30,6 +32,7 @@ export const queryKeys = {
 	settings: ["settings"] as const,
 	syncStatus: ["syncStatus"] as const,
 	auth: ["auth"] as const,
+	adminUsers: ["adminUsers"] as const,
 	search: (q: string) => ["search", q] as const,
 	byCategory: (name: string) => ["byCategory", name] as const,
 	byCreator: (name: string) => ["byCreator", name] as const,
@@ -86,7 +89,13 @@ export function useHistory(page = 1, limit = 50) {
 export function useAddJob() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: async ({ urls, category }: { urls: string; category: string }) => {
+		mutationFn: async ({
+			urls,
+			category,
+		}: {
+			urls: string;
+			category: string;
+		}) => {
 			const res = await fetchWithAuth(`${API_BASE}/queue/add`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -514,5 +523,53 @@ export function useImportJobs() {
 			qc.invalidateQueries({ queryKey: queryKeys.jobs });
 			qc.invalidateQueries({ queryKey: queryKeys.history });
 		},
+	});
+}
+
+// ============================================
+// Admin Queries & Mutations
+// ============================================
+export function useUsers() {
+	return useQuery({
+		queryKey: queryKeys.adminUsers,
+		queryFn: async () => {
+			const res = await fetchWithAuth(`${API_BASE}/admin/users`);
+			if (!res.ok) throw new Error("Failed to fetch users");
+			return res.json() as Promise<UserInfo[]>;
+		},
+		staleTime: 30000,
+	});
+}
+
+export function useUpdateUserRole() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+			const res = await fetchWithAuth(
+				`${API_BASE}/admin/users/${userId}/role`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ role }),
+				},
+			);
+			if (!res.ok) throw new Error("Failed to update role");
+		},
+		onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.adminUsers }),
+	});
+}
+
+export function useCreateUser() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async ({ username, email, password }: CreateUserRequest) => {
+			const res = await fetchWithAuth(`${API_BASE}/admin/users/create`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username, email, password }),
+			});
+			if (!res.ok) throw new Error("Failed to create user");
+		},
+		onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.adminUsers }),
 	});
 }
