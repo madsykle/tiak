@@ -1,8 +1,7 @@
 import React from 'react';
-import LazyThumbnail from './LazyThumbnail';
+import Thumbnail from './Thumbnail';
 import CategoryBadge from './CategoryBadge';
 import { formatBytes, platformBadgeClass, platformLabel } from '../lib/utils';
-import { getThumbnailUrl } from '../lib/api';
 
 interface FileCardProps {
   file: FileCardItem;
@@ -101,8 +100,8 @@ export default React.memo(function FileCard({
           <CategoryBadge category={file.category} />
         </div>
 
-        <LazyThumbnail
-          src={getThumbnailUrl(file.path)}
+        <Thumbnail
+          path={file.path}
           alt={file.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
