@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode, useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import InstallPrompt from "@/components/InstallPrompt";
-import { getRole, checkAuthSession } from "@/lib/api";
+import { useAuthState, useAppStore } from "@/store/app-store";
 import {
 	Inbox,
 	Settings,
@@ -13,21 +13,17 @@ import {
 } from "lucide-react";
 
 interface LayoutProps {
-	children: ReactNode;
+	children: React.ReactNode;
 }
 
 export default function MainLayout({ children }: LayoutProps) {
 	const pathname = usePathname();
-	const [role, setRole] = useState<string | null>(null);
+	const { role } = useAuthState();
+	const checkAuthSession = useAppStore((s) => s.checkAuth);
 
 	useEffect(() => {
-		setRole(getRole());
 		checkAuthSession();
-
-		const handleAuthChange = () => setRole(getRole());
-		window.addEventListener("auth-change", handleAuthChange);
-		return () => window.removeEventListener("auth-change", handleAuthChange);
-	}, []);
+	}, [checkAuthSession]);
 
 	const mainRef = useRef<HTMLElement>(null);
 	useEffect(() => {

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getRole, login, logout, signup } from "@/lib/api";
 import CategorySettingsSection from "@/components/settings/CategorySettingsSection";
 import MaintenanceToolsSection from "@/components/settings/MaintenanceToolsSection";
 import SystemInfoSection from "@/components/settings/SystemInfoSection";
 import CloudSyncSection from "@/components/settings/CloudSyncSection";
 import PlayerPreferencesSection from "@/components/settings/PlayerPreferencesSection";
 import { useVisibilityPolling } from "@/hooks/useVisibilityPolling";
+import { useAuthState, useAppStore } from "@/store/app-store";
 import {
 	useCategories,
 	useCreateCategory,
@@ -23,7 +23,12 @@ import {
 } from "@/lib/queries";
 
 export default function SettingsPage() {
-	const [role, setRole] = useState<string | null>(null);
+	const { role, login, logout, signup } = useAuthState();
+	const { settings, updateSetting, updateSettings } = useAppStore((s) => ({
+		settings: s.settings,
+		updateSetting: s.updateSetting,
+		updateSettings: s.updateSettings,
+	}));
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [loginLoading, setLoginLoading] = useState(false);
@@ -33,18 +38,30 @@ export default function SettingsPage() {
 	const [email, setEmail] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 
-	const [syncDestination, setSyncDestination] = useState("");
-	const [syncMode, setSyncMode] = useState("copy");
+	const [syncDestination, setSyncDestination] = useState(
+		settings.syncDestination || "",
+	);
+	const [syncMode, setSyncMode] = useState(settings.syncMode || "copy");
 	const [syncStatus, setSyncStatus] = useState<{
 		status: string;
 		lastRun: string | null;
 		logs: string[];
 		error: string | null;
 		unsyncedCount: number;
-	}>({ status: "idle", lastRun: null, logs: [], error: null, unsyncedCount: 0 });
-	const [maxConcurrent, setMaxConcurrent] = useState<number>(2);
+	}>({
+		status: "idle",
+		lastRun: null,
+		logs: [],
+		error: null,
+		unsyncedCount: 0,
+	});
+	const [maxConcurrent, setMaxConcurrent] = useState<number>(
+		settings.maxConcurrent || 2,
+	);
 
-	const [playerType, setPlayerType] = useState<"native" | "custom">("custom");
+	const [playerType, setPlayerType] = useState<"native" | "custom">(
+		settings.playerType || "custom",
+	);
 	const [newCatName, setNewCatName] = useState("");
 	const [editingCat, setEditingCat] = useState<{
 		original: string;
@@ -75,14 +92,6 @@ export default function SettingsPage() {
 	const thumbBackfillMutation = useBackfillThumbnails();
 
 	useEffect(() => {
-		setRole(getRole());
-		const handleAuthChange = () => setRole(getRole());
-		window.addEventListener("auth-change", handleAuthChange);
-		return () =>
-			window.removeEventListener("auth-change", handleAuthChange);
-	}, []);
-
-	useEffect(() => {
 		if (settingsData) {
 			if (settingsData.maxConcurrent !== undefined)
 				setMaxConcurrent(settingsData.maxConcurrent);
@@ -92,13 +101,6 @@ export default function SettingsPage() {
 			setLoading(false);
 		}
 	}, [settingsData]);
-
-	useEffect(() => {
-		const storedPlayer = localStorage.getItem("player_preference");
-		if (storedPlayer === "native" || storedPlayer === "custom") {
-			setPlayerType(storedPlayer);
-		}
-	}, []);
 
 	const fetchSyncStatus = useCallback(async () => {
 		if (role !== "admin") return;
@@ -127,12 +129,9 @@ export default function SettingsPage() {
 		runImmediately: false,
 	});
 
-	const showMessage = useCallback(
-		(type: "success" | "error", text: string) => {
-			setMsg({ type, text });
-		},
-		[],
-	);
+	const showMessage = useCallback((type: "success" | "error", text: string) => {
+		setMsg({ type, text });
+	}, []);
 
 	const handleAuth = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -169,15 +168,25 @@ export default function SettingsPage() {
 		}
 	};
 
-	const handleSave = async (overrides?: { syncDest?: string; sMode?: string }) => {
+	const handleSave = async (overrides?: {
+		syncDest?: string;
+		sMode?: string;
+	}) => {
 		setSaving(true);
 		setMsg(null);
 		try {
+			updateSetting("playerType", playerType);
 			localStorage.setItem("player_preference", playerType);
 			await updateSettingsMutation.mutateAsync({
 				maxConcurrent,
 				syncDestination: overrides?.syncDest ?? syncDestination,
 				syncMode: overrides?.sMode ?? syncMode,
+			});
+			updateSettings({
+				maxConcurrent,
+				syncDestination: overrides?.syncDest ?? syncDestination,
+				syncMode: overrides?.sMode ?? syncMode,
+				playerType,
 			});
 			setMsg({ type: "success", text: "Saved" });
 			setTimeout(() => setMsg(null), 3000);
@@ -505,9 +514,7 @@ export default function SettingsPage() {
 										min="1"
 										max="10"
 										value={maxConcurrent}
-										onChange={(e) =>
-											setMaxConcurrent(parseInt(e.target.value))
-										}
+										onChange={(e) => setMaxConcurrent(parseInt(e.target.value))}
 										className="w-full h-2 bg-surface-strong rounded-lg appearance-none cursor-pointer accent-foreground"
 									/>
 								</div>
@@ -518,8 +525,8 @@ export default function SettingsPage() {
 								</div>
 							</div>
 							<p className="mt-3 text-xs text-content-muted">
-								Limit the number of simultaneous downloads (1-10)
-								to manage bandwidth.
+								Limit the number of simultaneous downloads (1-10) to manage
+								bandwidth.
 							</p>
 						</div>
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Users, UserPlus, RefreshCw } from "lucide-react";
-import { getRole } from "@/lib/api";
+import { useAuthState } from "@/store/app-store";
 import { formatBytes } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import {
@@ -38,7 +38,7 @@ function StatCard({
 }
 
 export default function AdminPage() {
-	const [role, setRole] = useState<string | null>(null);
+	const { role } = useAuthState();
 	const [newUsername, setNewUsername] = useState("");
 	const [newEmail, setNewEmail] = useState("");
 	const [newPassword, setNewPassword] = useState("");
@@ -49,10 +49,6 @@ export default function AdminPage() {
 	const { data: usage } = useUsage();
 	const updateRoleMutation = useUpdateUserRole();
 	const createUserMutation = useCreateUser();
-
-	useEffect(() => {
-		setRole(getRole());
-	}, []);
 
 	if (!role) {
 		return (
