@@ -46,7 +46,7 @@ export const useAppStore = create<AppState>()(
 			error: null,
 			settings: {
 				maxConcurrent: 2,
-				syncDestination: "onedrive:others/Edits",
+				syncDestination: "onedrive:EDITS",
 				syncMode: "copy",
 				playerType: "custom",
 			},

@@ -159,17 +159,18 @@ func NewRouter(state *AppState) http.Handler {
 	r.Get("/api/files/thumbnail", getThumbnail(state))
 	r.Get("/api/files/info", getFileInfo(state))
 	r.Post("/api/files/resolve", resolveURLEndpoint(state))
-	r.Get("/api/queue/history", queueHistory(state))
+	r.Get("/api/queue/history", queueHistory(state)) // Files share one mount point; apply role middleware per endpoint so Chi
+	// does not attempt to mount /api/files more than once.
+	r.Route("/api/files", func(r chi.Router) {
+		r.With(auth.RequirePremiumMemberOrAdmin).Get("/", listFiles(state))
+		r.With(auth.RequirePremiumMemberOrAdmin).Post("/zip", zipFiles)
+		r.With(auth.RequireAdmin).Delete("/", deleteFiles(state))
+		r.With(auth.RequireAdmin).Post("/move", moveFile(state))
+	})
 
 	// Admin routes
 	r.Group(func(r chi.Router) {
 		r.Use(auth.RequireAdmin)
-		r.Route("/api/files", func(r chi.Router) {
-			r.Get("/", listFiles(state))
-			r.Delete("/", deleteFiles(state))
-			r.Post("/zip", zipFiles)
-			r.Post("/move", moveFile(state))
-		})
 		r.Route("/api/categories", func(r chi.Router) {
 			r.Get("/", listCategories)
 			r.Post("/", createCategory)

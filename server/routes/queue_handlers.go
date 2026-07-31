@@ -1,9 +1,13 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"tiak-server/auth"
@@ -267,6 +271,87 @@ func rcloneLs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
+
+	target := strings.TrimSpace(r.URL.Query().Get("path"))
+	if target == "" {
+		remotes, err := runRclone(r.Context(), "listremotes")
+		if err != nil {
+			http.Error(w, "Unable to read rclone remotes: "+err.Error(), http.StatusBadGateway)
+			return
+		}
+		entries := make([]map[string]interface{}, 0)
+		for _, remote := range strings.Split(strings.TrimSpace(remotes), "\n") {
+			remote = strings.TrimSuffix(strings.TrimSpace(remote), ":")
+			if remote == "" {
+				continue
+			}
+			entries = append(entries, map[string]interface{}{
+				"Path":  remote + ":",
+				"Name":  remote,
+				"IsDir": true,
+			})
+		}
+		writeRcloneEntries(w, entries)
+		return
+	}
+
+	output, err := runRclone(r.Context(), "lsjson", "--dirs-only", "--max-depth", "1", "--no-modtime", "--", target)
+	if err != nil {
+		status := http.StatusBadGateway
+		message := "Unable to list rclone path: " + err.Error()
+		if strings.Contains(strings.ToLower(err.Error()), "directory not found") {
+			status = http.StatusNotFound
+			message = "Rclone folder not found: " + target
+		}
+		http.Error(w, message, status)
+		return
+	}
+
+	var entries []struct {
+		Path  string `json:"Path"`
+		Name  string `json:"Name"`
+		IsDir bool   `json:"IsDir"`
+	}
+	if err := json.Unmarshal([]byte(output), &entries); err != nil {
+		http.Error(w, "Invalid response from rclone: "+err.Error(), http.StatusBadGateway)
+		return
+	}
+
+	result := make([]map[string]interface{}, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir {
+			continue
+		}
+		result = append(result, map[string]interface{}{
+			"Path":  entry.Path,
+			"Name":  entry.Name,
+			"IsDir": true,
+		})
+	}
+	writeRcloneEntries(w, result)
+}
+
+func runRclone(parent context.Context, args ...string) (string, error) {
+	if _, err := exec.LookPath("rclone"); err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
+	defer cancel()
+	output, err := exec.CommandContext(ctx, "rclone", args...).CombinedOutput()
+	if ctx.Err() != nil {
+		return "", ctx.Err()
+	}
+	if err != nil {
+		message := strings.TrimSpace(string(output))
+		if message == "" {
+			return "", err
+		}
+		return "", errors.New(message)
+	}
+	return string(output), nil
+}
+
+func writeRcloneEntries(w http.ResponseWriter, entries interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"entries": []string{}})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"entries": entries})
 }

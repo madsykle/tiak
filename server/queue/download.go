@@ -37,7 +37,7 @@ func NewDownloadQueue(d *db.MongoDB, fi *storage.FileIndex, maxRetry uint32) *Do
 		queue:           make(chan string, 1000),
 		maxConcurrent:   2,
 		MaxRetryCount:   maxRetry,
-		SyncDestination: "onedrive:others/Edits",
+		SyncDestination: "onedrive:EDITS",
 		SyncMode:        "copy",
 	}
 }

@@ -1,4 +1,5 @@
 import React from "react";
+import { Check, Download, File, Image as ImageIcon, Play, Video } from "lucide-react";
 import Thumbnail from "./Thumbnail";
 import CategoryBadge from "./CategoryBadge";
 import { formatBytes, platformBadgeClass, platformLabel } from "../lib/utils";
@@ -24,185 +25,47 @@ type FileCardItem = {
 	caption?: string;
 };
 
-export default React.memo(function FileCard({
-	file,
-	isSelected,
-	onSelect,
-	onPreview,
-	onDownload,
-	style,
-}: FileCardProps) {
-	const date = new Date(file.createdAt).toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-
-	const isVideo = file.name
-		.toLowerCase()
-		.match(/\.(mp4|mov|avi|mkv|webm|flv|wmv)$/);
-	const isImage = file.name
-		.toLowerCase()
-		.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/);
-
-	const handleCardClick = (e: React.MouseEvent) => {
-		if ((e.target as HTMLElement).closest("button, input, a")) {
-			return;
-		}
-		if (isVideo || isImage) {
-			onPreview(file);
-		}
-	};
-
-	const handleCheckboxClick = (e: React.MouseEvent) => {
-		e.stopPropagation();
-	};
-
-	const handleDownloadClick = (e: React.MouseEvent) => {
-		e.stopPropagation();
-		onDownload(file.path, file.name);
-	};
-
-	const handlePreviewClick = (e: React.MouseEvent) => {
-		e.stopPropagation();
-		onPreview(file);
-	};
-
-	let cardStyle =
-		"border-border/60 bg-surface/40 hover:border-accent/30 hover:glow-accent";
-	if (isSelected) {
-		cardStyle = "border-accent bg-accent/10 ring-1 ring-accent/40 glow-accent";
-	}
+export default React.memo(function FileCard({ file, isSelected, onSelect, onPreview, onDownload, style }: FileCardProps) {
+	const extension = file.name.split(".").pop()?.toLowerCase() || "file";
+	const isVideo = /^(mp4|mov|avi|mkv|webm|flv|wmv)$/.test(extension);
+	const isImage = /^(jpg|jpeg|png|gif|bmp|webp)$/.test(extension);
+	const date = new Date(file.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+	const typeLabel = isVideo ? "Video" : isImage ? "Image" : "File";
 
 	return (
-		<div
-			style={style}
-			className={`group relative overflow-hidden rounded-2xl border glass-premium hover-scale transition-all duration-300 cursor-default ${cardStyle}`}
-			onClick={handleCardClick}
-		>
-			{/* Selection Overlay */}
-			{isSelected && <div className="absolute inset-0 bg-accent/5 z-0"></div>}
-
-			{/* Checkbox */}
-			<div className="absolute top-3 left-3 z-10">
-				<input
-					type="checkbox"
-					checked={isSelected}
-					onChange={() => onSelect(file.path)}
-					onClick={handleCheckboxClick}
-					className="h-4 w-4 rounded border-border bg-surface text-accent focus:ring-accent/30 focus:ring-1"
-				/>
-			</div>
-
-			{/* Thumbnail */}
+		<article style={style} className={`group relative overflow-hidden rounded-2xl border bg-surface transition duration-200 ${isSelected ? "border-accent ring-2 ring-accent/20" : "border-border/70 hover:-translate-y-0.5 hover:border-accent/50"}`}>
 			<div className="relative aspect-[4/5] overflow-hidden bg-surface-strong">
-				{/* Category Badge Overlay */}
-				<div className="absolute top-2 right-2 z-20 shadow-md">
-					<CategoryBadge category={file.category} />
+				<Thumbnail path={file.path} alt={file.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+				<div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-2.5">
+					<label className={`flex size-9 cursor-pointer items-center justify-center rounded-xl border backdrop-blur-md transition ${isSelected ? "border-accent bg-accent text-background" : "border-white/20 bg-black/45 text-white hover:bg-black/65"}`}>
+						<input type="checkbox" checked={isSelected} onChange={() => onSelect(file.path)} className="sr-only" aria-label={`Select ${file.name}`} />
+						{isSelected ? <Check size={16} strokeWidth={2.5} /> : <span className="size-3 rounded border border-white/80" />}
+					</label>
+					<CategoryBadge category={file.category} className="max-w-[62%] border-white/20 bg-black/45 text-white" />
 				</div>
-
-				<Thumbnail
-					path={file.path}
-					alt={file.name}
-					className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-				/>
-
-				{/* Play Button for Videos */}
-				{isVideo && (
-					<button
-						onClick={handlePreviewClick}
-						className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-					>
-						<div className="rounded-full bg-white/90 p-3 shadow-lg hover:scale-110 active:scale-95 transition-transform">
-							<svg
-								className="h-6 w-6 text-background"
-								fill="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path d="M8 5v14l11-7z" />
-							</svg>
-						</div>
-					</button>
-				)}
-
-				{/* File Type Indicator */}
-				<div className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-white z-10">
-					{isVideo ? "VIDEO" : isImage ? "IMAGE" : "FILE"}
+				<div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent px-2.5 pb-2.5 pt-8 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/80">
+					<span className="flex items-center gap-1.5">{isVideo ? <Video size={13} /> : isImage ? <ImageIcon size={13} /> : <File size={13} />}{typeLabel}</span>
+					<span>{extension}</span>
 				</div>
+				{(isVideo || isImage) && <button type="button" onClick={() => onPreview(file)} className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100" aria-label={`Preview ${file.name}`}><span className="flex size-12 items-center justify-center rounded-full bg-white text-background shadow-xl"><Play size={20} fill="currentColor" /></span></button>}
 			</div>
 
-			{/* Content */}
-			<div
-				className="p-4 relative z-10 flex flex-col justify-between"
-				style={{ minHeight: "120px" }}
-			>
-				<div className="space-y-2.5 text-xs text-content-muted">
-					{/* Platform and Creator */}
-					{(file.platform || file.creator) && (
-						<div className="flex items-center gap-1.5">
-							{file.platform && (
-								<span className={platformBadgeClass(file.platform)}>
-									{platformLabel(file.platform)}
-								</span>
-							)}
-							{file.creator && (
-								<span
-									className="truncate font-medium text-foreground"
-									title={file.creator}
-								>
-									@{file.creator}
-								</span>
-							)}
-						</div>
-					)}
-
-					{/* Caption or Filename Fallback */}
-					{file.caption ? (
-						<p
-							className="line-clamp-2 text-[11px] leading-relaxed text-content-muted"
-							title={file.caption}
-						>
-							{file.caption}
-						</p>
-					) : !file.creator ? (
-						<div className="mb-2">
-							<h3
-								className="line-clamp-2 text-sm font-semibold text-foreground tracking-tight leading-tight"
-								title={file.name}
-							>
-								{file.name}
-							</h3>
-						</div>
-					) : null}
-				</div>
-
-				{/* File Info */}
-				<div className="flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-content-muted mt-2">
-					<div className="flex items-center gap-1.5 font-mono">
-						<span>{formatBytes(file.size)}</span>
-						<span className="text-content-subtle">•</span>
-						<span>{date}</span>
+			<div className="flex min-h-[9.25rem] flex-col gap-3 p-3">
+				<div className="min-w-0">
+					<div className="mb-1 flex min-w-0 items-center gap-1.5">
+						{file.platform && <span className={platformBadgeClass(file.platform)}>{platformLabel(file.platform)}</span>}
+						{file.creator && <span className="truncate text-xs font-medium text-foreground">@{file.creator}</span>}
 					</div>
+					{file.caption ? <p className="line-clamp-2 text-xs leading-5 text-content-muted" title={file.caption}>{file.caption}</p> : <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-foreground" title={file.name}>{file.name}</h3>}
 				</div>
-
-				{/* Actions - visible by default on mobile, hover-only on desktop */}
-				<div className="mt-4 flex flex-col gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-					<button
-						onClick={handlePreviewClick}
-						className="w-full rounded-xl border border-border bg-surface-subtle/50 px-2 py-2 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-					>
-						Preview
-					</button>
-					<button
-						onClick={handleDownloadClick}
-						className="w-full rounded-xl bg-accent hover:bg-accent/90 px-2 py-2 text-xs font-bold text-white shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-					>
-						Download
-					</button>
+				<div className="mt-auto flex items-center justify-between gap-2 border-t border-border-subtle pt-2 text-[11px] text-content-muted">
+					<span>{formatBytes(file.size)}</span><span>{date}</span>
+				</div>
+				<div className="grid grid-cols-2 gap-2">
+					<button type="button" onClick={() => onPreview(file)} disabled={!isVideo && !isImage} className="button-secondary min-h-9 px-2 text-xs disabled:opacity-40">Preview</button>
+					<button type="button" onClick={() => onDownload(file.path, file.name)} className="button-primary min-h-9 px-2 text-xs"><Download size={14} />Save</button>
 				</div>
 			</div>
-		</div>
+		</article>
 	);
 });

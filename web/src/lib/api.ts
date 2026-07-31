@@ -264,7 +264,8 @@ export async function zipFiles(paths: string[]): Promise<Blob> {
     body: JSON.stringify({ paths })
   });
   if (!res.ok) {
-    throw new Error('Failed to create ZIP');
+    const message = await res.text().catch(() => '');
+    throw new Error(message || `Failed to create ZIP (${res.status})`);
   }
   return res.blob();
 }

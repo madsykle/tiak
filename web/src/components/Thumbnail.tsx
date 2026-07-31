@@ -27,8 +27,7 @@ export default function Thumbnail({
 	if (error) {
 		return (
 			<div
-				className={`bg-surface-strong rounded-lg flex items-center justify-center ${className}`}
-				style={{ width, height }}
+				className={`bg-surface-strong rounded-lg flex h-full w-full items-center justify-center ${className}`}
 			>
 				<svg
 					className="w-8 h-8 text-content-muted"
@@ -51,8 +50,7 @@ export default function Thumbnail({
 
 	return (
 		<div
-			className={`relative overflow-hidden rounded-lg bg-surface-strong ${className}`}
-			style={{ width, height }}
+			className={`relative h-full w-full overflow-hidden rounded-lg bg-surface-strong ${className}`}
 		>
 			{!loaded && (
 				<div className="absolute inset-0 flex items-center justify-center">
@@ -64,7 +62,7 @@ export default function Thumbnail({
 				alt={alt}
 				width={width}
 				height={height}
-				className={`transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+				className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
 				priority={priority}
 				onLoad={() => setLoaded(true)}
 				onError={() => setError(true)}

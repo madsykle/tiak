@@ -1,36 +1,7 @@
-interface PlayerPreferencesSectionProps {
-  playerType: 'native' | 'custom';
-  onPlayerTypeChange: (value: 'native' | 'custom') => void;
-}
+import { Check, MonitorPlay } from "lucide-react";
+
+interface PlayerPreferencesSectionProps { playerType: "native" | "custom"; onPlayerTypeChange: (value: "native" | "custom") => void; }
 
 export default function PlayerPreferencesSection({ playerType, onPlayerTypeChange }: PlayerPreferencesSectionProps) {
-  return (
-    <div className="pt-6 border-t border-border-subtle">
-      <h2 className="text-lg font-medium text-foreground mb-4">Player Preferences</h2>
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => onPlayerTypeChange('custom')}
-          className={`p-4 rounded-lg border text-left transition-all ${
-            playerType === 'custom'
-              ? 'border-foreground bg-surface-strong ring-1 ring-foreground'
-              : 'border-border-subtle hover:bg-surface-subtle'
-          }`}
-        >
-          <div className="font-medium text-foreground">Custom Player</div>
-          <div className="text-xs text-content-muted mt-1">Enhanced controls, keyboard shortcuts, modern UI.</div>
-        </button>
-        <button
-          onClick={() => onPlayerTypeChange('native')}
-          className={`p-4 rounded-lg border text-left transition-all ${
-            playerType === 'native'
-              ? 'border-foreground bg-surface-strong ring-1 ring-foreground'
-              : 'border-border-subtle hover:bg-surface-subtle'
-          }`}
-        >
-          <div className="font-medium text-foreground">Native Player</div>
-          <div className="text-xs text-content-muted mt-1">Standard browser player. Better for compatibility on some devices.</div>
-        </button>
-      </div>
-    </div>
-  );
+	return <section className="space-y-4 border-t border-border-subtle pt-6"><div><p className="eyebrow">Playback</p><h2 className="type-section-header mt-1">Player preference</h2></div><div className="grid gap-2 sm:grid-cols-2">{(["custom", "native"] as const).map((value) => { const active = playerType === value; return <button type="button" key={value} onClick={() => onPlayerTypeChange(value)} className={`relative flex min-h-24 items-start gap-3 rounded-2xl border p-4 text-left transition ${active ? "border-accent bg-accent/10" : "border-border-subtle bg-surface-subtle/45 hover:border-border hover:bg-surface-subtle"}`}><span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${active ? "bg-accent text-background" : "bg-surface-strong text-content-muted"}`}><MonitorPlay size={17} /></span><span><span className="block text-sm font-semibold">{value === "custom" ? "Custom player" : "Native player"}</span><span className="mt-1 block text-xs leading-5 text-content-muted">{value === "custom" ? "Enhanced controls and a focused viewing layout." : "Browser controls for maximum compatibility."}</span></span>{active && <Check size={16} className="absolute right-3 top-3 text-accent" />}</button>; })}</div></section>;
 }

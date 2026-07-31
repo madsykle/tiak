@@ -1,42 +1,8 @@
+import { HardDrive, Info, Video } from "lucide-react";
 import { formatBytes } from "../../lib/utils";
-import { Info } from "lucide-react";
 
-interface SystemInfoSectionProps {
-	systemStats: { totalSize: number; fileCount: number } | null;
-}
+interface SystemInfoSectionProps { systemStats: { totalSize: number; fileCount: number } | null; }
 
-export default function SystemInfoSection({
-	systemStats,
-}: SystemInfoSectionProps) {
-	return (
-		<div className="pt-6 border-t border-border-subtle">
-			<h2 className="text-lg font-medium text-foreground mb-4 flex items-center gap-2">
-				<Info
-					width={18}
-					height={18}
-					strokeWidth={2}
-					className="text-foreground"
-				/>
-				System Information
-			</h2>
-			<div className="grid grid-cols-2 gap-4">
-				<div className="p-4 rounded-xl border border-border-subtle bg-surface-subtle/30">
-					<span className="text-[10px] text-content-muted uppercase font-bold tracking-wider block mb-1">
-						Total Storage
-					</span>
-					<span className="text-xl font-mono font-medium text-foreground">
-						{systemStats ? formatBytes(systemStats.totalSize) : "--"}
-					</span>
-				</div>
-				<div className="p-4 rounded-xl border border-border-subtle bg-surface-subtle/30">
-					<span className="text-[10px] text-content-muted uppercase font-bold tracking-wider block mb-1">
-						Total Videos
-					</span>
-					<span className="text-xl font-mono font-medium text-foreground">
-						{systemStats ? systemStats.fileCount : "--"}
-					</span>
-				</div>
-			</div>
-		</div>
-	);
+export default function SystemInfoSection({ systemStats }: SystemInfoSectionProps) {
+	return <section className="space-y-4 border-t border-border-subtle pt-6"><div><p className="eyebrow">Workspace</p><h2 className="type-section-header mt-1 flex items-center gap-2"><Info size={17} className="text-accent" />Storage overview</h2></div><div className="grid grid-cols-2 gap-2"><div className="app-card-muted p-4"><HardDrive size={16} className="mb-3 text-accent" /><p className="text-xs text-content-muted">Total storage</p><p className="mt-1 font-mono text-lg font-semibold">{systemStats ? formatBytes(systemStats.totalSize) : "Loading"}</p></div><div className="app-card-muted p-4"><Video size={16} className="mb-3 text-accent" /><p className="text-xs text-content-muted">Total videos</p><p className="mt-1 font-mono text-lg font-semibold">{systemStats ? systemStats.fileCount : "Loading"}</p></div></div></section>;
 }

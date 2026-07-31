@@ -1,36 +1,33 @@
-import React from 'react';
+import React from "react";
 
 interface StatusBadgeProps {
-  status: 'queued' | 'downloading' | 'done' | 'completed' | 'failed' | 'missing' | 'imported';
+	status: "queued" | "downloading" | "done" | "completed" | "failed" | "missing" | "imported";
 }
 
+const styles: Record<StatusBadgeProps["status"], string> = {
+	queued: "bg-surface-strong text-content-muted ring-border",
+	downloading: "bg-accent/[0.12] text-accent ring-accent/[0.25]",
+	done: "bg-emerald-400/[0.12] text-emerald-300 ring-emerald-400/[0.25]",
+	completed: "bg-emerald-400/[0.12] text-emerald-300 ring-emerald-400/[0.25]",
+	failed: "bg-red-400/[0.12] text-red-300 ring-red-400/[0.25]",
+	missing: "bg-amber-400/[0.12] text-amber-300 ring-amber-400/[0.25]",
+	imported: "bg-sky-400/[0.12] text-sky-300 ring-sky-400/[0.25]",
+};
+
+const labels: Record<StatusBadgeProps["status"], string> = {
+	queued: "Queued",
+	downloading: "Downloading",
+	done: "Completed",
+	completed: "Completed",
+	failed: "Failed",
+	missing: "Expired",
+	imported: "Imported",
+};
+
 export default function StatusBadge({ status }: StatusBadgeProps) {
-  const styles = {
-    queued: 'bg-zinc-100 text-zinc-600 ring-zinc-200',
-    downloading: 'bg-blue-50 text-blue-700 ring-blue-200',
-    done: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-    completed: 'bg-emerald-50 text-emerald-700 ring-emerald-200', // alias for done
-    failed: 'bg-red-50 text-red-700 ring-red-200',
-    missing: 'bg-orange-50 text-orange-700 ring-orange-200',
-    imported: 'bg-indigo-50 text-indigo-700 ring-indigo-200',
-  };
-
-  const labels = {
-    queued: 'Queued',
-    downloading: 'Downloading',
-    done: 'Completed',
-    completed: 'Completed',
-    failed: 'Failed',
-    missing: 'Expired',
-    imported: 'Imported',
-  };
-
-  const styleClass = styles[status] || styles.queued;
-  const label = labels[status] || status;
-
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${styleClass}`}>
-      {label}
-    </span>
-  );
+	return (
+		<span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ring-1 ring-inset ${styles[status] || styles.queued}`}>
+			{labels[status] || status}
+		</span>
+	);
 }

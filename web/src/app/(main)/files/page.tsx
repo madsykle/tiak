@@ -10,6 +10,7 @@ import FileDateSection from "@/components/FileDateSection";
 import FilePreviewModal from "@/components/FilePreviewModal";
 import { formatBytes, triggerInvisibleDownload } from "@/lib/utils";
 import { useFiles, useUsage, useCategories, useMoveFile } from "@/lib/queries";
+import { useAuthState } from "@/store/app-store";
 
 function formatDateHeader(dateStr: string) {
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
@@ -25,6 +26,8 @@ export default function FilesPage() {
 	const { data: usage, refetch: refetchUsage } = useUsage();
 	const { data: categories = ["default"] } = useCategories();
 	const moveFileMutation = useMoveFile();
+	const { role } = useAuthState();
+	const canManageFiles = role === "admin";
 
 	const allFiles: FileItem[] = useMemo(() => {
 		if (!filesData) return [];
@@ -58,8 +61,16 @@ export default function FilesPage() {
 	const [zipping, setZipping] = useState(false);
 	const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
 	const [previewSrc, setPreviewSrc] = useState("");
+	const [playerType, setPlayerType] = useState<"native" | "custom">("custom");
 	const deferredSearchQuery = useDeferredValue(searchQuery);
 	const loadMoreRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const savedPreference = window.localStorage.getItem("player_preference");
+		if (savedPreference === "native" || savedPreference === "custom") {
+			setPlayerType(savedPreference);
+		}
+	}, []);
 
 	const showFeedback = useCallback((type: "success" | "error", text: string) => {
 		setFeedback({ type, text });
@@ -123,11 +134,16 @@ export default function FilesPage() {
 			a.download = `tiak-archive-${new Date().toISOString().slice(0, 10)}.zip`;
 			document.body.appendChild(a);
 			a.click();
-			window.URL.revokeObjectURL(url);
 			a.remove();
+			window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
 			showFeedback("success", `Downloading ZIP for ${paths.length} file(s)`);
-		} catch {
-			showFeedback("error", "Failed to create ZIP");
+		} catch (error) {
+			showFeedback(
+				"error",
+				error instanceof Error && error.message
+					? error.message
+					: "Failed to create ZIP",
+			);
 		} finally {
 			setZipping(false);
 		}
@@ -245,16 +261,6 @@ export default function FilesPage() {
 	const hasPrevPreview = previewIndex > 0;
 	const hasNextPreview = previewIndex >= 0 && previewIndex < sortedFilesList.length - 1;
 
-	useEffect(() => {
-		if (!previewFile) return;
-		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") closePreview();
-			else if (event.key === "ArrowRight") navigatePreview("next");
-			else if (event.key === "ArrowLeft") navigatePreview("prev");
-		};
-		window.addEventListener("keydown", onKeyDown);
-		return () => window.removeEventListener("keydown", onKeyDown);
-	}, [closePreview, navigatePreview, previewFile]);
 
 	const availablePlatforms = useMemo(() => {
 		const platforms = new Set<string>();
@@ -314,7 +320,7 @@ export default function FilesPage() {
 		<div className="space-y-6 animate-in fade-in duration-500">
 			<header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
 				<div className="flex-1 min-w-0">
-					<h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display">Files</h1>
+					<h1 className="page-title">Files</h1>
 					{usage ? (
 						<div className="mt-3 space-y-1.5 max-w-[280px]">
 							<div className="flex justify-between text-[11px] font-mono text-content-muted">
@@ -335,7 +341,7 @@ export default function FilesPage() {
 				<button
 					onClick={handleManualRefresh}
 					disabled={loading}
-					className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-subtle/50 text-sm font-medium hover:bg-surface-strong hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
+					className="button-secondary min-h-10 px-3 text-xs"
 					title="Refresh files manually"
 				>
 					<RefreshCw width={14} height={14} strokeWidth={2.5} className={loading ? "animate-spin" : ""} />
@@ -370,14 +376,15 @@ export default function FilesPage() {
 				onClearSelection={handleClearSelection}
 				isLoading={loading}
 				isZipping={zipping}
+				canManageFiles={canManageFiles}
 			/>
 
 			{feedback && (
 				<div
 					className={`rounded-lg border px-4 py-3 text-sm ${
 						feedback.type === "success"
-							? "border-emerald-200 bg-emerald-50 text-emerald-800"
-							: "border-red-200 bg-red-50 text-red-800"
+							? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200"
+							: "border-red-400/20 bg-red-400/10 text-red-200"
 					}`}
 				>
 					{feedback.text}
@@ -438,7 +445,12 @@ export default function FilesPage() {
 					onClose={closePreview}
 					onPrev={() => navigatePreview("prev")}
 					onNext={() => navigatePreview("next")}
-					onTogglePlayerType={() => {}}
+					playerType={playerType}
+					onTogglePlayerType={() => setPlayerType((current) => {
+						const next = current === "custom" ? "native" : "custom";
+						window.localStorage.setItem("player_preference", next);
+						return next;
+					})}
 				/>
 			)}
 		</div>

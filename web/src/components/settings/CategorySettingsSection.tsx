@@ -1,160 +1,62 @@
-import { useState, useEffect } from 'react';
-import { Check, X, FolderOpen, ChevronUp, ChevronDown, Edit2, Trash2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Check, ChevronDown, ChevronUp, Edit2, FolderOpen, Plus, Trash2, X } from "lucide-react";
 
-interface EditingCategory {
-  original: string;
-  current: string;
-}
-
+interface EditingCategory { original: string; current: string; }
 interface CategorySettingsSectionProps {
-  categories: string[];
-  newCatName: string;
-  editingCat: EditingCategory | null;
-  onNewCatNameChange: (value: string) => void;
-  onAddCategory: () => void;
-  onStartEditing: (name: string) => void;
-  onEditingCatChange: (value: EditingCategory | null) => void;
-  onSaveRename: () => void;
-  onDeleteCategory: (name: string) => void;
+	categories: string[];
+	newCatName: string;
+	editingCat: EditingCategory | null;
+	onNewCatNameChange: (value: string) => void;
+	onAddCategory: () => void;
+	onStartEditing: (name: string) => void;
+	onEditingCatChange: (value: EditingCategory | null) => void;
+	onSaveRename: () => void;
+	onDeleteCategory: (name: string) => void;
 }
 
-export default function CategorySettingsSection({
-  categories,
-  newCatName,
-  editingCat,
-  onNewCatNameChange,
-  onAddCategory,
-  onStartEditing,
-  onEditingCatChange,
-  onSaveRename,
-  onDeleteCategory,
-}: CategorySettingsSectionProps) {
-  const [localCategories, setLocalCategories] = useState(categories);
-  const [showAll, setShowAll] = useState(false);
+export default function CategorySettingsSection({ categories, newCatName, editingCat, onNewCatNameChange, onAddCategory, onStartEditing, onEditingCatChange, onSaveRename, onDeleteCategory }: CategorySettingsSectionProps) {
+	const [localCategories, setLocalCategories] = useState(categories);
+	const [showAll, setShowAll] = useState(false);
+	useEffect(() => setLocalCategories(categories), [categories]);
 
-  useEffect(() => {
-    setLocalCategories(categories);
-  }, [categories]);
+	const handleMove = (index: number, direction: "up" | "down") => {
+		const next = [...localCategories];
+		const target = direction === "up" ? index - 1 : index + 1;
+		if (target < 0 || target >= next.length) return;
+		[next[index], next[target]] = [next[target], next[index]];
+		setLocalCategories(next);
+	};
 
-  const handleMove = (index: number, direction: 'up' | 'down') => {
-    const newCats = [...localCategories];
-    if (direction === 'up' && index > 0) {
-      [newCats[index - 1], newCats[index]] = [newCats[index], newCats[index - 1]];
-    } else if (direction === 'down' && index < newCats.length - 1) {
-      [newCats[index + 1], newCats[index]] = [newCats[index], newCats[index + 1]];
-    }
-    setLocalCategories(newCats);
-  };
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">Categories</h2>
-        <span className="text-xs font-medium px-2 py-1 bg-surface-strong text-content-muted rounded-full">
-          {localCategories.length} Total
-        </span>
-      </div>
-      <div className="space-y-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="New Category Name"
-            value={newCatName}
-            onChange={(e) => onNewCatNameChange(e.target.value)}
-            className="flex-1 min-w-0 rounded-md border border-border-subtle bg-transparent px-3 py-1.5 text-sm"
-            onKeyDown={(e) => e.key === 'Enter' && onAddCategory()}
-          />
-          <button
-            onClick={onAddCategory}
-            disabled={!newCatName.trim()}
-            className="shrink-0 whitespace-nowrap bg-accent text-white px-4 py-1.5 rounded-md text-sm font-semibold shadow-sm shadow-accent/20 hover:bg-accent/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Add Category
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {(showAll ? localCategories : localCategories.slice(0, 5)).map((cat, index) => (
-            <div key={cat} className="group flex items-center justify-between p-3 rounded-xl border border-border-subtle bg-surface hover:bg-surface-strong hover:border-border transition-all duration-200">
-              {editingCat?.original === cat ? (
-                <div className="flex flex-1 items-center gap-2 mr-2">
-                  <input
-                    type="text"
-                    value={editingCat.current}
-                    onChange={(e) => onEditingCatChange({ ...editingCat, current: e.target.value })}
-                    className="flex-1 rounded-lg border border-accent bg-surface px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/50"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') onSaveRename();
-                      if (e.key === 'Escape') onEditingCatChange(null);
-                    }}
-                  />
-                  <button onClick={onSaveRename} className="p-1.5 rounded-md bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors">
-                    <Check width={16} height={16} strokeWidth={2.5} className="text-current" />
-                  </button>
-                  <button onClick={() => onEditingCatChange(null)} className="p-1.5 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors">
-                    <X width={16} height={16} strokeWidth={2.5} className="text-current" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 min-w-0 pr-2">
-                  <div className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center border border-accent/20">
-                    <FolderOpen width={14} height={14} className="text-accent shrink-0" strokeWidth={2.5} />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-semibold text-foreground tracking-tight truncate block" title={cat}>{cat}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 shrink-0">
-                {editingCat?.original !== cat && (
-                  <div className="flex items-center mr-2 bg-surface-strong rounded-md p-0.5">
-                    <button 
-                      onClick={() => handleMove(index, 'up')} 
-                      disabled={index === 0}
-                      className="text-content-muted hover:text-foreground disabled:opacity-30 p-1 hover:bg-surface rounded transition-colors" 
-                      title="Move Up"
-                    >
-                      <ChevronUp width={14} height={14} strokeWidth={2.5} className="text-current" />
-                    </button>
-                    <button 
-                      onClick={() => handleMove(index, 'down')} 
-                      disabled={index === localCategories.length - 1}
-                      className="text-content-muted hover:text-foreground disabled:opacity-30 p-1 hover:bg-surface rounded transition-colors" 
-                      title="Move Down"
-                    >
-                      <ChevronDown width={14} height={14} strokeWidth={2.5} className="text-current" />
-                    </button>
-                  </div>
-                )}
-                {cat !== 'default' && editingCat?.original !== cat && (
-                  <>
-                    <button onClick={() => onStartEditing(cat)} className="text-blue-400 hover:text-blue-500 hover:bg-blue-500/10 p-1.5 rounded-md transition-colors" title="Rename">
-                      <Edit2 width={14} height={14} strokeWidth={2.5} className="text-current" />
-                    </button>
-                    <button onClick={() => onDeleteCategory(cat)} className="text-red-400 hover:text-accent hover:bg-accent/10 p-1.5 rounded-md transition-colors" title="Delete">
-                      <Trash2 width={14} height={14} strokeWidth={2.5} className="text-current" />
-                    </button>
-                  </>
-                )}
-                {cat === 'default' && (
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-content-muted bg-surface-strong px-2 py-1 rounded-md">Default</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {localCategories.length > 5 && (
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className="w-full py-2.5 mt-2 rounded-xl border border-border border-dashed text-sm font-medium text-content-muted hover:text-foreground hover:border-accent/50 hover:bg-accent/5 transition-all duration-200"
-          >
-            {showAll ? 'Show Less' : `Show All Categories (${localCategories.length})`}
-          </button>
-        )}
-      </div>
-    </div>
-  );
+	return (
+		<section className="space-y-4">
+			<div className="flex items-end justify-between gap-3">
+				<div><p className="eyebrow">Library structure</p><h2 className="type-section-header mt-1">Categories</h2></div>
+				<span className="rounded-full bg-surface-strong px-2.5 py-1 text-xs text-content-muted">{localCategories.length} total</span>
+			</div>
+			<div className="flex flex-col gap-2 sm:flex-row">
+				<input type="text" placeholder="New Category Name" value={newCatName} onChange={(event) => onNewCatNameChange(event.target.value)} onKeyDown={(event) => event.key === "Enter" && onAddCategory()} className="app-input min-w-0 flex-1" />
+				<button type="button" onClick={onAddCategory} disabled={!newCatName.trim()} className="button-primary shrink-0"><Plus size={16} />Add</button>
+			</div>
+			<div className="flex flex-col gap-2">
+				{(showAll ? localCategories : localCategories.slice(0, 5)).map((category, index) => (
+					<div key={category} className="app-card-muted flex min-h-14 items-center justify-between gap-3 px-3 py-2.5">
+						{editingCat?.original === category ? (
+							<div className="flex min-w-0 flex-1 items-center gap-2">
+								<input autoFocus value={editingCat.current} onChange={(event) => onEditingCatChange({ ...editingCat, current: event.target.value })} onKeyDown={(event) => { if (event.key === "Enter") onSaveRename(); if (event.key === "Escape") onEditingCatChange(null); }} className="app-input min-w-0 flex-1" />
+								<button type="button" onClick={onSaveRename} className="rounded-lg bg-emerald-400/[0.12] p-2 text-emerald-300" aria-label="Save category"><Check size={16} /></button>
+								<button type="button" onClick={() => onEditingCatChange(null)} className="rounded-lg bg-red-400/[0.12] p-2 text-red-300" aria-label="Cancel edit"><X size={16} /></button>
+							</div>
+						) : (
+							<div className="flex min-w-0 items-center gap-3"><span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent"><FolderOpen size={15} /></span><span className="truncate text-sm font-medium">{category}</span></div>
+						)}
+						{editingCat?.original !== category && <div className="flex shrink-0 items-center gap-1">
+							<div className="hidden items-center rounded-lg bg-surface-strong p-0.5 sm:flex"><button type="button" onClick={() => handleMove(index, "up")} disabled={index === 0} className="rounded-md p-1.5 text-content-muted hover:text-foreground disabled:opacity-30" title="Move Up"><ChevronUp size={14} /></button><button type="button" onClick={() => handleMove(index, "down")} disabled={index === localCategories.length - 1} className="rounded-md p-1.5 text-content-muted hover:text-foreground disabled:opacity-30" title="Move Down"><ChevronDown size={14} /></button></div>
+							{category !== "default" ? <><button type="button" onClick={() => onStartEditing(category)} className="rounded-lg p-2 text-content-muted hover:bg-surface-strong hover:text-foreground" title="Rename"><Edit2 size={15} /></button><button type="button" onClick={() => onDeleteCategory(category)} className="rounded-lg p-2 text-content-muted hover:bg-red-400/[0.12] hover:text-red-300" title="Delete"><Trash2 size={15} /></button></> : <span className="rounded-md bg-surface-strong px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-content-subtle">Default</span>}
+						</div>}
+					</div>
+				))}
+			</div>
+			{localCategories.length > 5 && <button type="button" onClick={() => setShowAll(!showAll)} className="w-full rounded-xl border border-dashed border-border py-2.5 text-xs font-semibold text-content-muted hover:border-accent hover:text-accent">{showAll ? "Show less" : `Show all categories (${localCategories.length})`}</button>}
+		</section>
+	);
 }

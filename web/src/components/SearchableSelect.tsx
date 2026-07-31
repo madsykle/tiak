@@ -1,152 +1,52 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from "react";
+import { Check, ChevronDown, Search } from "lucide-react";
 
 interface SearchableSelectProps {
-  options: string[];
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-  includeAllOption?: boolean;
-  allOptionLabel?: string;
-  allowCreation?: boolean;
+	options: string[];
+	value: string;
+	onChange: (value: string) => void;
+	placeholder?: string;
+	className?: string;
+	includeAllOption?: boolean;
+	allOptionLabel?: string;
+	allowCreation?: boolean;
 }
 
-export default function SearchableSelect({
-  options,
-  value,
-  onChange,
-  placeholder = 'Select...',
-  className = '',
-  includeAllOption = false,
-  allOptionLabel = 'All Categories',
-  allowCreation = true
-}: SearchableSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const wrapperRef = useRef<HTMLDivElement>(null);
+export default function SearchableSelect({ options, value, onChange, placeholder = "Select...", className = "", includeAllOption = false, allOptionLabel = "All categories", allowCreation = true }: SearchableSelectProps) {
+	const [isOpen, setIsOpen] = useState(false);
+	const [searchTerm, setSearchTerm] = useState("");
+	const wrapperRef = useRef<HTMLDivElement>(null);
+	const filteredOptions = options.filter((option) => option.toLowerCase().includes(searchTerm.toLowerCase()));
+	const displayValue = includeAllOption && value === "all" ? allOptionLabel : value;
 
-  // Close when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+	useEffect(() => {
+		const onPointerDown = (event: MouseEvent) => { if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) setIsOpen(false); };
+		const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setIsOpen(false); };
+		document.addEventListener("mousedown", onPointerDown);
+		document.addEventListener("keydown", onKeyDown);
+		return () => { document.removeEventListener("mousedown", onPointerDown); document.removeEventListener("keydown", onKeyDown); };
+	}, []);
 
-  const filteredOptions = options.filter(option =>
-    option.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+	const choose = (next: string) => { onChange(next); setSearchTerm(""); setIsOpen(false); };
 
-  const displayValue = includeAllOption && value === 'all' 
-    ? allOptionLabel 
-    : value;
+	return (
+		<div ref={wrapperRef} className={`relative ${className}`}>
+			<button type="button" onClick={() => setIsOpen((open) => !open)} className="app-input flex w-full items-center justify-between gap-2 text-left" aria-haspopup="listbox" aria-expanded={isOpen}>
+				<span className={`truncate ${displayValue ? "text-foreground" : "text-content-subtle"}`}>{displayValue || placeholder}</span><ChevronDown size={16} className={`shrink-0 text-content-subtle transition-transform ${isOpen ? "rotate-180" : ""}`} />
+			</button>
+			{isOpen && <div className="absolute left-0 top-full z-50 mt-2 w-full min-w-[12rem] overflow-hidden rounded-xl border border-border bg-surface p-2 shadow-2xl">
+				<div className="relative mb-2"><Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-content-subtle" /><input autoFocus value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search" className="app-input h-9 min-h-9 w-full pl-8 text-xs" aria-label="Search options" /></div>
+				<div className="max-h-56 overflow-y-auto" role="listbox">
+					{includeAllOption && !searchTerm && <Option active={value === "all"} label={allOptionLabel} onClick={() => choose("all")} />}
+					{filteredOptions.map((option) => <Option key={option} active={value === option} label={option} onClick={() => choose(option)} />)}
+					{filteredOptions.length === 0 && searchTerm && allowCreation && <Option label={`Create "${searchTerm}"`} onClick={() => choose(searchTerm)} />}
+					{filteredOptions.length === 0 && !allowCreation && <p className="px-2 py-4 text-center text-xs text-content-subtle">No matches</p>}
+				</div>
+			</div>}
+		</div>
+	);
+}
 
-  const handleSelect = (val: string) => {
-    onChange(val);
-    setIsOpen(false);
-    setSearchTerm('');
-  };
-
-  return (
-    <div className={`relative ${className}`} ref={wrapperRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex h-9 w-full items-center justify-between rounded-lg border border-border-subtle bg-surface px-3 py-2 text-sm text-foreground focus:border-foreground focus:ring-1 focus:ring-foreground hover:bg-surface-subtle transition-all"
-      >
-        <span className="truncate">{displayValue || placeholder}</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div className="absolute bottom-full left-0 z-50 mb-1 w-full min-w-[200px] rounded-xl border border-border bg-surface shadow-xl animate-in fade-in zoom-in-95 duration-100 origin-bottom">
-          <div className="p-2">
-            <div className="relative mb-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-50"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-              <input
-                autoFocus
-                type="text"
-                className="h-8 w-full rounded-md border-border-subtle bg-surface-subtle pl-8 pr-3 text-xs focus:border-foreground focus:ring-0"
-                placeholder="Search categories..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') setIsOpen(false);
-                }}
-              />
-            </div>
-
-            <div className="max-h-[240px] overflow-y-auto overflow-x-hidden scrollbar-thin">
-              {includeAllOption && !searchTerm && (
-                <button
-                  onClick={() => handleSelect('all')}
-                  className={`flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors ${
-                    value === 'all' ? 'bg-surface-strong text-foreground' : 'hover:bg-surface-subtle text-content-muted hover:text-foreground'
-                  }`}
-                >
-                  {allOptionLabel}
-                </button>
-              )}
-
-              {filteredOptions.length > 0 ? (
-                filteredOptions.map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => handleSelect(option)}
-                    className={`flex w-full items-center rounded-md px-2 py-1.5 text-sm transition-colors ${
-                      value === option ? 'bg-surface-strong text-foreground' : 'hover:bg-surface-subtle text-content-muted hover:text-foreground'
-                    }`}
-                  >
-                    <span className="truncate">{option}</span>
-                  </button>
-                ))
-              ) : (searchTerm && allowCreation) ? (
-                <button
-                  onClick={() => handleSelect(searchTerm)}
-                  className="flex w-full flex-col items-start rounded-md px-2 py-2 text-sm text-foreground hover:bg-surface-subtle transition-colors border border-dashed border-border-subtle mt-1"
-                >
-                  <span className="text-[10px] uppercase tracking-wider text-content-subtle font-semibold mb-0.5">Create new category</span>
-                  <span className="truncate font-medium text-emerald-600 dark:text-emerald-400">&quot;{searchTerm}&quot;</span>
-                </button>
-              ) : (
-                <div className="px-2 py-4 text-center text-xs text-content-subtle">
-                  No categories found
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+function Option({ label, active = false, onClick }: { label: string; active?: boolean; onClick: () => void }) {
+	return <button type="button" role="option" aria-selected={active} onClick={onClick} className={`flex min-h-10 w-full items-center justify-between rounded-lg px-2.5 text-left text-sm transition-colors ${active ? "bg-accent/[0.12] text-accent" : "text-content-muted hover:bg-surface-subtle hover:text-foreground"}`}><span className="truncate">{label}</span>{active && <Check size={14} />}</button>;
 }

@@ -25,14 +25,28 @@ func AuthMiddleware(authState *AuthState, cfg *config.ServerConfig) func(http.Ha
 }
 
 func RequireAdmin(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := GetUser(r)
-		if user == nil || user.Role != "admin" {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+	return requireRole(func(user *AuthenticatedUser) bool {
+		return user.Role == "admin"
+	})(next)
+}
+
+func RequirePremiumMemberOrAdmin(next http.Handler) http.Handler {
+	return requireRole(func(user *AuthenticatedUser) bool {
+		return user.Role == "admin" || user.Role == "premium_member"
+	})(next)
+}
+
+func requireRole(allowed func(*AuthenticatedUser) bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			user := GetUser(r)
+			if user == nil || !allowed(user) {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func GetUser(r *http.Request) *AuthenticatedUser {

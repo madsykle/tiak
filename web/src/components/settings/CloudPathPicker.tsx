@@ -1,157 +1,19 @@
-import { useState, useEffect } from 'react';
-import { X, ChevronLeft, RefreshCw, FolderOpen } from 'lucide-react';
-import { API_BASE } from '../../lib/config';
+import { useCallback, useEffect, useState } from "react";
+import { ChevronLeft, FolderOpen, RefreshCw, X } from "lucide-react";
+import { API_BASE } from "../../lib/config";
 
-interface RcloneEntry {
-  Path: string;
-  Name: string;
-  IsDir: boolean;
-}
-
-interface CloudPathPickerProps {
-  currentPath: string;
-  onSelect: (path: string) => void;
-  onClose: () => void;
-}
+interface RcloneEntry { Path: string; Name: string; IsDir: boolean; }
+interface CloudPathPickerProps { currentPath: string; onSelect: (path: string) => void; onClose: () => void; }
 
 export default function CloudPathPicker({ currentPath, onSelect, onClose }: CloudPathPickerProps) {
-  const [path, setPath] = useState(() => {
-    if (currentPath.includes(':')) {
-      return currentPath;
-    }
-    return '';
-  });
-  const [entries, setEntries] = useState<RcloneEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchDirectory(path);
-  }, [path]);
-
-  const fetchDirectory = async (targetPath: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${API_BASE}/rclone/ls?path=${encodeURIComponent(targetPath)}`, {
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setEntries(data.entries || []);
-      } else {
-        const text = await res.text();
-        setError(text || 'Failed to list directory');
-      }
-    } catch {
-      setError('Network error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleNavigate = (entryName: string) => {
-    // Determine remote vs path
-    let newPath = '';
-    if (path.endsWith(':')) {
-      newPath = path + entryName;
-    } else if (path.endsWith('/')) {
-      newPath = path + entryName;
-    } else {
-      newPath = path + '/' + entryName;
-    }
-    setPath(newPath);
-  };
-
-  const handleGoUp = () => {
-    if (path.endsWith(':')) return; // Already at remote root
-    const parts = path.split('/');
-    if (parts.length === 1) {
-      // Just remote:folder -> go to remote:
-      setPath(path.split(':')[0] + ':');
-    } else {
-      parts.pop();
-      setPath(parts.join('/'));
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
-        <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-strong/50">
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">Select Cloud Folder</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-content-muted hover:bg-white/5 transition-colors">
-            <X width={20} height={20} strokeWidth={2} className="text-current" />
-          </button>
-        </div>
-        
-        <div className="p-3 border-b border-border-subtle flex gap-2 items-center bg-surface-subtle">
-          <button 
-            onClick={handleGoUp} 
-            disabled={path.endsWith(':')}
-            className="p-1.5 rounded-lg border border-border bg-surface-strong hover:border-border-strong disabled:opacity-50 transition-colors"
-          >
-            <ChevronLeft width={18} height={18} strokeWidth={2} className="text-current" />
-          </button>
-          <input
-            type="text"
-            value={path}
-            onChange={(e) => setPath(e.target.value)}
-            className="flex-1 rounded-lg border border-border bg-surface/50 p-2 text-sm text-foreground focus:ring-1 focus:ring-accent focus:border-accent"
-          />
-          <button onClick={() => fetchDirectory(path)} className="p-2 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors">
-            <RefreshCw width={16} height={16} strokeWidth={2} className="text-current" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-2">
-          {loading ? (
-            <div className="py-12 flex flex-col items-center justify-center gap-3 text-content-muted">
-              <span className="h-6 w-6 animate-spin rounded-full border-2 border-content-muted border-t-transparent" />
-              <span className="text-sm">Loading directories...</span>
-            </div>
-          ) : error ? (
-            <div className="p-4 m-2 text-sm text-red-400 bg-accent/10 border border-accent/20 rounded-xl">
-              {error}
-            </div>
-          ) : entries.length === 0 ? (
-            <div className="py-12 text-center text-sm text-content-muted">
-              Empty directory.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {entries.map(entry => (
-                <button
-                  key={entry.Path}
-                  onClick={() => handleNavigate(entry.Name)}
-                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-strong hover:text-accent transition-colors text-left group"
-                >
-                  <FolderOpen width={20} height={20} className="text-blue-400" strokeWidth={2} />
-                  <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">{entry.Name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="p-4 border-t border-border-subtle bg-surface-strong/50 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-content-muted hover:text-foreground hover:bg-white/5 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onSelect(path)}
-            className="px-6 py-2 rounded-xl text-sm font-semibold text-white bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20 transition-all active:scale-95"
-          >
-            Select Here
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+	const [path, setPath] = useState(() => currentPath.includes(":") ? currentPath : "");
+	const [entries, setEntries] = useState<RcloneEntry[]>([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [retriedAtRemoteRoot, setRetriedAtRemoteRoot] = useState(false);
+	const fetchDirectory = useCallback(async (targetPath: string) => { setLoading(true); setError(null); try { const response = await fetch(`${API_BASE}/rclone/ls?path=${encodeURIComponent(targetPath)}`, { headers: { "ngrok-skip-browser-warning": "true", Authorization: `Bearer ${localStorage.getItem("token")}` } }); if (!response.ok) { const message = await response.text(); if (response.status === 404 && targetPath.includes(":") && !retriedAtRemoteRoot) { setRetriedAtRemoteRoot(true); setPath(`${targetPath.split(":")[0]}:`); return; } setError(message || "Failed to list directory"); return; } const data = await response.json(); setEntries(data.entries || []); } catch { setError("Network error"); } finally { setLoading(false); } }, [retriedAtRemoteRoot]);
+	useEffect(() => { fetchDirectory(path); }, [fetchDirectory, path]);
+	const navigate = (name: string) => setPath(path.endsWith(":") || path.endsWith("/") ? `${path}${name}` : `${path}/${name}`);
+	const goUp = () => { if (path.endsWith(":")) return; const parts = path.split("/"); if (parts.length === 1) setPath(path.split(":")[0] + ":"); else { parts.pop(); setPath(parts.join("/")); } };
+	return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-labelledby="cloud-picker-title"><div className="app-card flex max-h-[88dvh] w-full max-w-lg flex-col overflow-hidden"><header className="flex items-center justify-between border-b border-border-subtle px-4 py-4"><div><p className="eyebrow">Remote storage</p><h2 id="cloud-picker-title" className="mt-1 text-base font-semibold">Choose a folder</h2></div><button type="button" onClick={onClose} className="rounded-lg p-2 text-content-muted hover:bg-surface-strong hover:text-foreground" aria-label="Close folder picker"><X size={18} /></button></header><div className="flex gap-2 border-b border-border-subtle bg-surface-subtle/45 p-3"><button type="button" onClick={goUp} disabled={path.endsWith(":")} className="button-secondary min-h-10 px-3" aria-label="Go up one folder"><ChevronLeft size={17} /></button><input value={path} onChange={(event) => setPath(event.target.value)} className="app-input min-w-0 flex-1" aria-label="Current cloud path" /><button type="button" onClick={() => fetchDirectory(path)} className="button-secondary min-h-10 px-3" aria-label="Refresh folders"><RefreshCw size={16} /></button></div><div className="min-h-44 flex-1 overflow-y-auto p-3">{loading ? <div className="flex flex-col items-center justify-center gap-3 py-16 text-sm text-content-muted"><RefreshCw size={20} className="animate-spin text-accent" />Loading folders</div> : error ? <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">{error}</div> : entries.length === 0 ? <p className="py-16 text-center text-sm text-content-muted">This folder is empty.</p> : <div className="grid gap-1">{entries.filter((entry) => entry.IsDir).map((entry) => <button type="button" key={entry.Path} onClick={() => navigate(entry.Name)} className="flex min-h-12 items-center gap-3 rounded-xl px-3 text-left text-sm text-content-muted hover:bg-surface-subtle hover:text-foreground"><FolderOpen size={18} className="text-accent" />{entry.Name}</button>)}</div>}</div><footer className="flex flex-col-reverse gap-2 border-t border-border-subtle p-3 sm:flex-row sm:justify-end"><button type="button" onClick={onClose} className="button-secondary">Cancel</button><button type="button" onClick={() => onSelect(path)} className="button-primary">Select this folder</button></footer></div></div>;
 }

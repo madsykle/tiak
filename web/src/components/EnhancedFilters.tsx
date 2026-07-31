@@ -1,218 +1,87 @@
-import React from 'react';
-import SearchableSelect from './SearchableSelect';
+import React from "react";
+import { ListFilter, Search, SlidersHorizontal, X } from "lucide-react";
+import SearchableSelect from "./SearchableSelect";
 
 interface EnhancedFiltersProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  categoryFilter: string;
-  setCategoryFilter: (category: string) => void;
-  platformFilter: string;
-  setPlatformFilter: (platform: string) => void;
-  sortBy: string;
-  setSortBy: (sortBy: string) => void;
-  sortDir: 'asc' | 'desc';
-  setSortDir: (dir: 'asc' | 'desc') => void;
-  categories: string[];
-  availablePlatforms: string[];
-  fileCount: number;
-  onClearFilters: () => void;
+	searchQuery: string;
+	setSearchQuery: (query: string) => void;
+	categoryFilter: string;
+	setCategoryFilter: (category: string) => void;
+	platformFilter: string;
+	setPlatformFilter: (platform: string) => void;
+	sortBy: string;
+	setSortBy: (sortBy: string) => void;
+	sortDir: "asc" | "desc";
+	setSortDir: (dir: "asc" | "desc") => void;
+	categories: string[];
+	availablePlatforms: string[];
+	fileCount: number;
+	onClearFilters: () => void;
 }
 
 export default function EnhancedFilters({
-  searchQuery,
-  setSearchQuery,
-  categoryFilter,
-  setCategoryFilter,
-  platformFilter,
-  setPlatformFilter,
-  sortBy,
-  setSortBy,
-  sortDir,
-  setSortDir,
-  categories,
-  availablePlatforms,
-  fileCount,
-  onClearFilters,
+	searchQuery,
+	setSearchQuery,
+	categoryFilter,
+	setCategoryFilter,
+	platformFilter,
+	setPlatformFilter,
+	sortBy,
+	setSortBy,
+	sortDir,
+	setSortDir,
+	categories,
+	availablePlatforms,
+	fileCount,
+	onClearFilters,
 }: EnhancedFiltersProps) {
-  const hasActiveFilters =
-    searchQuery.trim() !== '' ||
-    categoryFilter !== 'all' ||
-    platformFilter !== 'all';
+	const hasActiveFilters = searchQuery.trim() !== "" || categoryFilter !== "all" || platformFilter !== "all";
+	const sortValue = `${sortBy}-${sortDir}`;
 
-  const sortOptions = [
-    { value: 'time', label: 'Date (Newest)' },
-    { value: 'time-asc', label: 'Date (Oldest)' },
-    { value: 'name', label: 'Name (A-Z)' },
-    { value: 'name-desc', label: 'Name (Z-A)' },
-    { value: 'size', label: 'Size (Largest)' },
-    { value: 'size-asc', label: 'Size (Smallest)' },
-    { value: 'platform', label: 'Platform' },
-  ];
+	return (
+		<section className="app-card-muted p-3 sm:p-4" aria-label="File filters">
+			<div className="flex items-center gap-2">
+				<div className="relative min-w-0 flex-1">
+					<Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-subtle" size={16} />
+					<input
+						value={searchQuery}
+						onChange={(event) => setSearchQuery(event.target.value)}
+						placeholder="Search files"
+						className="app-input w-full pl-9 pr-9"
+						aria-label="Search files"
+					/>
+					{searchQuery && (
+						<button type="button" onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-content-muted hover:bg-surface-strong hover:text-foreground" aria-label="Clear search">
+							<X size={14} />
+						</button>
+					)}
+				</div>
+				<span className="hidden items-center gap-1 text-xs text-content-muted sm:flex"><ListFilter size={14} />{fileCount}</span>
+			</div>
 
-  const handleSortChange = (value: string) => {
-    if (value.includes('-')) {
-      const [field, dir] = value.split('-');
-      setSortBy(field);
-      setSortDir(dir as 'asc' | 'desc');
-    } else {
-      setSortBy(value);
-      setSortDir(value === 'time' || value === 'size' ? 'desc' : 'asc');
-    }
-  };
+			<div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+				<SearchableSelect options={categories} value={categoryFilter} onChange={setCategoryFilter} placeholder="Category" className="w-full" includeAllOption allOptionLabel="All categories" allowCreation={false} />
+				<SearchableSelect options={availablePlatforms} value={platformFilter} onChange={setPlatformFilter} placeholder="Platform" className="w-full" includeAllOption allOptionLabel="All platforms" allowCreation={false} />
+				<label className="relative col-span-2 sm:col-span-1">
+					<SlidersHorizontal className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-content-subtle" size={14} />
+					<select value={sortValue} onChange={(event) => { const [field, direction] = event.target.value.split("-"); setSortBy(field); setSortDir(direction as "asc" | "desc"); }} className="app-input w-full appearance-none pl-9 pr-3" aria-label="Sort files">
+						<option value="time-desc">Newest first</option>
+						<option value="time-asc">Oldest first</option>
+						<option value="name-asc">Name A-Z</option>
+						<option value="name-desc">Name Z-A</option>
+						<option value="size-desc">Largest first</option>
+						<option value="size-asc">Smallest first</option>
+						<option value="platform-asc">Platform</option>
+					</select>
+				</label>
+			</div>
 
-  
-  return (
-    <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="group relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <svg className="h-4 w-4 text-content-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search files by name..."
-          className="block w-full rounded-lg border border-border bg-surface py-2.5 pl-10 pr-10 text-foreground placeholder:text-content-muted focus:border-foreground/30 focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-all"
-        />
-        {searchQuery.trim() && (
-          <button
-            onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-content-muted hover:text-foreground transition-colors"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
-      </div>
-
-      {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Category Filter */}
-        <div className="min-w-[160px]">
-          <SearchableSelect
-            options={categories}
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-            placeholder="All categories"
-            className="w-full"
-            includeAllOption
-            allOptionLabel="All categories"
-            allowCreation={false}
-          />
-        </div>
-
-        {/* Platform Filter */}
-        <div className="min-w-[140px]">
-          <SearchableSelect
-            options={availablePlatforms}
-            value={platformFilter}
-            onChange={setPlatformFilter}
-            placeholder="All platforms"
-            className="w-full"
-            includeAllOption
-            allOptionLabel="All platforms"
-            allowCreation={false}
-          />
-        </div>
-
-        {/* Sort Dropdown */}
-        <div className="relative min-w-[160px]">
-          <select
-            value={sortDir === 'desc' && sortBy !== 'platform' ? sortBy : `${sortBy}${sortDir === 'asc' && sortBy !== 'platform' ? '-asc' : ''}`}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="w-full appearance-none rounded-lg border border-border bg-surface py-2.5 pl-3 pr-8 text-foreground focus:border-foreground/30 focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-all"
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-            <svg className="h-4 w-4 text-content-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Active Filters Indicator */}
-        {hasActiveFilters && (
-          <>
-            <div className="flex items-center gap-2 rounded-xl bg-accent/10 border border-accent/30 px-3 py-1.5 text-xs font-semibold text-accent">
-              <span className="flex h-2 w-2 rounded-full bg-accent animate-pulse"></span>
-              <span>{fileCount} result{fileCount !== 1 ? 's' : ''}</span>
-              <button
-                onClick={onClearFilters}
-                className="ml-1 text-accent hover:text-accent/80 transition-colors"
-                title="Clear all filters"
-              >
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* Filter Count */}
-        <div className="ml-auto text-xs text-content-muted">
-          Showing {fileCount} file{fileCount !== 1 ? 's' : ''}
-        </div>
-      </div>
-
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
-          {searchQuery.trim() && (
-            <div className="flex items-center gap-1 rounded-full bg-surface-strong px-3 py-1 text-xs">
-              <span className="text-content">Search:</span>
-              <span className="font-medium text-foreground">{searchQuery}</span>
-              <button
-                onClick={() => setSearchQuery('')}
-                className="ml-1 text-content-muted hover:text-foreground transition-colors"
-              >
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          )}
-
-          {categoryFilter !== 'all' && (
-            <div className="flex items-center gap-1 rounded-full bg-surface-strong px-3 py-1 text-xs">
-              <span className="text-content">Category:</span>
-              <span className="font-medium text-foreground">{categoryFilter}</span>
-              <button
-                onClick={() => setCategoryFilter('all')}
-                className="ml-1 text-content-muted hover:text-foreground transition-colors"
-              >
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          )}
-
-          {platformFilter !== 'all' && (
-            <div className="flex items-center gap-1 rounded-full bg-surface-strong px-3 py-1 text-xs">
-              <span className="text-content">Platform:</span>
-              <span className="font-medium text-foreground">{platformFilter}</span>
-              <button
-                onClick={() => setPlatformFilter('all')}
-                className="ml-1 text-content-muted hover:text-foreground transition-colors"
-              >
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+			{hasActiveFilters && (
+				<div className="mt-3 flex items-center justify-between gap-3 border-t border-border-subtle pt-3 text-xs">
+					<span className="text-content-muted">{fileCount} matching file{fileCount === 1 ? "" : "s"}</span>
+					<button type="button" onClick={onClearFilters} className="font-semibold text-accent hover:text-foreground">Clear filters</button>
+				</div>
+			)}
+		</section>
+	);
 }

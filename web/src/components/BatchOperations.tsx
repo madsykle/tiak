@@ -1,163 +1,20 @@
-import React, { useState } from 'react';
-import SearchableSelect from './SearchableSelect';
+import React, { useState } from "react";
+import { Archive, ArrowLeftRight, Info, Trash2, X } from "lucide-react";
+import SearchableSelect from "./SearchableSelect";
 
-interface BatchOperationsProps {
-  selectedCount: number;
-  categories: string[];
-  onDelete: () => void;
-  onZip: () => void;
-  onMove: (targetCategory: string) => void;
-  onSelectAll: () => void;
-  onClearSelection: () => void;
-  isLoading?: boolean;
-  isZipping?: boolean;
-}
+interface BatchOperationsProps { selectedCount: number; categories: string[]; onDelete: () => void; onZip: () => void; onMove: (targetCategory: string) => void; onSelectAll: () => void; onClearSelection: () => void; isLoading?: boolean; isZipping?: boolean; canManageFiles?: boolean; }
 
-export default function BatchOperations({
-  selectedCount,
-  categories,
-  onDelete,
-  onZip,
-  onMove,
-  onSelectAll,
-  onClearSelection,
-  isLoading = false,
-  isZipping = false,
-}: BatchOperationsProps) {
-  const [showMoveModal, setShowMoveModal] = useState(false);
-  const [targetCategory, setTargetCategory] = useState('');
+export default function BatchOperations({ selectedCount, categories, onDelete, onZip, onMove, onSelectAll, onClearSelection, isLoading = false, isZipping = false, canManageFiles = true }: BatchOperationsProps) {
+	const [showMoveModal, setShowMoveModal] = useState(false);
+	const [targetCategory, setTargetCategory] = useState("");
+	const closeMove = () => { setShowMoveModal(false); setTargetCategory(""); };
+	if (selectedCount === 0) return <div className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-border-subtle bg-surface-subtle/35 px-3 py-2.5 sm:px-4"><span className="text-xs text-content-muted">Select files to manage them together</span><button type="button" onClick={onSelectAll} className="button-secondary min-h-9 px-3 text-xs">Select all</button></div>;
 
-  const handleMoveSubmit = () => {
-    if (targetCategory.trim()) {
-      onMove(targetCategory);
-      setShowMoveModal(false);
-      setTargetCategory('');
-    }
-  };
-
-  if (selectedCount === 0) {
-    return (
-      <div className="flex items-center justify-between rounded-xl border border-border bg-surface/30 p-4 glass-premium">
-        <div className="text-sm text-content-muted">No files selected</div>
-        <button
-          onClick={onSelectAll}
-          className="rounded-xl border border-border bg-surface-subtle/50 px-4 py-2 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-        >
-          Select All
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="space-y-4 rounded-xl border border-accent/20 bg-accent/5 p-4 glow-accent glass-premium">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-foreground">
-              {selectedCount} file{selectedCount !== 1 ? 's' : ''} selected
-            </span>
-            <button
-              onClick={onClearSelection}
-              className="text-xs font-medium text-content-muted hover:text-foreground transition-colors"
-            >
-              Clear selection
-            </button>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={onZip}
-              disabled={isLoading || isZipping}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isZipping ? (
-                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-              ) : (
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              )}
-              {isZipping ? 'Zipping…' : 'ZIP Selected'}
-            </button>
-
-            <button
-              onClick={() => setShowMoveModal(true)}
-              disabled={isLoading}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-accent hover:bg-accent/90 text-white px-3.5 py-2 text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed glow-accent"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              Move
-            </button>
-
-            <button
-              onClick={onDelete}
-              disabled={isLoading}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 hover:bg-accent text-white px-3.5 py-2 text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Delete
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-[11px] text-content-muted">
-          <svg className="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>Batch operations apply to all selected files</span>
-        </div>
-      </div>
-
-      {/* Move Modal */}
-      {showMoveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-surface/85 p-6 shadow-xl glass-premium animate-in zoom-in-95 duration-150">
-            <div className="mb-4">
-              <h3 className="text-lg font-bold text-foreground">Move {selectedCount} files</h3>
-              <p className="text-sm text-content-muted mt-1">Select a destination category</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-content-muted mb-2">
-                  Destination Category
-                </label>
-                <SearchableSelect
-                  options={categories}
-                  value={targetCategory}
-                  onChange={setTargetCategory}
-                  placeholder="Select or enter category"
-                  className="w-full"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  onClick={() => {
-                    setShowMoveModal(false);
-                    setTargetCategory('');
-                  }}
-                  className="rounded-xl border border-border bg-surface-subtle/50 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleMoveSubmit}
-                  disabled={!targetCategory.trim() || isLoading}
-                  className="rounded-xl bg-accent hover:bg-accent/90 text-white px-5 py-2.5 text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed glow-accent"
-                >
-                  Move Files
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+	return <>
+		<div className="app-card flex flex-col gap-3 border-accent/25 bg-accent/5 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+			<div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold text-foreground">{selectedCount} selected</p><p className="hidden text-xs text-content-muted sm:block">Batch actions apply to every selected file</p></div><button type="button" onClick={onClearSelection} className="inline-flex items-center gap-1 text-xs font-semibold text-content-muted hover:text-foreground"><X size={14} />Clear</button></div>
+			<div className="flex flex-wrap gap-2"><button type="button" onClick={onZip} disabled={isLoading || isZipping} className="button-secondary min-h-10 px-2 text-xs"><Archive size={14} />{isZipping ? "Zipping" : "Archive"}</button>{canManageFiles && <><button type="button" onClick={() => setShowMoveModal(true)} disabled={isLoading} className="button-secondary min-h-10 px-2 text-xs"><ArrowLeftRight size={14} />Move</button><button type="button" onClick={onDelete} disabled={isLoading} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-red-400/25 bg-red-400/10 px-2 text-xs font-semibold text-red-300 transition hover:bg-red-400/20 disabled:opacity-45"><Trash2 size={14} />Delete</button></>}</div>
+		</div>
+		{showMoveModal && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="move-files-title" onClick={closeMove}><div className="app-card w-full max-w-md p-5 sm:p-6" onClick={(event) => event.stopPropagation()}><div className="flex items-start justify-between gap-3"><div><p className="eyebrow">Batch action</p><h2 id="move-files-title" className="mt-1 text-lg font-semibold">Move {selectedCount} files</h2></div><button type="button" onClick={closeMove} className="rounded-lg p-2 text-content-muted hover:bg-surface-strong hover:text-foreground" aria-label="Close move dialog"><X size={18} /></button></div><div className="mt-5"><label className="mb-2 block text-xs font-semibold text-content-muted">Destination category</label><SearchableSelect options={categories} value={targetCategory} onChange={setTargetCategory} placeholder="Choose a category" className="w-full" /></div><div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={closeMove} className="button-secondary">Cancel</button><button type="button" onClick={() => { if (targetCategory.trim()) { onMove(targetCategory); closeMove(); } }} disabled={!targetCategory.trim() || isLoading} className="button-primary">Move files</button></div><p className="mt-4 flex items-center gap-1.5 text-xs text-content-subtle"><Info size={13} />Files keep their original names.</p></div></div>}
+	</>;
 }

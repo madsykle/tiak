@@ -1,16 +1,24 @@
 package routes
 
 import (
+	"archive/zip"
 	"encoding/json"
+	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"tiak-server/auth"
 	"tiak-server/storage"
 )
+
+const maxArchiveSize int64 = 5 << 30
 
 func listFiles(state *AppState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -62,11 +70,160 @@ func deleteFiles(state *AppState) http.HandlerFunc {
 
 func zipFiles(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetUser(r)
-	if user == nil || user.Role != "admin" {
+	if user == nil || (user.Role != "admin" && user.Role != "premium_member") {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	http.Error(w, "Zip not implemented yet", http.StatusNotImplemented)
+
+	// Keep malformed or unexpectedly large path lists from consuming the server.
+	r.Body = http.MaxBytesReader(w, r.Body, 2<<20)
+	var req struct {
+		Paths []string `json:"paths"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid archive request", http.StatusBadRequest)
+		return
+	}
+	if len(req.Paths) == 0 {
+		http.Error(w, "At least one file is required", http.StatusBadRequest)
+		return
+	}
+	if len(req.Paths) > 500 {
+		http.Error(w, "Too many files selected", http.StatusBadRequest)
+		return
+	}
+
+	type archiveEntry struct {
+		file *os.File
+		name string
+		info os.FileInfo
+	}
+	entries := make([]archiveEntry, 0, len(req.Paths))
+	seen := make(map[string]struct{}, len(req.Paths))
+	var totalSize int64
+	closeEntries := func() {
+		for _, entry := range entries {
+			_ = entry.file.Close()
+		}
+	}
+	defer closeEntries()
+	for _, requestedPath := range req.Paths {
+		absPath, archiveName, err := validateArchivePath(requestedPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if _, exists := seen[absPath]; exists {
+			continue
+		}
+		file, err := os.Open(absPath)
+		if err != nil {
+			closeEntries()
+			http.Error(w, "Unable to open selected file", http.StatusInternalServerError)
+			return
+		}
+		info, err := file.Stat()
+		if err != nil || !info.Mode().IsRegular() {
+			_ = file.Close()
+			closeEntries()
+			http.Error(w, "Only regular files can be archived", http.StatusBadRequest)
+			return
+		}
+		if info.Size() > maxArchiveSize-totalSize {
+			_ = file.Close()
+			closeEntries()
+			http.Error(w, "Selected files exceed the archive size limit", http.StatusRequestEntityTooLarge)
+			return
+		}
+		totalSize += info.Size()
+		seen[absPath] = struct{}{}
+		entries = append(entries, archiveEntry{file: file, name: archiveName, info: info})
+	}
+	if len(entries) == 0 {
+		http.Error(w, "No unique files selected", http.StatusBadRequest)
+		return
+	}
+
+	// Videos and image/audio assets are already compressed. Streaming them with
+	// ZIP deflate wastes CPU and also requires a temporary archive on disk.
+	// Validate and open every file before writing headers so validation errors
+	// remain normal HTTP responses instead of corrupting a partially-started archive.
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"tiak-archive-%s.zip\"", time.Now().Format("20060102-150405")))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+
+	archive := zip.NewWriter(w)
+	for _, entry := range entries {
+		if err := r.Context().Err(); err != nil {
+			log.Printf("bulk ZIP cancelled: %v", err)
+			return
+		}
+
+		header, err := zip.FileInfoHeader(entry.info)
+		if err != nil {
+			log.Printf("bulk ZIP header failed for %s: %v", entry.name, err)
+			return
+		}
+		header.Name = entry.name
+		header.Method = archiveMethod(entry.name)
+		writer, err := archive.CreateHeader(header)
+		if err != nil {
+			log.Printf("bulk ZIP entry setup failed for %s: %v", entry.name, err)
+			return
+		}
+		if _, err := io.Copy(writer, entry.file); err != nil {
+			log.Printf("bulk ZIP copy failed for %s: %v", entry.name, err)
+			return
+		}
+	}
+	if err := archive.Close(); err != nil {
+		log.Printf("bulk ZIP finalization failed: %v", err)
+	}
+}
+
+func archiveMethod(name string) uint16 {
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".aac", ".avi", ".flac", ".gif", ".jpeg", ".jpg", ".m4a", ".m4v", ".mkv", ".mov", ".mp3", ".mp4", ".png", ".webm", ".webp", ".zip":
+		return zip.Store
+	default:
+		return zip.Deflate
+	}
+}
+
+func validateArchivePath(requestedPath string) (string, string, error) {
+	absPath, err := storage.ValidateDataPath(requestedPath)
+	if err != nil {
+		return "", "", err
+	}
+	info, err := os.Stat(absPath)
+	if err != nil {
+		return "", "", fmt.Errorf("file not found")
+	}
+	if !info.Mode().IsRegular() {
+		return "", "", fmt.Errorf("only regular files can be archived")
+	}
+
+	root, err := filepath.Abs(storage.DataRoot)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid data root")
+	}
+	resolvedRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid data root")
+	}
+	resolvedPath, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		return "", "", fmt.Errorf("file not found")
+	}
+	relativeResolved, err := filepath.Rel(resolvedRoot, resolvedPath)
+	if err != nil || relativeResolved == "." || relativeResolved == ".." || strings.HasPrefix(relativeResolved, ".."+string(os.PathSeparator)) {
+		return "", "", fmt.Errorf("access denied: file outside data root")
+	}
+	relativeName, err := filepath.Rel(root, absPath)
+	if err != nil || relativeName == "." || relativeName == ".." || strings.HasPrefix(relativeName, ".."+string(os.PathSeparator)) {
+		return "", "", fmt.Errorf("access denied: invalid archive path")
+	}
+	return absPath, filepath.ToSlash(relativeName), nil
 }
 
 func moveFile(state *AppState) http.HandlerFunc {

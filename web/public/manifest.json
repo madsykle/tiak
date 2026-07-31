@@ -1,12 +1,12 @@
 {
-  "name": "Tiak Downloader",
+  "name": "Tiak Media Desk",
   "short_name": "Tiak",
   "id": "/",
   "scope": "/",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#0b0e12",
+  "theme_color": "#0b0e12",
   "orientation": "portrait",
   "icons": [
     {

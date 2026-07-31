@@ -22,6 +22,11 @@ import {
 	useUsage,
 } from "@/lib/queries";
 
+const normalizeSyncDestination = (destination: string) =>
+	destination.trim().toLowerCase() === "onedrive:others/edits"
+		? "onedrive:EDITS"
+		: destination;
+
 export default function SettingsPage() {
 	const { role, login, logout, signup } = useAuthState();
 	const settings = useAppStore((s) => s.settings);
@@ -37,7 +42,7 @@ export default function SettingsPage() {
 	const [confirmPassword, setConfirmPassword] = useState("");
 
 	const [syncDestination, setSyncDestination] = useState(
-		settings.syncDestination || "",
+		normalizeSyncDestination(settings.syncDestination || ""),
 	);
 	const [syncMode, setSyncMode] = useState(settings.syncMode || "copy");
 	const [syncStatus, setSyncStatus] = useState<{
@@ -94,7 +99,7 @@ export default function SettingsPage() {
 			if (settingsData.maxConcurrent !== undefined)
 				setMaxConcurrent(settingsData.maxConcurrent);
 			if (settingsData.syncDestination)
-				setSyncDestination(settingsData.syncDestination);
+				setSyncDestination(normalizeSyncDestination(settingsData.syncDestination));
 			if (settingsData.syncMode) setSyncMode(settingsData.syncMode);
 			setLoading(false);
 		}
@@ -322,10 +327,10 @@ export default function SettingsPage() {
 	if (role !== "admin" && role !== "premium_member") {
 		return (
 			<div className="max-w-md mx-auto py-12 animate-in fade-in duration-500">
-				<h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display mb-8 text-center">
+				<h1 className="page-title mb-8 text-center">
 					Member Dashboard
 				</h1>
-				<div className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
+				<div className="app-card p-5 sm:p-6">
 					<div className="flex border-b border-border mb-6">
 						<button
 							type="button"
@@ -460,7 +465,7 @@ export default function SettingsPage() {
 				</h1>
 				<button
 					onClick={logout}
-					className="text-sm font-medium text-accent hover:text-red-700 transition-colors"
+					className="button-secondary min-h-9 border-red-400/25 px-3 text-xs text-red-300 hover:bg-red-400/10"
 				>
 					Sign Out
 				</button>
@@ -552,8 +557,8 @@ export default function SettingsPage() {
 									<span
 										className={`text-sm font-medium ${
 											msg.type === "success"
-												? "text-emerald-600"
-												: "text-red-600"
+												? "text-emerald-300"
+												: "text-red-300"
 										} animate-in fade-in slide-in-from-left-2`}
 									>
 										{msg.text}

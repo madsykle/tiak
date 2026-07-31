@@ -221,20 +221,6 @@ export function useDeleteFiles() {
 	});
 }
 
-export function useZipFiles() {
-	return useMutation({
-		mutationFn: async (paths: string[]) => {
-			const res = await fetchWithAuth(`${API_BASE}/files/zip`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ paths }),
-			});
-			if (!res.ok) throw new Error("Failed to zip");
-			return res.blob();
-		},
-	});
-}
-
 export function useMoveFile() {
 	const qc = useQueryClient();
 	return useMutation({

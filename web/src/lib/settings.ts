@@ -7,7 +7,7 @@ const SETTINGS_STORAGE_KEY = 'tiak_settings';
 // Default settings
 const defaultSettings: AppSettings = {
   maxConcurrent: 2,
-  syncDestination: 'onedrive:others/Edits',
+  syncDestination: 'onedrive:EDITS',
   syncMode: 'copy',
   playerType: 'custom',
 };

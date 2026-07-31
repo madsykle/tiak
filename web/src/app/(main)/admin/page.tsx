@@ -1,312 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { Users, UserPlus, RefreshCw } from "lucide-react";
+import { Activity, HardDrive, Plus, RefreshCw, ShieldCheck, UserPlus, Users, Video } from "lucide-react";
 import { useAuthState } from "@/store/app-store";
 import { formatBytes } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
-import {
-	useStats,
-	useUsers,
-	useUsage,
-	useUpdateUserRole,
-	useCreateUser,
-} from "@/lib/queries";
+import { useCreateUser, useStats, useUpdateUserRole, useUsage, useUsers } from "@/lib/queries";
 
-function StatCard({
-	title,
-	value,
-	color = "text-foreground",
-	icon,
-}: {
-	title: string;
-	value: string | number;
-	color?: string;
-	icon: string;
-}) {
-	return (
-		<div className="rounded-2xl border border-border bg-surface/40 p-5 shadow-md glass-premium hover-scale transition-all duration-300 hover:border-accent/30 hover:glow-accent">
-			<div className="text-2xl mb-2">{icon}</div>
-			<p className="text-xs font-semibold text-content-muted uppercase tracking-wider">
-				{title}
-			</p>
-			<p className={`text-2xl font-extrabold mt-1 tracking-tight ${color}`}>
-				{value}
-			</p>
-		</div>
-	);
+function Metric({ label, value, icon: Icon, tone = "text-foreground" }: { label: string; value: string | number; icon: typeof Video; tone?: string }) {
+	return <div className="app-card-muted p-4 sm:p-5"><Icon size={17} className="text-accent" /><p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-content-subtle">{label}</p><p className={`mt-1 font-mono text-2xl font-semibold tracking-tight ${tone}`}>{value}</p></div>;
 }
 
 export default function AdminPage() {
 	const { role } = useAuthState();
+	const { showToast } = useToast();
 	const [newUsername, setNewUsername] = useState("");
 	const [newEmail, setNewEmail] = useState("");
 	const [newPassword, setNewPassword] = useState("");
-	const { showToast } = useToast();
-
 	const { data: stats } = useStats();
 	const { data: users = [] } = useUsers();
 	const { data: usage } = useUsage();
 	const updateRoleMutation = useUpdateUserRole();
 	const createUserMutation = useCreateUser();
 
-	if (!role) {
-		return (
-			<div className="flex h-screen items-center justify-center">
-				<RefreshCw className="h-8 w-8 animate-spin text-accent" />
-			</div>
-		);
-	}
+	if (!role) return <div className="flex min-h-[60dvh] items-center justify-center text-content-muted"><RefreshCw size={22} className="animate-spin text-accent" /></div>;
+	if (role !== "admin") return <div className="app-card mx-auto flex min-h-[40dvh] max-w-md flex-col items-center justify-center p-8 text-center"><ShieldCheck size={32} className="text-accent" /><h1 className="mt-4 text-2xl font-semibold">Admin access required</h1><p className="mt-2 text-sm text-content-muted">This workspace is available to administrators only.</p></div>;
 
-	if (role !== "admin") {
-		return (
-			<div className="flex h-[80vh] flex-col items-center justify-center text-center">
-				<h1 className="text-4xl font-bold text-accent mb-4">403</h1>
-				<p className="text-xl text-content-muted">
-					Access Denied. Admins only.
-				</p>
-			</div>
-		);
-	}
+	const filteredUsers = users.filter((user) => !user.email.includes("test_") && !user.email.includes("example.com"));
+	const updateRole = async (userId: string, nextRole: string) => { try { await updateRoleMutation.mutateAsync({ userId, role: nextRole }); showToast("Role updated", "success"); } catch { showToast("Failed to update role", "error"); } };
+	const createUser = async (event: React.FormEvent) => { event.preventDefault(); try { await createUserMutation.mutateAsync({ username: newUsername, email: newEmail, password: newPassword }); setNewUsername(""); setNewEmail(""); setNewPassword(""); showToast("User created", "success"); } catch { showToast("Failed to create user", "error"); } };
 
-	const updateUserRole = async (userId: string, newRole: string) => {
-		try {
-			await updateRoleMutation.mutateAsync({ userId, role: newRole });
-			showToast("Role updated", "success");
-		} catch {
-			showToast("Failed to update role", "error");
-		}
-	};
-
-	const handleCreateUser = async (e: React.FormEvent) => {
-		e.preventDefault();
-		try {
-			await createUserMutation.mutateAsync({
-				username: newUsername,
-				email: newEmail,
-				password: newPassword,
-			});
-			setNewUsername("");
-			setNewEmail("");
-			setNewPassword("");
-			showToast("User created successfully!", "success");
-		} catch {
-			showToast("Failed to create user", "error");
-		}
-	};
-
-	const filteredUsers = users.filter(
-		(u) => !u.email.includes("test_") && !u.email.includes("example.com"),
-	);
-
-	return (
-		<div className="space-y-8 animate-in fade-in duration-500 pb-20">
-			<header>
-				<h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display">
-					System Dashboard
-				</h1>
-				<p className="text-content-muted mt-1">
-					Global oversight and user management.
-				</p>
-			</header>
-
-			{/* Stats Grid */}
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-				<StatCard title="Total Jobs" value={stats?.total || 0} icon="📊" />
-				<StatCard
-					title="Storage"
-					value={usage ? formatBytes(usage.totalSize) : "..."}
-					icon="💾"
-				/>
-				<StatCard
-					title="In Queue"
-					value={stats?.queued || 0}
-					color="text-gradient-accent"
-					icon="⏳"
-				/>
-				<StatCard
-					title="Failed"
-					value={stats?.failed || 0}
-					color="text-gradient-accent"
-					icon="❌"
-				/>
-			</div>
-
-			<div className="grid md:grid-cols-2 gap-8">
-				{/* User Management */}
-				<div className="space-y-8">
-					<section className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
-						<div className="flex items-center justify-between mb-6">
-							<h2 className="text-lg font-bold flex items-center gap-2">
-								<Users
-									width={20}
-									height={20}
-									strokeWidth={2.5}
-									className="text-current"
-								/>
-								User Directory
-							</h2>
-							<span className="text-xs font-semibold text-content-muted bg-surface-strong px-2 py-1 rounded-full border border-border/50">
-								Total Users: {filteredUsers.length}
-							</span>
-						</div>
-						<div className="space-y-4">
-							{filteredUsers.map((u) => (
-								<div
-									key={u.id}
-									className="flex items-center justify-between p-3 rounded-xl bg-surface/40 border border-border/80"
-								>
-									<div className="min-w-0">
-										<p className="font-semibold truncate text-sm">
-											{u.username}
-										</p>
-										<p className="text-xs text-content-muted truncate">
-											{u.email}
-										</p>
-									</div>
-									<select
-										value={u.role}
-										onChange={(e) => updateUserRole(u.id, e.target.value)}
-										className={`text-xs font-bold rounded-full py-1 pl-3 pr-8 transition-all duration-200 focus:outline-none focus:ring-2 cursor-pointer ${
-											u.role === "admin"
-												? "bg-accent text-white border border-accent focus:ring-accent/30"
-												: u.role === "premium_member"
-													? "bg-accent/10 text-accent border border-accent/20 focus:ring-accent/30"
-													: "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20 focus:ring-zinc-500/30"
-										}`}
-										disabled={u.username === "nesbeer"}
-									>
-										<option value="guest">Guest</option>
-										<option value="premium_member">Premium</option>
-										<option value="admin">Admin</option>
-									</select>
-								</div>
-							))}
-						</div>
-					</section>
-
-					<section className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
-						<h2 className="text-lg font-bold mb-6 flex items-center gap-2">
-							<UserPlus
-								width={20}
-								height={20}
-								strokeWidth={2.5}
-								className="text-current"
-							/>
-							Create New User
-						</h2>
-						<form onSubmit={handleCreateUser} className="space-y-4">
-							<div className="space-y-1.5">
-								<label className="text-xs font-semibold text-content-muted uppercase tracking-wider block">
-									Username
-								</label>
-								<input
-									type="text"
-									className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all placeholder-content-subtle"
-									value={newUsername}
-									onChange={(e) => setNewUsername(e.target.value)}
-									required
-								/>
-							</div>
-							<div className="space-y-1.5">
-								<label className="text-xs font-semibold text-content-muted uppercase tracking-wider block">
-									Email
-								</label>
-								<input
-									type="email"
-									className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all placeholder-content-subtle"
-									value={newEmail}
-									onChange={(e) => setNewEmail(e.target.value)}
-									required
-								/>
-							</div>
-							<div className="space-y-1.5">
-								<label className="text-xs font-semibold text-content-muted uppercase tracking-wider block">
-									Password
-								</label>
-								<input
-									type="password"
-									className="w-full bg-surface/40 border border-border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/30 focus:border-accent transition-all placeholder-content-subtle"
-									value={newPassword}
-									onChange={(e) => setNewPassword(e.target.value)}
-									required
-								/>
-							</div>
-							<button
-								type="submit"
-								disabled={createUserMutation.isPending}
-								className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-2.5 rounded-xl shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 glow-accent mt-2"
-							>
-								{createUserMutation.isPending
-									? "Creating..."
-									: "Create Premium User"}
-							</button>
-							<p className="text-[10px] text-content-muted text-center italic">
-								Newly created users default to Premium status.
-							</p>
-						</form>
-					</section>
-				</div>
-
-				{/* Stats Breakdown */}
-				<section className="rounded-2xl border border-border bg-surface/40 p-6 shadow-md glass-premium">
-					<h2 className="text-lg font-bold mb-6">Queue Breakdown</h2>
-					<div className="space-y-5">
-						{stats && (
-							<>
-								<div className="space-y-1.5">
-									<div className="flex justify-between text-xs font-semibold">
-										<span className="text-emerald-500">Done</span>
-										<span className="font-mono text-content-muted">
-											{stats.done} video{stats.done !== 1 ? "s" : ""}
-										</span>
-									</div>
-									<div className="h-2 w-full bg-surface-strong rounded-full overflow-hidden border border-border/30">
-										<div
-											className="h-full bg-emerald-500 transition-all duration-1000"
-											style={{
-												width: `${(stats.done / (stats.total || 1)) * 100}%`,
-											}}
-										/>
-									</div>
-								</div>
-								<div className="space-y-1.5">
-									<div className="flex justify-between text-xs font-semibold">
-										<span className="text-accent">Failed</span>
-										<span className="font-mono text-content-muted">
-											{stats.failed} video{stats.failed !== 1 ? "s" : ""}
-										</span>
-									</div>
-									<div className="h-2 w-full bg-surface-strong rounded-full overflow-hidden border border-border/30">
-										<div
-											className="h-full bg-accent transition-all duration-1000"
-											style={{
-												width: `${(stats.failed / (stats.total || 1)) * 100}%`,
-											}}
-										/>
-									</div>
-								</div>
-								<div className="space-y-1.5">
-									<div className="flex justify-between text-xs font-semibold">
-										<span className="text-amber-500">Queued</span>
-										<span className="font-mono text-content-muted">
-											{stats.queued} video{stats.queued !== 1 ? "s" : ""}
-										</span>
-									</div>
-									<div className="h-2 w-full bg-surface-strong rounded-full overflow-hidden border border-border/30">
-										<div
-											className="h-full bg-amber-500 transition-all duration-1000"
-											style={{
-												width: `${(stats.queued / (stats.total || 1)) * 100}%`,
-											}}
-										/>
-									</div>
-								</div>
-							</>
-						)}
-					</div>
-				</section>
-			</div>
-		</div>
-	);
+	return <div className="space-y-7"><header><p className="eyebrow">System control</p><h1 className="page-title mt-1">Admin</h1><p className="page-subtitle">Keep an eye on the queue, storage, and member access.</p></header><section className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3"><Metric label="Total jobs" value={stats?.total || 0} icon={Activity} /><Metric label="Storage" value={usage ? formatBytes(usage.totalSize) : "Loading"} icon={HardDrive} /><Metric label="In queue" value={stats?.queued || 0} icon={Video} tone="text-accent" /><Metric label="Failed" value={stats?.failed || 0} icon={Activity} tone="text-red-300" /></section><div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]"><section className="app-card p-4 sm:p-6"><div className="flex items-end justify-between gap-3"><div><p className="eyebrow">Access control</p><h2 className="type-section-header mt-1 flex items-center gap-2"><Users size={17} className="text-accent" />Member directory</h2></div><span className="text-xs text-content-muted">{filteredUsers.length} members</span></div><div className="mt-5 space-y-2">{filteredUsers.map((user) => <div key={user.id} className="flex items-center gap-3 rounded-xl border border-border-subtle bg-surface-subtle/45 p-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-xs font-semibold text-accent">{user.username.slice(0, 1).toUpperCase()}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{user.username}</p><p className="truncate text-xs text-content-muted">{user.email}</p></div><select value={user.role} onChange={(event) => updateRole(user.id, event.target.value)} disabled={user.username === "nesbeer"} className="min-h-9 max-w-[7.5rem] rounded-lg border border-border bg-surface px-2 text-xs font-semibold text-foreground" aria-label={`Role for ${user.username}`}><option value="guest">Guest</option><option value="premium_member">Premium</option><option value="admin">Admin</option></select></div>)}</div></section><div className="space-y-4"><section className="app-card p-4 sm:p-6"><div><p className="eyebrow">Provisioning</p><h2 className="type-section-header mt-1 flex items-center gap-2"><UserPlus size={17} className="text-accent" />Create member</h2></div><form onSubmit={createUser} className="mt-5 space-y-3"><label className="block text-xs font-semibold text-content-muted">Username<input value={newUsername} onChange={(event) => setNewUsername(event.target.value)} className="app-input mt-2 w-full" required /></label><label className="block text-xs font-semibold text-content-muted">Email<input type="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} className="app-input mt-2 w-full" required /></label><label className="block text-xs font-semibold text-content-muted">Password<input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} className="app-input mt-2 w-full" required /></label><button type="submit" disabled={createUserMutation.isPending} className="button-primary w-full"> <Plus size={16} />{createUserMutation.isPending ? "Creating" : "Create premium user"}</button></form></section><section className="app-card p-4 sm:p-6"><div><p className="eyebrow">Queue health</p><h2 className="type-section-header mt-1">Breakdown</h2></div><div className="mt-5 space-y-4">{stats && <><Breakdown label="Completed" value={stats.done} total={stats.total} tone="bg-emerald-400" /><Breakdown label="Queued" value={stats.queued} total={stats.total} tone="bg-amber-400" /><Breakdown label="Failed" value={stats.failed} total={stats.total} tone="bg-red-400" /></>}</div></section></div></div></div>;
 }
+
+function Breakdown({ label, value, total, tone }: { label: string; value: number; total: number; tone: string }) { return <div><div className="flex items-center justify-between text-xs"><span className="text-content-muted">{label}</span><span className="font-mono text-content">{value}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-strong"><div className={`h-full ${tone}`} style={{ width: `${Math.min(100, (value / (total || 1)) * 100)}%` }} /></div></div>; }
