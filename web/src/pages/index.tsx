@@ -9,7 +9,7 @@ import HistoryTable from '../components/HistoryTable';
 import { platformLabel, platformBadgeClass, triggerInvisibleDownload } from '../lib/utils';
 import { useVisibilityPolling } from '../hooks/useVisibilityPolling';
 
-const CustomVideoPlayer = dynamic(() => import('../components/CustomVideoPlayer'), { ssr: false });
+const VideoPlayer = dynamic(() => import('../components/VideoPlayer'), { ssr: false });
 
 function ExpiryCountdown({ expiresAt }: { expiresAt: number }) {
   const [timeLeft, setTimeLeft] = useState(expiresAt - Date.now());
@@ -620,7 +620,7 @@ export default function Queue() {
         )}
 
         {previewJob && (
-          <CustomVideoPlayer 
+          <VideoPlayer 
             src={previewSrc}
             onClose={() => {
                 setPreviewJob(null);

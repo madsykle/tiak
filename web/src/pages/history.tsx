@@ -5,7 +5,7 @@ import HistoryTable from '../components/HistoryTable';
 import HistoryToolbar from '../components/HistoryToolbar';
 import { getHistory, retryJob, redownloadJob, deleteJob, DownloadJob, getStreamUrl } from '../lib/api';
 
-const CustomVideoPlayer = dynamic(() => import('../components/CustomVideoPlayer'), { ssr: false });
+const VideoPlayer = dynamic(() => import('../components/VideoPlayer'), { ssr: false });
 
 type StatusFilter = 'all' | 'queued' | 'downloading' | 'done' | 'failed' | 'imported' | 'missing';
 
@@ -29,20 +29,7 @@ export default function HistoryPage() {
   const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
 
   // Player Preference
-  const [playerPreference, setPlayerPreference] = useState<'custom' | 'native'>('custom');
-
-  useEffect(() => {
-    const pref = localStorage.getItem('player_preference');
-    if (pref === 'custom' || pref === 'native') {
-      setPlayerPreference(pref);
-    }
-  }, []);
-
-  const togglePlayerPreference = () => {
-    const newPref = playerPreference === 'custom' ? 'native' : 'custom';
-    setPlayerPreference(newPref);
-    localStorage.setItem('player_preference', newPref);
-  };
+  // Player preference removed - using native video player
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -297,13 +284,11 @@ export default function HistoryPage() {
                     )}
             
                     {previewJob && (
-                      <CustomVideoPlayer 
+                      <VideoPlayer 
                         src={previewSrc}
                         onClose={closePreview}
                         filename={previewJob.filename || undefined}
                         path={previewJob._computedPath}
-                        mode={playerPreference}
-                        onTogglePlayerType={togglePlayerPreference}
                       />
                     )}
                   </div>

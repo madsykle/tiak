@@ -5,25 +5,27 @@ import Layout from "@/components/Layout";
 import { QueryProvider } from "@/lib/query-provider";
 
 const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+	src: "./fonts/GeistVF.woff",
+	variable: "--font-geist-sans",
+	weight: "100 900",
 });
 
 const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+	src: "./fonts/GeistMonoVF.woff",
+	variable: "--font-geist-mono",
+	weight: "100 900",
 });
 
 export default function App({ Component, pageProps }: AppProps) {
-  return (
-    <QueryProvider>
-      <div className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      </div>
-    </QueryProvider>
-  );
+	return (
+		<QueryProvider>
+			<div
+				className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+			>
+				<Layout>
+					<Component {...pageProps} />
+				</Layout>
+			</div>
+		</QueryProvider>
+	);
 }
