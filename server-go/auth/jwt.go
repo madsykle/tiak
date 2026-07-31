@@ -2,8 +2,10 @@ package auth
 
 import (
 	"crypto/rand"
-	"encoding/hex"
+	"encoding/base64"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -27,8 +29,8 @@ func (c Claims) GetIssuedAt() (*jwt.NumericDate, error) {
 func (c Claims) GetNotBefore() (*jwt.NumericDate, error) {
 	return &jwt.NumericDate{Time: time.Unix(c.Iat, 0)}, nil
 }
-func (c Claims) GetIssuer() (string, error)   { return "", nil }
-func (c Claims) GetSubject() (string, error)   { return c.Sub, nil }
+func (c Claims) GetIssuer() (string, error)             { return "", nil }
+func (c Claims) GetSubject() (string, error)            { return c.Sub, nil }
 func (c Claims) GetAudience() (jwt.ClaimStrings, error) { return jwt.ClaimStrings{}, nil }
 
 type AuthConfig struct {
@@ -78,60 +80,65 @@ func (a *AuthState) VerifyToken(tokenStr string) (*Claims, error) {
 	return claims, nil
 }
 
-// HashPassword hashes a password using argon2id with a random salt.
+// HashPassword hashes a password using argon2id in PHC format.
 func HashPassword(password string) (string, error) {
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
 	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
-	return hex.EncodeToString(salt) + ":" + hex.EncodeToString(hash), nil
+	saltB64 := base64.RawStdEncoding.EncodeToString(salt)
+	hashB64 := base64.RawStdEncoding.EncodeToString(hash)
+	return fmt.Sprintf("$argon2id$v=19$m=65536,t=1,p=4$%s$%s", saltB64, hashB64), nil
 }
 
-// VerifyPassword checks a password against a salt:hash string.
+// VerifyPassword checks a password against a PHC-format argon2 hash.
+// Parses m, t, p from the hash string itself.
 func VerifyPassword(password, stored string) bool {
-	parts := splitHash(stored)
-	if parts[0] == "" {
+	if !strings.HasPrefix(stored, "$argon2id$") {
 		return false
 	}
-	salt, err := hex.DecodeString(parts[0])
+	parts := strings.Split(stored, "$")
+	// parts: ["", "argon2id", "v=19", "m=...,t=...,p=...", <salt>, <hash>]
+	if len(parts) != 6 {
+		return false
+	}
+
+	// Parse params from parts[3]: m=19456,t=2,p=1
+	var m, t, p uint32
+	for _, param := range strings.Split(parts[3], ",") {
+		kv := strings.SplitN(param, "=", 2)
+		if len(kv) != 2 { continue }
+		switch kv[0] {
+		case "m":
+			fmt.Sscanf(kv[1], "%d", &m)
+		case "t":
+			fmt.Sscanf(kv[1], "%d", &t)
+		case "p":
+			fmt.Sscanf(kv[1], "%d", &p)
+		}
+	}
+	if m == 0 { m = 65536 }
+	if t == 0 { t = 1 }
+	if p == 0 { p = 1 }
+
+	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
 		return false
 	}
-	expectedHash, err := hex.DecodeString(parts[1])
+	expectedHash, err := base64.RawStdEncoding.DecodeString(parts[5])
 	if err != nil {
 		return false
 	}
-	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
+	hash := argon2.IDKey([]byte(password), salt, t, m, uint8(p), uint32(len(expectedHash)))
 	if len(hash) != len(expectedHash) {
 		return false
 	}
-	// Constant-time compare
 	result := byte(0)
 	for i := range hash {
 		result |= hash[i] ^ expectedHash[i]
 	}
 	return result == 0
-}
-
-func splitHash(stored string) [2]string {
-	var parts [2]string
-	idx := -1
-	for i, c := range stored {
-		if c == ':' {
-			idx = i
-			break
-		}
-	}
-	if idx < 0 {
-		return [2]string{}
-	}
-	parts[0] = stored[:idx]
-	parts[1] = stored[idx+1:]
-	if parts[0] == "" || parts[1] == "" {
-		return [2]string{}
-	}
-	return parts
 }
 
 // NewID generates a UUID v4.

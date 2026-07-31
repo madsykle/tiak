@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	DataRoot       = "data"
-	ThumbnailsRoot = "data/.thumbnails"
+	DataRoot        = "data"
+	ThumbnailsRoot  = "data/.thumbnails"
 	DefaultCategory = "default"
 )
 
@@ -30,9 +30,9 @@ type FileItem struct {
 }
 
 type FileIndexResponse struct {
-	ByDate     map[string][]FileItem                `json:"byDate"`
-	ByCategory map[string]map[string][]FileItem     `json:"byCategory"`
-	LastScan   int64                                `json:"lastScan"`
+	ByDate     map[string][]FileItem            `json:"byDate"`
+	ByCategory map[string]map[string][]FileItem `json:"byCategory"`
+	LastScan   int64                            `json:"lastScan"`
 }
 
 type FileIndex struct {

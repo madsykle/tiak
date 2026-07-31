@@ -29,10 +29,10 @@ type AppState struct {
 }
 
 var (
-	reYT = regexp.MustCompile(`(?:v=|shorts/|v/|embed/|live/|youtu\.be/)([a-zA-Z0-9_-]{11})`)
-	reIG = regexp.MustCompile(`instagram\.com/(?:reels|p|tv)/([a-zA-Z0-9_-]+)`)
-	reTT = regexp.MustCompile(`tiktok\.com/(@[^/]+/video/\d+)`)
-	reTW = regexp.MustCompile(`(?:x|twitter)\.com/([^/]+/status/\d+)`)
+	reYT     = regexp.MustCompile(`(?:v=|shorts/|v/|embed/|live/|youtu\.be/)([a-zA-Z0-9_-]{11})`)
+	reIG     = regexp.MustCompile(`instagram\.com/(?:reels|p|tv)/([a-zA-Z0-9_-]+)`)
+	reTT     = regexp.MustCompile(`tiktok\.com/(@[^/]+/video/\d+)`)
+	reTW     = regexp.MustCompile(`(?:x|twitter)\.com/([^/]+/status/\d+)`)
 	reParams = regexp.MustCompile(`([?&])(?:feature|utm_[^=&]+|si|igsh|fbclid|gclid|ref|referrer)=[^&]*`)
 )
 

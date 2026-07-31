@@ -208,16 +208,16 @@ func getFileInfo(state *AppState) http.HandlerFunc {
 		if err == nil && job != nil {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]interface{}{
-				"jobId":       job.ID,
-				"url":         job.URL,
-				"status":      job.Status,
-				"progress":    job.Progress,
-				"category":    job.Category,
-				"platform":    job.Platform,
-				"creator":     job.CreatorName,
-				"caption":     job.Caption,
-				"transcript":  job.Transcript,
-				"hashtags":    job.Hashtags,
+				"jobId":      job.ID,
+				"url":        job.URL,
+				"status":     job.Status,
+				"progress":   job.Progress,
+				"category":   job.Category,
+				"platform":   job.Platform,
+				"creator":    job.CreatorName,
+				"caption":    job.Caption,
+				"transcript": job.Transcript,
+				"hashtags":   job.Hashtags,
 			})
 			return
 		}

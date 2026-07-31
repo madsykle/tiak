@@ -19,8 +19,8 @@ func addToQueue(state *AppState) http.HandlerFunc {
 			return
 		}
 		var req struct {
-			URLs      string `json:"urls"`
-			Category  string `json:"category"`
+			URLs     string `json:"urls"`
+			Category string `json:"category"`
 		}
 		json.NewDecoder(r.Body).Decode(&req)
 		if req.Category == "" {
@@ -127,9 +127,9 @@ func retryJob(state *AppState) http.HandlerFunc {
 		updated, _ := state.DB.GetJob(r.Context(), id)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"job":            updated,
+			"job":              updated,
 			"remainingRetries": maxRetries - newRetry,
-			"maxRetries":     maxRetries,
+			"maxRetries":       maxRetries,
 		})
 	}
 }
@@ -184,7 +184,7 @@ func getSettings(state *AppState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"maxConcurrent":    state.Queue.GetMaxConcurrent(),
+			"maxConcurrent":   state.Queue.GetMaxConcurrent(),
 			"syncDestination": state.Queue.GetSyncDestination(),
 			"syncMode":        state.Queue.GetSyncMode(),
 		})
@@ -199,7 +199,7 @@ func setSettings(state *AppState) http.HandlerFunc {
 			return
 		}
 		var req struct {
-			MaxConcurrent    int    `json:"maxConcurrent"`
+			MaxConcurrent   int    `json:"maxConcurrent"`
 			SyncDestination string `json:"syncDestination"`
 			SyncMode        string `json:"syncMode"`
 		}

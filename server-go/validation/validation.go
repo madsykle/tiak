@@ -138,7 +138,7 @@ func IsPrivateIP(ip net.IP) bool {
 	// IPv6: fc00::/7, fe80::/10
 	b := ip.To16()
 	if b != nil {
-		if (b[0] & 0xfe) == 0xfc || (b[0] & 0xff) == 0xfe || (b[0] & 0xff) == 0xff {
+		if (b[0]&0xfe) == 0xfc || (b[0]&0xff) == 0xfe || (b[0]&0xff) == 0xff {
 			return true
 		}
 	}

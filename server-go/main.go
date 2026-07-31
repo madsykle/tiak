@@ -17,9 +17,14 @@ import (
 	"tiak-server/queue"
 	"tiak-server/routes"
 	"tiak-server/storage"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env if present
+	godotenv.Load()
+
 	cfg := config.LoadConfig()
 	if err := cfg.Validate(); err != nil {
 		log.Fatalf("Config errors: %v", err)
