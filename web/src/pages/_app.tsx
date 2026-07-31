@@ -3,6 +3,7 @@ import type { AppProps } from "next/app";
 import localFont from "next/font/local";
 import Layout from "@/components/Layout";
 import { QueryProvider } from "@/lib/query-provider";
+import SWRegistration from "@/components/SWRegistration";
 
 const geistSans = localFont({
 	src: "./fonts/GeistVF.woff",
@@ -22,6 +23,7 @@ export default function App({ Component, pageProps }: AppProps) {
 			<div
 				className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
 			>
+				<SWRegistration />
 				<Layout>
 					<Component {...pageProps} />
 				</Layout>

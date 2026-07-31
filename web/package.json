@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/generate-sw-manifest.js",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
@@ -20,9 +20,9 @@
     "lucide-react": "^1.28.0",
     "media-chrome": "^4.19.2",
     "next": "14.2.35",
-    "next-pwa": "^5.6.0",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "workbox-window": "^7.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
@@ -46,6 +46,7 @@
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.4.9",
     "typescript": "^5",
-    "vercel": "^54.9.1"
+    "vercel": "^54.9.1",
+    "workbox-build": "^7.4.1"
   }
 }
