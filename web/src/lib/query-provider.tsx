@@ -7,7 +7,9 @@ import { useState, ReactNode } from "react";
 // Only load devtools in development
 const ReactQueryDevtools = dynamic(
 	() =>
-		import("@tanstack/react-query-devtools").then((mod) => mod.ReactQueryDevtools),
+		import("@tanstack/react-query-devtools").then(
+			(mod) => mod.ReactQueryDevtools,
+		),
 	{
 		ssr: false,
 		loading: () => null,
