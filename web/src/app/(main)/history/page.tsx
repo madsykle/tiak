@@ -1,0 +1,254 @@
+"use client";
+
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Search } from "lucide-react";
+import dynamic from "next/dynamic";
+import { type DownloadJob, getStreamUrl, getHistory } from "@/lib/api";
+import HistoryTable from "@/components/HistoryTable";
+import HistoryToolbar from "@/components/HistoryToolbar";
+import { useRetryJob, useRedownloadJob, useDeleteJob } from "@/lib/queries";
+
+const VideoPlayer = dynamic(() => import("@/components/VideoPlayer"), {
+  ssr: false,
+});
+
+type StatusFilter =
+  | "all"
+  | "queued"
+  | "downloading"
+  | "done"
+  | "failed"
+  | "imported"
+  | "missing";
+
+export default function HistoryPage() {
+  const [jobs, setJobs] = useState<DownloadJob[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [retryFilter, setRetryFilter] = useState(false);
+
+  const [previewJob, setPreviewJob] = useState<
+    (DownloadJob & { _computedPath?: string }) | null
+  >(null);
+  const [previewSrc, setPreviewSrc] = useState("");
+
+  const retryJobMutation = useRetryJob();
+  const redownloadJobMutation = useRedownloadJob();
+  const deleteJobMutation = useDeleteJob();
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getHistory(page, pageSize);
+      setJobs(data.items);
+      setTotal(data.total);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
+
+  const handleRetry = async (id: string) => {
+    if (retryingIds.has(id)) return;
+    setRetryingIds((prev) => new Set(prev).add(id));
+    try {
+      await retryJobMutation.mutateAsync(id);
+      fetchData();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRetryingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleRedownload = async (id: string) => {
+    if (retryingIds.has(id)) return;
+    setRetryingIds((prev) => new Set(prev).add(id));
+    try {
+      await redownloadJobMutation.mutateAsync(id);
+      fetchData();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRetryingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this job history?")) return;
+    try {
+      await deleteJobMutation.mutateAsync(id);
+      fetchData();
+    } catch {
+      console.error("Failed to delete");
+    }
+  };
+
+  const handlePreview = (job: DownloadJob) => {
+    if (!job.filename) return;
+    const ts = job.completedAt || job.createdAt;
+    const date = new Date(ts);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const dateFolder = `${yyyy}-${mm}-${dd}`;
+    const path = `data/${job.category || "default"}/${dateFolder}/${job.filename}`;
+    setPreviewSrc(getStreamUrl(path));
+    setPreviewJob({ ...job, _computedPath: path });
+  };
+
+  const closePreview = () => {
+    setPreviewJob(null);
+    setPreviewSrc("");
+  };
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        job.url.toLowerCase().includes(query) ||
+        (job.filename && job.filename.toLowerCase().includes(query));
+
+      if (!matchesSearch) return false;
+      if (statusFilter !== "all" && job.status !== statusFilter) return false;
+      if (retryFilter && job.retries < 1) return false;
+      return true;
+    });
+  }, [jobs, searchQuery, statusFilter, retryFilter]);
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500 relative">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent font-display">
+            History
+          </h1>
+          <p className="mt-1 text-sm text-content-muted">
+            View past download jobs.
+          </p>
+        </div>
+        <HistoryToolbar onImportSuccess={fetchData} onImportError={() => {}} />
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center">
+        <div className="flex-1">
+          <div className="relative group">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search
+                width={16}
+                height={16}
+                strokeWidth={2.5}
+                className="text-content-subtle"
+              />
+            </div>
+            <input
+              type="text"
+              placeholder="Search URL or filename..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-full rounded-xl border-border bg-surface/40 pl-10 pr-3 py-2.5 text-sm text-foreground shadow-sm placeholder:text-content-subtle focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all duration-200"
+            />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            className="block w-full rounded-xl border-border bg-surface/40 py-2.5 pl-3 pr-8 text-sm text-foreground shadow-sm focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all duration-200"
+          >
+            <option value="all">All Status</option>
+            <option value="done">Done</option>
+            <option value="failed">Failed</option>
+            <option value="downloading">Downloading</option>
+            <option value="queued">Queued</option>
+            <option value="missing">Missing</option>
+            <option value="imported">Imported</option>
+          </select>
+          <button
+            onClick={() => setRetryFilter(!retryFilter)}
+            className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200 ${
+              retryFilter
+                ? "bg-accent/20 border-accent/40 text-foreground glow-accent"
+                : "bg-surface/40 border-border text-content-muted hover:bg-surface-subtle hover:text-foreground"
+            }`}
+          >
+            <span>Retried</span>
+            {retryFilter && (
+              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse"></span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="h-6 w-6 border-2 border-foreground border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <>
+          <HistoryTable
+            jobs={filteredJobs}
+            onRetry={handleRetry}
+            onRedownload={handleRedownload}
+            onPreview={handlePreview}
+            onDelete={handleDelete}
+            retryingIds={retryingIds}
+            maxRetries={5}
+          />
+          <div className="flex items-center justify-between border-t border-border-subtle pt-4">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="text-sm font-medium text-content-muted hover:text-foreground disabled:opacity-50 transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-content-muted">
+              Page <span className="font-medium text-foreground">{page}</span> of{" "}
+              {totalPages || 1}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="text-sm font-medium text-content-muted hover:text-foreground disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
+
+      {previewJob && (
+        <VideoPlayer
+          src={previewSrc}
+          onClose={closePreview}
+          filename={previewJob.filename || undefined}
+          path={previewJob._computedPath}
+        />
+      )}
+    </div>
+  );
+}
