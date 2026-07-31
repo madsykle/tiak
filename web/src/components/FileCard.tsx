@@ -10,6 +10,7 @@ interface FileCardProps {
   onSelect: (path: string) => void;
   onPreview: (file: FileCardItem) => void;
   onDownload: (path: string, name: string) => void;
+  style?: React.CSSProperties;
 }
 
 type FileCardItem = {
@@ -30,6 +31,7 @@ export default React.memo(function FileCard({
   onSelect,
   onPreview,
   onDownload,
+  style,
 }: FileCardProps) {
   const date = new Date(file.createdAt).toLocaleDateString('en-US', {
     month: 'short',
@@ -72,6 +74,7 @@ export default React.memo(function FileCard({
 
   return (
     <div
+      style={style}
       className={`group relative overflow-hidden rounded-2xl border glass-premium hover-scale transition-all duration-300 cursor-default ${cardStyle}`}
       onClick={handleCardClick}
     >
