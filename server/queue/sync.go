@@ -19,10 +19,11 @@ type SyncState struct {
 }
 
 func (dq *DownloadQueue) GetSyncState(fi *storage.FileIndex) SyncState {
-	state := SyncState{Status: "idle"}
+	state := SyncState{Status: "idle", Logs: []string{}, UnsyncedCount: 0}
 	lastSync := storage.DataRoot + "/.last_sync"
-	if _, err := os.Stat(lastSync); err == nil {
-		// use modtime
+	if info, err := os.Stat(lastSync); err == nil {
+		t := info.ModTime()
+		state.LastRun = &t
 	}
 	_ = fi
 	return state

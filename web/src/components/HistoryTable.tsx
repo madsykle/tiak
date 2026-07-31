@@ -4,7 +4,7 @@ import { DownloadJob, getDownloadUrl } from "../lib/api";
 import StatusBadge from "./StatusBadge";
 import { platformLabel, platformBadgeClass } from "../lib/utils";
 import CategoryBadge from "./CategoryBadge";
-import { Trash2, Play } from "lucide-react";
+import { Trash2, Play, ChevronDown } from "lucide-react";
 
 interface HistoryTableProps {
 	jobs: DownloadJob[];
@@ -41,7 +41,8 @@ export default function HistoryTable({
 		});
 	};
 
-	const getFileDateFolder = (ts: number) => {
+	const getFileDateFolder = (ts: number | null | undefined) => {
+		if (!ts) return "unknown";
 		const date = new Date(ts);
 		const yyyy = date.getFullYear();
 		const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -49,7 +50,8 @@ export default function HistoryTable({
 		return `${yyyy}-${mm}-${dd}`;
 	};
 
-	const toggleExpand = (id: string) => {
+	const toggleExpand = (id: string, e: React.MouseEvent) => {
+		e.stopPropagation();
 		setExpandedRows((prev) => {
 			const next = new Set(prev);
 			if (next.has(id)) next.delete(id);
@@ -80,15 +82,17 @@ export default function HistoryTable({
 	return (
 		<div className="overflow-hidden rounded-xl border border-border-subtle bg-surface shadow-sm">
 			<div className="overflow-x-auto" ref={parentRef} style={{ height: 600 }}>
-				<table className="min-w-full text-left text-sm whitespace-nowrap">
+				<table className="w-full min-w-max text-left text-sm whitespace-nowrap border-collapse">
 					<thead className="bg-surface-subtle border-b border-border-subtle text-xs uppercase tracking-wider text-content-muted font-medium sticky top-0 z-10">
 						<tr>
-							<th className="px-4 py-3">Date</th>
-							<th className="px-4 py-3">Platform</th>
-							<th className="px-4 py-3">Creator & Caption</th>
-							<th className="px-4 py-3">Category</th>
-							<th className="px-4 py-3">Status</th>
-							<th className="px-4 py-3 text-right">Actions</th>
+							<th className="px-4 py-3 w-[120px]">Date</th>
+							<th className="px-4 py-3 w-[100px]">Platform</th>
+							<th className="px-4 py-3 min-w-[200px] max-w-[300px]">
+								Creator & Caption
+							</th>
+							<th className="px-4 py-3 w-[120px]">Category</th>
+							<th className="px-4 py-3 w-[100px]">Status</th>
+							<th className="px-4 py-3 w-[200px] text-right">Actions</th>
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-border-subtle bg-surface">
@@ -106,23 +110,35 @@ export default function HistoryTable({
 									? `${job.id}-${index}`
 									: `fallback-${index}`;
 								const isExpanded = expandedRows.has(uniqueKey);
+								const rowHeight = isExpanded ? EXPANDED_ROW_HEIGHT : ROW_HEIGHT;
 
 								return (
 									<React.Fragment key={uniqueKey}>
 										<tr
-											className="hover:bg-surface-subtle/50 transition-colors cursor-pointer"
-											onClick={() => toggleExpand(uniqueKey)}
+											className="hover:bg-surface-subtle/50 transition-colors"
 											style={{
 												position: "absolute",
 												top: 0,
 												left: 0,
 												width: "100%",
-												height: isExpanded ? EXPANDED_ROW_HEIGHT : ROW_HEIGHT,
+												height: rowHeight,
 												transform: `translateY(${virtualRow.start}px)`,
 											}}
 										>
 											<td className="px-4 py-3 text-content-muted font-mono text-xs">
-												{formatDate(job.createdAt)}
+												<button
+													onClick={(e) => toggleExpand(uniqueKey, e)}
+													className="flex items-center gap-1 hover:text-foreground transition-colors"
+													aria-label={isExpanded ? "Collapse" : "Expand"}
+												>
+													<ChevronDown
+														width={14}
+														height={14}
+														strokeWidth={2}
+														className={`text-content-muted transition-transform ${isExpanded ? "rotate-180" : ""}`}
+													/>
+													{formatDate(job.createdAt)}
+												</button>
 											</td>
 
 											<td className="px-4 py-3">
@@ -135,7 +151,7 @@ export default function HistoryTable({
 												)}
 											</td>
 
-											<td className="px-4 py-3 max-w-[250px]">
+											<td className="px-4 py-3 max-w-[300px]">
 												<div className="flex flex-col">
 													{job.creator_name && (
 														<span
@@ -156,7 +172,9 @@ export default function HistoryTable({
 														</span>
 													)}
 													{!job.creator_name && !job.caption && (
-														<span className="text-content-muted text-xs">—</span>
+														<span className="text-content-muted text-xs">
+															—
+														</span>
 													)}
 												</div>
 											</td>
@@ -170,10 +188,7 @@ export default function HistoryTable({
 											</td>
 
 											<td className="px-4 py-3 text-right">
-												<div
-													className="flex justify-end gap-2"
-													onClick={(e) => e.stopPropagation()}
-												>
+												<div className="flex justify-end gap-2">
 													{job.status === "failed" && (
 														<button
 															onClick={(e) => {
@@ -211,24 +226,28 @@ export default function HistoryTable({
 															disabled={retryingIds.has(job.id)}
 															className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded transition-colors disabled:opacity-50"
 														>
-															{retryingIds.has(job.id) ? "Retrying..." : "Retry"}
+															{retryingIds.has(job.id)
+																? "Retrying..."
+																: "Retry"}
 														</button>
 													)}
-													{job.status === "done" &&
-														job.filename &&
-														job.completedAt && (
-															<a
-																href={getDownloadUrl(
-																	`data/${job.category || "default"}/${getFileDateFolder(job.completedAt)}/${job.filename}`,
-																)}
-																target="_blank"
-																rel="noopener noreferrer"
-																onClick={(e) => e.stopPropagation()}
-																className="text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded transition-colors"
-															>
-																Open
-															</a>
-														)}
+													{job.status === "done" && job.filename && (
+														<button
+															onClick={(e) => {
+																e.stopPropagation();
+																window.open(
+																	getDownloadUrl(
+																		`data/${job.category || "default"}/${getFileDateFolder(job.completedAt)}/${job.filename}`,
+																	),
+																	"_blank",
+																	"noopener,noreferrer",
+																);
+															}}
+															className="text-xs font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded transition-colors"
+														>
+															Open
+														</button>
+													)}
 													<button
 														onClick={(e) => {
 															e.stopPropagation();
@@ -266,14 +285,19 @@ export default function HistoryTable({
 															<span className="font-semibold text-content-muted">
 																URL:
 															</span>
-															<a
-																href={job.url}
-																target="_blank"
-																rel="noopener noreferrer"
-																className="text-blue-500 hover:underline break-all"
+															<button
+																onClick={(e) => {
+																	e.stopPropagation();
+																	window.open(
+																		job.url,
+																		"_blank",
+																		"noopener,noreferrer",
+																	);
+																}}
+																className="text-blue-500 hover:underline break-all text-left font-normal bg-transparent p-0"
 															>
 																{job.url}
-															</a>
+															</button>
 														</div>
 														<div className="grid grid-cols-[80px_1fr] gap-2">
 															<span className="font-semibold text-content-muted">

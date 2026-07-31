@@ -15,7 +15,12 @@ interface CloudPathPickerProps {
 }
 
 export default function CloudPathPicker({ currentPath, onSelect, onClose }: CloudPathPickerProps) {
-  const [path, setPath] = useState(currentPath.includes(':') ? currentPath.split(':')[0] + ':' : 'onedrive:');
+  const [path, setPath] = useState(() => {
+    if (currentPath.includes(':')) {
+      return currentPath;
+    }
+    return '';
+  });
   const [entries, setEntries] = useState<RcloneEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

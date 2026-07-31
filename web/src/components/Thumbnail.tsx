@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { getThumbnailUrl } from "@/lib/api";
 
 interface ThumbnailProps {
 	path: string;
@@ -46,7 +47,7 @@ export default function Thumbnail({
 		);
 	}
 
-	const thumbnailUrl = `/api/files/thumbnail?path=${encodeURIComponent(path)}`;
+	const thumbnailUrl = getThumbnailUrl(path);
 
 	return (
 		<div

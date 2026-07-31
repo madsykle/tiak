@@ -68,7 +68,7 @@ export default function VideoPlayer({
 		}
 	}, [path]);
 
-	// Update source
+	// Update source when src changes
 	useEffect(() => {
 		if (mediaRef.current && src) {
 			mediaRef.current.src = src;
@@ -94,11 +94,11 @@ export default function VideoPlayer({
 			onClick={onClose}
 		>
 			<div
-				className="relative w-full h-full p-4 md:p-8 flex flex-col justify-center items-center"
+				className="relative w-full h-full max-w-[95vw] max-h-[95vh] p-4 md:p-8 flex flex-col justify-center items-center"
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Header */}
-				<div className="absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-start pointer-events-none">
+				<div className="absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-start pointer-events-none mb-4">
 					<h3 className="text-white/80 font-medium text-sm md:text-base drop-shadow-md truncate max-w-32 sm:max-w-md pointer-events-auto">
 						{filename}
 					</h3>
@@ -339,8 +339,8 @@ export default function VideoPlayer({
 					</div>
 				)}
 
-				{/* Video Container */}
-				<div className="relative group w-auto h-auto max-w-full max-h-full flex items-center justify-center rounded-lg shadow-2xl ring-1 ring-white/10 overflow-hidden">
+				{/* Video Container - Fixed sizing */}
+				<div className="relative group w-full h-full flex items-center justify-center rounded-lg shadow-2xl ring-1 ring-white/10 overflow-hidden bg-black">
 					{/* Prev Arrow */}
 					{hasPrev && (
 						<button
@@ -391,7 +391,7 @@ export default function VideoPlayer({
 						</button>
 					)}
 
-					<media-controller className="w-full h-full max-h-[85vh] flex flex-col">
+					<media-controller className="w-full h-full flex flex-col">
 						<video
 							ref={mediaRef}
 							src={src}
@@ -400,7 +400,7 @@ export default function VideoPlayer({
 							playsInline
 							preload="metadata"
 							crossOrigin="anonymous"
-							className="w-auto h-auto max-w-full max-h-[85vh] object-contain"
+							className="w-full h-full object-contain"
 						/>
 						<media-control-bar
 							slot="bottom"
@@ -433,7 +433,7 @@ export default function VideoPlayer({
 						</media-control-bar>
 					</media-controller>
 
-					{/* Prev Arrow */}
+					{/* Prev Arrow (duplicate for keyboard) */}
 					{hasPrev && (
 						<button
 							onClick={(e) => {
@@ -458,7 +458,7 @@ export default function VideoPlayer({
 						</button>
 					)}
 
-					{/* Next Arrow */}
+					{/* Next Arrow (duplicate for keyboard) */}
 					{hasNext && (
 						<button
 							onClick={(e) => {

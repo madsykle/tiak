@@ -487,149 +487,159 @@ export default function QueuePage() {
 				<h2 className="text-sm font-medium text-content-muted uppercase tracking-wider">
 					Active Downloads
 				</h2>
-				{jobs.length === 0 ? (
-					<div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border-subtle bg-surface-subtle/30 py-16 text-center animate-in fade-in zoom-in-95 duration-500">
-						<div className="mb-4 rounded-full bg-surface-strong/50 p-4">
-							<Video
-								width={32}
-								height={32}
-								strokeWidth={1.5}
-								className="text-content-muted"
-							/>
-						</div>
-						<h3 className="mb-1 text-base font-semibold text-foreground">
-							Queue is empty
-						</h3>
-						<p className="text-sm text-content-muted max-w-[250px]">
-							Paste a URL above to start downloading
-						</p>
-					</div>
-				) : (
-					<div className="space-y-3">
-						{jobs.map((job) => (
-							<div
-								key={job.id}
-								className="relative overflow-hidden rounded-2xl border bg-surface/50 p-4 shadow-md transition-all duration-300 hover-scale glass-premium hover:border-accent/30 border-transparent"
-							>
-								{job.status === "downloading" && (
-									<div
-										className="absolute bottom-0 left-0 top-0 bg-accent/10 transition-all duration-300 ease-linear"
-										style={{ width: `${job.progress || 0}%` }}
+				{/* Filter to only active (queued/downloading) jobs */}
+				{(() => {
+					const activeJobs = jobs.filter(
+						(j) => j.status === "queued" || j.status === "downloading",
+					);
+					if (activeJobs.length === 0) {
+						return (
+							<div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border-subtle bg-surface-subtle/30 py-16 text-center animate-in fade-in zoom-in-95 duration-500">
+								<div className="mb-4 rounded-full bg-surface-strong/50 p-4">
+									<Video
+										width={32}
+										height={32}
+										strokeWidth={1.5}
+										className="text-content-muted"
 									/>
-								)}
-								<div className="relative z-10 flex items-start justify-between gap-4">
-									<div className="min-w-0 flex-1">
-										<div className="flex items-center gap-2 mb-1">
-											<span
-												className={`inline-flex h-2 w-2 rounded-full ${
-													job.status === "done"
-														? "bg-emerald-500"
-														: job.status === "downloading"
-															? "bg-accent"
-															: job.status === "failed"
+								</div>
+								<h3 className="mb-1 text-base font-semibold text-foreground">
+									No active downloads
+								</h3>
+								<p className="text-sm text-content-muted max-w-[250px]">
+									Downloads in progress will appear here
+								</p>
+							</div>
+						);
+					}
+					return (
+						<div className="space-y-3">
+							{activeJobs.map((job) => (
+								<div
+									key={job.id}
+									className="relative overflow-hidden rounded-2xl border bg-surface/50 p-4 shadow-md transition-all duration-300 hover-scale glass-premium hover:border-accent/30 border-transparent"
+								>
+									{job.status === "downloading" && (
+										<div
+											className="absolute bottom-0 left-0 top-0 bg-accent/10 transition-all duration-300 ease-linear"
+											style={{ width: `${job.progress || 0}%` }}
+										/>
+									)}
+									<div className="relative z-10 flex items-start justify-between gap-4">
+										<div className="min-w-0 flex-1">
+											<div className="flex items-center gap-2 mb-1">
+												<span
+													className={`inline-flex h-2 w-2 rounded-full ${
+														job.status === "done"
+															? "bg-emerald-500"
+															: job.status === "downloading"
 																? "bg-accent"
-																: job.status === "missing"
-																	? "bg-zinc-500"
-																	: "bg-zinc-400"
-												}`}
-											/>
-											<p
-												className="truncate text-sm font-medium text-foreground"
-												title={job.url}
-											>
-												{job.url}
-											</p>
-										</div>
-										<div className="flex items-center gap-3 text-xs text-content-muted">
-											<span className="capitalize">
-												{job.status === "missing" ? "Expired" : job.status}
-											</span>
-											{job.category && roleValue === "admin" && (
-												<>
-													<span>•</span>
-													<span className="px-1.5 py-0.5 rounded bg-surface-strong text-[10px]">
-														{job.category}
-													</span>
-												</>
-											)}
-											{job.platform && job.platform !== "unknown" && (
-												<>
-													<span>•</span>
-													<span className={platformBadgeClass(job.platform)}>
-														{platformLabel(job.platform)}
-													</span>
-												</>
-											)}
-											{job.status === "downloading" && (
-												<>
-													<span>•</span>
-													<span>{job.progress?.toFixed(1)}%</span>
-													<span>•</span>
-													<span>{job.eta || "--:--"}</span>
-												</>
-											)}
-											{job.filename && (
-												<>
-													<span>•</span>
-													<span className="truncate max-w-[200px]">
-														{job.filename}
-													</span>
-												</>
-											)}
-											{job.expiresAt && job.status === "done" && (
-												<>
-													<span>•</span>
-													<ExpiryCountdown expiresAt={job.expiresAt} />
-												</>
-											)}
-											{job.error && (
-												<span className="text-accent truncate max-w-[200px]">
-													{job.error}
+																: job.status === "failed"
+																	? "bg-accent"
+																	: job.status === "missing"
+																		? "bg-zinc-500"
+																		: "bg-zinc-400"
+													}`}
+												/>
+												<p
+													className="truncate text-sm font-medium text-foreground"
+													title={job.url}
+												>
+													{job.url}
+												</p>
+											</div>
+											<div className="flex items-center gap-3 text-xs text-content-muted">
+												<span className="capitalize">
+													{job.status === "missing" ? "Expired" : job.status}
 												</span>
+												{job.category && roleValue === "admin" && (
+													<>
+														<span>•</span>
+														<span className="px-1.5 py-0.5 rounded bg-surface-strong text-[10px]">
+															{job.category}
+														</span>
+													</>
+												)}
+												{job.platform && job.platform !== "unknown" && (
+													<>
+														<span>•</span>
+														<span className={platformBadgeClass(job.platform)}>
+															{platformLabel(job.platform)}
+														</span>
+													</>
+												)}
+												{job.status === "downloading" && (
+													<>
+														<span>•</span>
+														<span>{job.progress?.toFixed(1)}%</span>
+														<span>•</span>
+														<span>{job.eta || "--:--"}</span>
+													</>
+												)}
+												{job.filename && (
+													<>
+														<span>•</span>
+														<span className="truncate max-w-[200px]">
+															{job.filename}
+														</span>
+													</>
+												)}
+												{job.expiresAt && job.status === "done" && (
+													<>
+														<span>•</span>
+														<ExpiryCountdown expiresAt={job.expiresAt} />
+													</>
+												)}
+												{job.error && (
+													<span className="text-accent truncate max-w-[200px]">
+														{job.error}
+													</span>
+												)}
+											</div>
+										</div>
+										<div className="flex items-center gap-2">
+											{job.status === "done" && job.filename && (
+												<button
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														triggerInvisibleDownload(
+															getDownloadUrl(getJobDownloadPath(job)),
+														);
+													}}
+													className="shrink-0 rounded-lg bg-accent hover:bg-accent/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
+												>
+													Download File
+												</button>
+											)}
+											{(job.status === "queued" ||
+												job.status === "downloading") && (
+												<button
+													onClick={() => handleCancel(job.id)}
+													className="shrink-0 rounded-lg bg-accent/10 border border-accent/20 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-accent/20 hover:text-red-300 transition-all duration-200 active:scale-95"
+												>
+													Cancel
+												</button>
+											)}
+											{(job.status === "failed" ||
+												job.status === "missing") && (
+												<button
+													onClick={() => handleRetry(job.id)}
+													disabled={retryingIds.has(job.id)}
+													className="shrink-0 rounded-lg bg-surface-strong/50 border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
+												>
+													{retryingIds.has(job.id)
+														? "Retrying..."
+														: `Retry${job.retries > 0 ? ` (${job.retries})` : ""}`}
+												</button>
 											)}
 										</div>
-									</div>
-									<div className="flex items-center gap-2">
-										{job.status === "done" && job.filename && (
-											<button
-												onClick={(e) => {
-													e.preventDefault();
-													e.stopPropagation();
-													triggerInvisibleDownload(
-														getDownloadUrl(getJobDownloadPath(job)),
-													);
-												}}
-												className="shrink-0 rounded-lg bg-accent hover:bg-accent/90 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md transition-all duration-200 active:scale-95"
-											>
-												Download File
-											</button>
-										)}
-										{(job.status === "queued" ||
-											job.status === "downloading") && (
-											<button
-												onClick={() => handleCancel(job.id)}
-												className="shrink-0 rounded-lg bg-accent/10 border border-accent/20 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-accent/20 hover:text-red-300 transition-all duration-200 active:scale-95"
-											>
-												Cancel
-											</button>
-										)}
-										{(job.status === "failed" || job.status === "missing") && (
-											<button
-												onClick={() => handleRetry(job.id)}
-												disabled={retryingIds.has(job.id)}
-												className="shrink-0 rounded-lg bg-surface-strong/50 border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-surface-strong hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
-											>
-												{retryingIds.has(job.id)
-													? "Retrying..."
-													: `Retry${job.retries > 0 ? ` (${job.retries})` : ""}`}
-											</button>
-										)}
 									</div>
 								</div>
-							</div>
-						))}
-					</div>
-				)}
+							))}
+						</div>
+					);
+				})()}
 			</div>
 
 			{/* History Section for Guests/Non-admins */}
