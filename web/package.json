@@ -14,6 +14,8 @@
     "analyze:server": "ANALYZE=true npm run build -- --profile"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-query-devtools": "^5.101.4",
     "next": "14.2.35",
     "next-pwa": "^5.6.0",
     "plyr": "^3.8.4",

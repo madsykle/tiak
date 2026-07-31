@@ -59,6 +59,33 @@ export interface AddJobResponse {
   skipped: { url: string; reason: string; jobId?: string; finishedAt?: number }[];
 }
 
+export interface RetryResponse {
+  job: DownloadJob;
+  remainingRetries: number;
+  maxRetries: number;
+}
+
+export interface FileResponse {
+  byDate: Record<string, FileItem[]>;
+  byCategory: Record<string, Record<string, FileItem[]>>;
+  lastScan: number;
+  infoByKey?: Record<string, JobInfo>;
+}
+
+export interface FileInfo {
+  jobId: string;
+  url: string;
+  status: string;
+  progress: number;
+  category: string;
+  platform?: string | null;
+  creator?: string;
+  caption?: string;
+  hashtags?: string;
+  transcript?: string;
+  visualDescription?: string;
+}
+
 // System types
 export interface DiskUsage {
   totalSize: number;

@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import localFont from "next/font/local";
 import Layout from "@/components/Layout";
+import { QueryProvider } from "@/lib/query-provider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -17,10 +18,12 @@ const geistMono = localFont({
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <div className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
-    </div>
+    <QueryProvider>
+      <div className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </div>
+    </QueryProvider>
   );
 }
