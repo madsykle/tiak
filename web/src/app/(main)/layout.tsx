@@ -1,10 +1,8 @@
-"use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState, useRef } from "react";
-import InstallPrompt from "./InstallPrompt";
-import { getRole, checkAuthSession } from "../lib/api";
+import InstallPrompt from "@/components/InstallPrompt";
+import { getRole, checkAuthSession } from "@/lib/api";
 import {
 	Inbox,
 	Settings,
@@ -17,13 +15,12 @@ interface LayoutProps {
 	children: ReactNode;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function MainLayout({ children }: LayoutProps) {
 	const pathname = usePathname();
 	const [role, setRole] = useState<string | null>(null);
 
 	useEffect(() => {
 		setRole(getRole());
-		// Verify auth status with server on load
 		checkAuthSession();
 
 		const handleAuthChange = () => setRole(getRole());
