@@ -24,11 +24,9 @@ import {
 
 export default function SettingsPage() {
 	const { role, login, logout, signup } = useAuthState();
-	const { settings, updateSetting, updateSettings } = useAppStore((s) => ({
-		settings: s.settings,
-		updateSetting: s.updateSetting,
-		updateSettings: s.updateSettings,
-	}));
+	const settings = useAppStore((s) => s.settings);
+	const updateSetting = useAppStore((s) => s.updateSetting);
+	const updateSettings = useAppStore((s) => s.updateSettings);
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [loginLoading, setLoginLoading] = useState(false);
