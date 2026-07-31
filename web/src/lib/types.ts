@@ -60,6 +60,9 @@ export interface AddJobResponse {
 		url: string;
 		reason: string;
 		jobId?: string;
+		filename?: string;
+		category?: string;
+		dateFolder?: string;
 		finishedAt?: number;
 	}[];
 }

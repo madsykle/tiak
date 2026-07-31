@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 import localFont from "next/font/local";
 import { QueryProvider } from "@/lib/query-provider";
-import Layout from "@/components/Layout";
 import SWRegistration from "@/components/SWRegistration";
 
 const geistSans = localFont({
@@ -18,7 +17,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-	title: "Tiak Downloader",
+	title: "Tiak - Media Downloader",
 	description:
 		"Download and manage media from TikTok, Instagram, YouTube and more",
 };
@@ -36,7 +35,7 @@ export default function RootLayout({
 			<body className="bg-background text-foreground">
 				<QueryProvider>
 					<SWRegistration />
-					<Layout>{children}</Layout>
+					{children}
 				</QueryProvider>
 			</body>
 		</html>

@@ -86,11 +86,11 @@ export function useHistory(page = 1, limit = 50) {
 export function useAddJob() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: async (urls: string) => {
+		mutationFn: async ({ urls, category }: { urls: string; category: string }) => {
 			const res = await fetchWithAuth(`${API_BASE}/queue/add`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ urls, category: "default" }),
+				body: JSON.stringify({ urls, category }),
 			});
 			if (!res.ok) throw new Error("Failed to add jobs");
 			return res.json() as Promise<AddJobResponse>;
