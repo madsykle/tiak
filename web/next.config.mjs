@@ -4,11 +4,9 @@ import withBundleAnalyzerInit from '@next/bundle-analyzer';
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  // Ensure we use SWC for transformations
   experimental: {
     forceSwcTransforms: true,
   },
-  // Security: restrict origin access for dev
   allowedDevOrigins: ['localhost'],
 };
 
