@@ -9,6 +9,7 @@ use serde::Deserialize;
 use std::io::Write;
 use std::path::{Path as StdPath, PathBuf};
 use tokio::fs::File as AsyncFile;
+use tokio::sync::mpsc;
 use tokio_util::io::ReaderStream;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
@@ -39,59 +40,89 @@ pub(super) async fn zip_files(
         return (StatusCode::BAD_REQUEST, "No files to zip").into_response();
     }
 
-    let res = tokio::task::spawn_blocking(move || -> Result<Vec<u8>, anyhow::Error> {
-        let mut buffer = Vec::new();
-        let mut zip = zip::ZipWriter::new(std::io::Cursor::new(&mut buffer));
-        let default_options =
-            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
-        let stored_options =
-            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+    let (tx, rx) = mpsc::channel::<Result<Vec<u8>, std::io::Error>>(32);
 
-        // ponytail: video formats are already compressed, deflating wastes CPU for ~0 gain
-        let no_compress_exts = [".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v", ".flv", ".ogg", ".opus", ".mp3", ".wav", ".flac"];
+    tokio::task::spawn_blocking(move || {
+        let mut buffer = Vec::with_capacity(1024 * 1024); // 1MB initial hint
+        {
+            let mut zip = zip::ZipWriter::new(std::io::Cursor::new(&mut buffer));
+            let default_options =
+                SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+            let stored_options =
+                SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
 
-        for p in paths {
-            match validate_data_path(&p) {
-                Ok(abs_path) if abs_path.is_file() => {
-                    let data_root = StdPath::new(DATA_ROOT);
-                    let relative_name = abs_path
-                        .strip_prefix(data_root)
-                        .map(|p| p.to_string_lossy().into_owned())
-                        .unwrap_or_else(|_| {
-                            abs_path.file_name().unwrap().to_string_lossy().into_owned()
-                        });
+            let no_compress_exts = [".mp4", ".webm", ".mov", ".avi", ".mkv", ".m4v", ".flv", ".ogg", ".opus", ".mp3", ".wav", ".flac"];
 
-                    let ext = abs_path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                    let options = if no_compress_exts.iter().any(|e| e.eq_ignore_ascii_case(&format!(".{ext}"))) {
-                        stored_options
-                    } else {
-                        default_options
-                    };
+            for p in paths {
+                match validate_data_path(&p) {
+                    Ok(abs_path) if abs_path.is_file() => {
+                        let data_root = StdPath::new(DATA_ROOT);
+                        let relative_name = abs_path
+                            .strip_prefix(data_root)
+                            .map(|p| p.to_string_lossy().into_owned())
+                            .unwrap_or_else(|_| {
+                                abs_path.file_name().unwrap().to_string_lossy().into_owned()
+                            });
 
-                    zip.start_file(relative_name, options)?;
-                    let content = std::fs::read(&abs_path)?;
-                    zip.write_all(&content)?;
+                        let ext = abs_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                        let options = if no_compress_exts.iter().any(|e| e.eq_ignore_ascii_case(&format!(".{ext}"))) {
+                            stored_options
+                        } else {
+                            default_options
+                        };
+
+                        if zip.start_file(relative_name, options).is_err() {
+                            continue;
+                        }
+
+                        // Stream file in 64KB chunks to reduce peak memory
+                        let mut file = match std::fs::File::open(&abs_path) {
+                            Ok(f) => f,
+                            Err(_) => continue,
+                        };
+                        let mut buf = [0u8; 65536];
+                        loop {
+                            match std::io::Read::read(&mut file, &mut buf) {
+                                Ok(0) => break,
+                                Ok(n) => {
+                                    if zip.write_all(&buf[..n]).is_err() {
+                                        break;
+                                    }
+                                }
+                                Err(_) => break,
+                            }
+                        }
+                    }
+                    _ => continue,
                 }
-                _ => continue,
             }
+            let _ = zip.finish();
         }
-        zip.finish()?;
-        Ok(buffer)
-    })
-    .await;
 
-    match res {
-        Ok(Ok(buffer)) => {
-            let mut headers = HeaderMap::new();
-            headers.insert(header::CONTENT_TYPE, "application/zip".parse().unwrap());
-            headers.insert(
-                header::CONTENT_DISPOSITION,
-                "attachment; filename=\"videos.zip\"".parse().unwrap(),
-            );
-            (headers, buffer).into_response()
+        // Stream the completed zip to the client in 64KB chunks
+        let chunk_size = 65536;
+        let mut offset = 0;
+        while offset < buffer.len() {
+            let end = (offset + chunk_size).min(buffer.len());
+            let chunk = buffer[offset..end].to_vec();
+            if tx.blocking_send(Ok(chunk)).is_err() {
+                break;
+            }
+            offset = end;
         }
-        _ => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create zip").into_response(),
-    }
+    });
+
+    let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
+    let body = Body::from_stream(stream);
+
+    let mut headers = HeaderMap::new();
+    headers.insert(header::CONTENT_TYPE, "application/zip".parse().unwrap());
+    headers.insert(
+        header::CONTENT_DISPOSITION,
+        "attachment; filename=\"videos.zip\"".parse().unwrap(),
+    );
+
+    (headers, body).into_response()
 }
 
 #[derive(Deserialize)]

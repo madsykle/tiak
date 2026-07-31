@@ -2590,6 +2590,7 @@ dependencies = [
  "tempfile",
  "time",
  "tokio",
+ "tokio-stream",
  "tokio-util",
  "tower",
  "tower-http",
