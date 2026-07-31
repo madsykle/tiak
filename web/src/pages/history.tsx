@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Search } from 'lucide-react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import HistoryTable from '../components/HistoryTable';
@@ -202,7 +203,7 @@ export default function HistoryPage() {
             <div className="flex-1">
                 <div className="relative group">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-content-subtle">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <Search width={16} height={16} strokeWidth={2.5} className="text-content-subtle" />
                     </div>
                     <input
                         type="text"

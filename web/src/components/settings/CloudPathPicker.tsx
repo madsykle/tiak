@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { X, ChevronLeft, RefreshCw, FolderOpen } from 'lucide-react';
 import { API_BASE } from '../../lib/config';
 
 interface RcloneEntry {
@@ -78,7 +79,7 @@ export default function CloudPathPicker({ currentPath, onSelect, onClose }: Clou
         <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-strong/50">
           <h3 className="text-lg font-semibold tracking-tight text-foreground">Select Cloud Folder</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg text-content-muted hover:bg-white/5 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            <X width={20} height={20} strokeWidth={2} className="text-current" />
           </button>
         </div>
         
@@ -88,7 +89,7 @@ export default function CloudPathPicker({ currentPath, onSelect, onClose }: Clou
             disabled={path.endsWith(':')}
             className="p-1.5 rounded-lg border border-border bg-surface-strong hover:border-border-strong disabled:opacity-50 transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+            <ChevronLeft width={18} height={18} strokeWidth={2} className="text-current" />
           </button>
           <input
             type="text"
@@ -97,7 +98,7 @@ export default function CloudPathPicker({ currentPath, onSelect, onClose }: Clou
             className="flex-1 rounded-lg border border-border bg-surface/50 p-2 text-sm text-foreground focus:ring-1 focus:ring-accent focus:border-accent"
           />
           <button onClick={() => fetchDirectory(path)} className="p-2 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            <RefreshCw width={16} height={16} strokeWidth={2} className="text-current" />
           </button>
         </div>
 
@@ -123,7 +124,7 @@ export default function CloudPathPicker({ currentPath, onSelect, onClose }: Clou
                   onClick={() => handleNavigate(entry.Name)}
                   className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-strong hover:text-accent transition-colors text-left group"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" className="text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+                  <FolderOpen width={20} height={20} className="text-blue-400" strokeWidth={2} />
                   <span className="text-sm font-medium text-foreground group-hover:text-accent transition-colors">{entry.Name}</span>
                 </button>
               ))}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Cloud, AlertTriangle, ChevronDown, RefreshCw } from 'lucide-react';
 import CloudPathPicker from './CloudPathPicker';
 
 interface SyncStatus {
@@ -36,7 +37,7 @@ export default function CloudSyncSection({
     <div className="pt-6 border-t border-border-subtle">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium text-foreground flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19a5.5 5.5 0 0 0 2.5-10.5 8.5 8.5 0 1 0-14 3h1.5"/><path d="M12 11v9"/><path d="m9 17 3 3 3-3"/></svg>
+          <Cloud width={18} height={18} strokeWidth={2} className="text-foreground" />
           Cloud Sync
         </h2>
         <div className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
@@ -51,7 +52,7 @@ export default function CloudSyncSection({
       <div className="space-y-4">
         {syncStatus.unsyncedCount > 0 && (
           <div className={`flex items-center gap-2 text-xs animate-in slide-in-from-top-2 transition-all duration-300 ${syncStatus.status === 'running' ? 'text-zinc-500 opacity-50' : 'text-content-muted'}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncStatus.status === 'running' ? 'text-zinc-500' : 'text-amber-500'}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <AlertTriangle width={14} height={14} strokeWidth={2} className={syncStatus.status === 'running' ? 'text-zinc-500' : 'text-amber-500'} />
             <span><strong className={syncStatus.status === 'running' ? '' : 'text-foreground'}>{syncStatus.unsyncedCount} new file(s)</strong> waiting to sync.</span>
           </div>
         )}
@@ -107,7 +108,7 @@ export default function CloudSyncSection({
           {syncStatus.logs.length > 0 && (
             <details className="group">
               <summary className="cursor-pointer text-xs text-content-muted hover:text-foreground select-none flex items-center gap-1 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-open:rotate-90 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                <ChevronDown width={12} height={12} strokeWidth={2} className="group-open:rotate-90 transition-transform text-current" />
                 View Activity Logs
               </summary>
               <div className="mt-3 max-h-40 overflow-y-auto rounded-lg bg-black p-3 text-[10px] text-zinc-400 font-mono whitespace-pre-wrap leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
@@ -125,7 +126,7 @@ export default function CloudSyncSection({
             disabled={syncStatus.status === 'running' || saving}
             className="inline-flex items-center gap-2 rounded-lg bg-surface-strong border border-border-subtle px-6 py-2 text-sm font-semibold text-foreground hover:border-foreground disabled:opacity-50 transition-all active:scale-95"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+            <RefreshCw width={16} height={16} strokeWidth={2} className="text-current" />
             {syncStatus.status === 'running' ? 'Syncing...' : 'Sync Now'}
           </button>
         </div>

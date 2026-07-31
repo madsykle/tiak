@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { RefreshCw, Video, Music, Camera, Clock, HelpCircle, X } from 'lucide-react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -361,12 +362,7 @@ export default function Queue() {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-subtle/50 text-sm font-medium hover:bg-surface-strong hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50"
                 title="Refresh jobs manually"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? 'animate-spin' : ''}>
-                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 3v5h5" />
-                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                  <path d="M16 16h5v5" />
-                </svg>
+                <RefreshCw width={14} height={14} strokeWidth={2.5} className={refreshing ? 'animate-spin' : ''} />
                 <span>Refresh</span>
               </button>
               <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse glow-accent" title="Live updates active"></div>
@@ -388,13 +384,13 @@ export default function Queue() {
                     {/* Platform Autodetect Badge */}
                     <div className="absolute bottom-3 left-4 flex flex-wrap gap-2 pointer-events-none">
                         {urls.toLowerCase().includes('youtube') && (
-                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white"/></svg> YouTube</span>
+                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><Video width={12} height={12} className="text-current" /> YouTube</span>
                         )}
                         {urls.toLowerCase().includes('tiktok') && (
-                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.12-3.44-3.17-3.48-5.56-.02-1.38.34-2.73 1.05-3.86 1.11-1.8 3.12-2.9 5.25-3v4.03c-1.12.06-2.19.68-2.79 1.62-.51.81-.66 1.83-.34 2.76.3 1.03 1.11 1.87 2.11 2.23 1.09.43 2.37.28 3.32-.38.7-.51 1.18-1.28 1.34-2.12.1-.57.1-1.16.1-1.74V.02z"/></svg> TikTok</span>
+                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><Music width={12} height={12} className="text-current" /> TikTok</span>
                         )}
                         {urls.toLowerCase().includes('instagram') && (
-                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram</span>
+                            <span className="px-2 py-1 rounded-md bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"><Camera width={12} height={12} className="text-current" /> Instagram</span>
                         )}
                     </div>
                 </div>
@@ -416,7 +412,7 @@ export default function Queue() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 text-xs text-content-muted">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          <Clock width={14} height={14} strokeWidth={2} className="text-current" />
                           <span>Auto-deletes in 5 minutes</span>
                       </div>
                     )}
@@ -435,7 +431,7 @@ export default function Queue() {
             {skipped.length > 0 && (
                 <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800 animate-in slide-in-from-top-2 shadow-sm">
                     <div className="font-semibold mb-2 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <HelpCircle width={16} height={16} strokeWidth={2} className="text-content-muted" />
                         Skipped {skipped.length} duplicate(s):
                     </div>
                     <ul className="space-y-2">
@@ -465,13 +461,13 @@ export default function Queue() {
             {/* Retry Error Toast */}
             {retryError && (
                 <div className="rounded-lg border border-accent/30 bg-accent/10 backdrop-blur-md p-4 text-sm text-red-400 animate-in slide-in-from-top-2 shadow-lg flex items-start gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <HelpCircle width={18} height={18} strokeWidth={2} className="shrink-0 mt-0.5 text-content-muted" />
                     <div className="flex-1">
                         <p className="font-semibold mb-1">Retry failed</p>
                         <p className="text-red-300/90 break-words">{retryError.message}</p>
                     </div>
                     <button onClick={() => setRetryError(null)} className="shrink-0 text-red-400 hover:text-red-300 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <X width={16} height={16} strokeWidth={2} className="text-content-muted" />
                     </button>
                 </div>
             )}
@@ -484,11 +480,7 @@ export default function Queue() {
             {jobs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border-subtle bg-surface-subtle/30 py-16 text-center animate-in fade-in zoom-in-95 duration-500">
                     <div className="mb-4 rounded-full bg-surface-strong/50 p-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-content-muted">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" x2="12" y1="15" y2="3" />
-                        </svg>
+                        <Video width={32} height={32} strokeWidth={1.5} className="text-content-muted" />
                     </div>
                     <h3 className="mb-1 text-base font-semibold text-foreground">Queue is empty</h3>
                     <p className="text-sm text-content-muted max-w-[250px]">Paste a URL above to start downloading</p>
