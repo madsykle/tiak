@@ -109,7 +109,9 @@ func VerifyPassword(password, stored string) bool {
 	var m, t, p uint32
 	for _, param := range strings.Split(parts[3], ",") {
 		kv := strings.SplitN(param, "=", 2)
-		if len(kv) != 2 { continue }
+		if len(kv) != 2 {
+			continue
+		}
 		switch kv[0] {
 		case "m":
 			fmt.Sscanf(kv[1], "%d", &m)
@@ -119,9 +121,15 @@ func VerifyPassword(password, stored string) bool {
 			fmt.Sscanf(kv[1], "%d", &p)
 		}
 	}
-	if m == 0 { m = 65536 }
-	if t == 0 { t = 1 }
-	if p == 0 { p = 1 }
+	if m == 0 {
+		m = 65536
+	}
+	if t == 0 {
+		t = 1
+	}
+	if p == 0 {
+		p = 1
+	}
 
 	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {

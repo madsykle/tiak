@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -15,7 +16,7 @@ type RateLimiter struct {
 }
 
 type visitor struct {
-	count   uint32
+	count       uint32
 	windowStart time.Time
 }
 
@@ -51,6 +52,10 @@ func RateLimitMiddleware(rl *RateLimiter) func(http.Handler) http.Handler {
 			ip := r.RemoteAddr
 			if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
 				ip = fwd
+			}
+			// Strip port for consistent keying
+			if idx := strings.LastIndex(ip, ":"); idx != -1 {
+				ip = ip[:idx]
 			}
 			if !rl.Allow(ip) {
 				w.Header().Set("Retry-After", "60")
