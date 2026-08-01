@@ -129,7 +129,7 @@ func (dq *DownloadQueue) runYtDlp(ctx context.Context, job *models.Job) (*downlo
 
 	commandArgs := append([]string{"-n", "10", downloader}, downloaderArgs...)
 	commandArgs = append(commandArgs,
-		"--newline", "--no-check-certificates", "--no-mtime", "--no-update",
+		"--newline", "--no-mtime", "--no-update",
 		"--merge-output-format", "mp4", "--remux-video", "mp4",
 		"--postprocessor-args", "ffmpeg:-movflags +faststart", "--write-info-json",
 		"-f", "bv*[height<=1080]+ba/b[height<=1080]/bestvideo+bestaudio/best")

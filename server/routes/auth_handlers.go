@@ -20,12 +20,8 @@ func loginHandler(state *AppState) http.HandlerFunc {
 			return
 		}
 		user, err := state.DB.FindUserByUsername(r.Context(), req.Username)
-		if err != nil || user == nil {
-			http.Error(w, `{"message":"User doesn't exist"}`, http.StatusUnauthorized)
-			return
-		}
-		if !auth.VerifyPassword(req.Password, user.PasswordHash) {
-			http.Error(w, `{"message":"Incorrect password"}`, http.StatusUnauthorized)
+		if err != nil || user == nil || !auth.VerifyPassword(req.Password, user.PasswordHash) {
+			http.Error(w, `{"message":"Invalid username or password"}`, http.StatusUnauthorized)
 			return
 		}
 		token, err := state.AuthState.GenerateToken(user.Username, user.Role)
@@ -38,11 +34,12 @@ func loginHandler(state *AppState) http.HandlerFunc {
 			Value:    token,
 			Path:     "/",
 			HttpOnly: true,
+			Secure:   true,
 			SameSite: http.SameSiteLaxMode,
 			MaxAge:   int(state.Config.Server.JWTExpiryHours * 3600),
 		})
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"token": token, "role": user.Role})
+		json.NewEncoder(w).Encode(map[string]interface{}{"role": user.Role})
 	}
 }
 
@@ -169,6 +166,11 @@ func updateRoleHandler(state *AppState) http.HandlerFunc {
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		}
+		validRoles := map[string]bool{"guest": true, "premium_member": true, "admin": true}
+		if !validRoles[req.Role] {
+			http.Error(w, "Invalid role", http.StatusBadRequest)
 			return
 		}
 		if err := state.DB.UpdateUserRole(r.Context(), id, req.Role); err != nil {

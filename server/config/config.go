@@ -47,10 +47,10 @@ func LoadConfig() *AppConfig {
 			MaxConcurrentDownloads: getEnvInt("MAX_CONCURRENT_DOWNLOADS", 4),
 			MaxRetryCount:          uint32(getEnvInt("MAX_RETRY_COUNT", 5)),
 			CORSOrigins:            strings.Split(getEnvStr("CORS_ORIGINS", ""), ","),
-			JWTSecret:              getEnvStr("JWT_SECRET", "development-secret-key-change-in-production"),
+			JWTSecret:              getEnvStr("JWT_SECRET", ""),
 			JWTExpiryHours:         getEnvInt64("JWT_EXPIRY_HOURS", 24),
-			EnableAuth:             getEnvBool("ENABLE_AUTH", false),
-			AdminPassword:          getEnvStr("ADMIN_PASSWORD", "admin"),
+			EnableAuth:             getEnvBool("ENABLE_AUTH", true),
+			AdminPassword:          getEnvStr("ADMIN_PASSWORD", ""),
 			YtDlpPython:            getEnvStr("YT_DLP_PYTHON", filepath.Join(cwd, "venv_python", "bin", "python")),
 			YtDlpBinary:            getEnvStr("YT_DLP_BINARY", filepath.Join(cwd, "bin", "yt-dlp")),
 			InstagramProxy:         getEnvStr("INSTAGRAM_PROXY", ""),
@@ -72,6 +72,9 @@ func (c *AppConfig) Validate() error {
 	}
 	if c.Server.JWTSecret == "" {
 		return ErrMissingJWTSecret
+	}
+	if c.Server.AdminPassword == "" {
+		return ErrMissingAdminPass
 	}
 	return nil
 }
@@ -111,9 +114,10 @@ func getEnvBool(key string, fallback bool) bool {
 }
 
 var (
-	ErrInvalidPort     = &ConfigError{"invalid port number"}
-	ErrMissingMongoURI = &ConfigError{"MONGODB_URI is required"}
+	ErrInvalidPort      = &ConfigError{"invalid port number"}
+	ErrMissingMongoURI  = &ConfigError{"MONGODB_URI is required"}
 	ErrMissingJWTSecret = &ConfigError{"JWT_SECRET is required"}
+	ErrMissingAdminPass = &ConfigError{"ADMIN_PASSWORD is required"}
 )
 
 type ConfigError struct {

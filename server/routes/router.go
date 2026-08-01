@@ -119,11 +119,23 @@ func DoneJobFileExists(jobFilename *string, completedAt, createdAt *int64, categ
 	return false
 }
 
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func NewRouter(state *AppState) http.Handler {
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(chiMiddleware.Compress(5))
+	r.Use(securityHeaders)
 	r.Use(auth.CORSMiddleware(state.Config.Server.CORSOrigins))
 	r.Use(auth.AuthMiddleware(state.AuthState, &state.Config.Server))
 
@@ -138,7 +150,7 @@ func NewRouter(state *AppState) http.Handler {
 	})
 	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		io.WriteString(w, "# HELP tiak_server_info\n# TYPE tiak_server_info gauge\ntiak_server_info{version=\"0.1.0\"} 1\n")
+		io.WriteString(w, "# HELP tiak_server_up\n# TYPE tiak_server_up gauge\ntiak_server_up 1\n")
 	})
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Tiak Server is running (Go)")

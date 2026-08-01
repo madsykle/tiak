@@ -70,9 +70,9 @@ func extractUser(r *http.Request, authState *AuthState, cfg *config.ServerConfig
 			return &AuthenticatedUser{Username: claims.Sub, Role: claims.Role}
 		}
 	}
-	// Auth disabled: bypass
+	// Auth disabled: guest access only (never admin)
 	if !cfg.EnableAuth {
-		return &AuthenticatedUser{Username: "admin_bypass", Role: "admin"}
+		return &AuthenticatedUser{Username: "guest", Role: "guest"}
 	}
 	return &AuthenticatedUser{Username: "guest", Role: "guest"}
 }
@@ -88,7 +88,7 @@ func CORSMiddleware(origins []string) func(http.Handler) http.Handler {
 					break
 				}
 			}
-			if allowed || len(origins) == 0 {
+			if allowed {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
 			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH")

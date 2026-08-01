@@ -36,10 +36,8 @@ export interface FileInfo {
 }
 
 
+// Token is stored in HttpOnly cookie only (not localStorage)
 export function getToken(): string | null {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
-  }
   return null;
 }
 
@@ -54,7 +52,7 @@ export function getGuestId(): string {
   if (typeof window !== 'undefined') {
     let id = localStorage.getItem('guest_id');
     if (!id) {
-      id = `guest_${Math.random().toString(36).substring(2, 11)}`;
+      id = `guest_${crypto.randomUUID()}`;
       localStorage.setItem('guest_id', id);
     }
     return id;
@@ -63,20 +61,13 @@ export function getGuestId(): string {
 }
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = getToken();
   const headers = new Headers(options.headers || {});
   
-  headers.set('ngrok-skip-browser-warning', 'true');
   headers.set('X-Guest-ID', getGuestId());
-
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
   
   const res = await fetch(url, { ...options, headers, credentials: 'include' });
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
       localStorage.removeItem('role');
       // Dispatch an event so layout/components can react
       window.dispatchEvent(new Event('auth-change'));
@@ -89,7 +80,7 @@ export async function login(username: string, password: string): Promise<{ token
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
   });
   
@@ -100,7 +91,6 @@ export async function login(username: string, password: string): Promise<{ token
   
   const data = await res.json();
   if (typeof window !== 'undefined') {
-    localStorage.setItem('token', data.token);
     localStorage.setItem('role', data.role);
     window.dispatchEvent(new Event('auth-change'));
   }
@@ -112,8 +102,7 @@ export async function logout(): Promise<void> {
     await fetch(`${API_BASE}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'ngrok-skip-browser-warning': 'true' }
-    });
+      });
   } catch (err) {
     console.error('Logout request failed', err);
   }
@@ -128,7 +117,7 @@ export async function signup(username: string, email: string, password: string):
   const res = await fetch(`${API_BASE}/auth/signup`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, email, password })
   });
   
@@ -358,7 +347,6 @@ export async function checkAuthSession(): Promise<{ username: string; role: stri
       return data;
     } else if (res.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
         localStorage.removeItem('role');
         window.dispatchEvent(new Event('auth-change'));
       }

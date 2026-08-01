@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"regexp"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -12,6 +13,11 @@ import (
 
 	"tiak-server/models"
 )
+
+// escapeRegex escapes regex metacharacters to prevent ReDoS and injection.
+func escapeRegex(s string) string {
+	return regexp.QuoteMeta(s)
+}
 
 func generateID() string {
 	b := make([]byte, 16)
@@ -251,11 +257,13 @@ func (m *MongoDB) GetTimelineJobs(ctx context.Context, limit int64) ([]models.Jo
 }
 
 func (m *MongoDB) SearchJobs(ctx context.Context, pattern string) ([]models.Job, error) {
+	// Escape regex metacharacters to prevent ReDoS and injection
+	escaped := escapeRegex(pattern)
 	filter := bson.M{
 		"$or": []bson.M{
-			{"url": bson.M{"$regex": pattern, "$options": "i"}},
-			{"filename": bson.M{"$regex": pattern, "$options": "i"}},
-			{"category": bson.M{"$regex": pattern, "$options": "i"}},
+			{"url": bson.M{"$regex": escaped, "$options": "i"}},
+			{"filename": bson.M{"$regex": escaped, "$options": "i"}},
+			{"category": bson.M{"$regex": escaped, "$options": "i"}},
 		},
 	}
 
