@@ -86,10 +86,11 @@ func HashPassword(password string) (string, error) {
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
-	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
+	// OWASP recommended: m=19456 (19MB), t=2, p=1
+	hash := argon2.IDKey([]byte(password), salt, 2, 19456, 1, 32)
 	saltB64 := base64.RawStdEncoding.EncodeToString(salt)
 	hashB64 := base64.RawStdEncoding.EncodeToString(hash)
-	return fmt.Sprintf("$argon2id$v=19$m=65536,t=1,p=4$%s$%s", saltB64, hashB64), nil
+	return fmt.Sprintf("$argon2id$v=19$m=19456,t=2,p=1$%s$%s", saltB64, hashB64), nil
 }
 
 // VerifyPassword checks a password against a PHC-format argon2 hash.

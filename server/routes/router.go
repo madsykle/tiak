@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -84,16 +84,40 @@ func DetectPlatform(url string) string {
 }
 
 func ResolveURL(rawURL string) (string, error) {
-	cmd := exec.Command("curl", "-Ls", "-o", "/dev/null", "-w", "%{url_effective}", "--", rawURL)
-	out, err := cmd.Output()
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("too many redirects")
+			}
+			return nil
+		},
+	}
+	resp, err := client.Head(rawURL)
 	if err != nil {
 		return rawURL, nil
 	}
-	resolved := strings.TrimSpace(string(out))
+	defer resp.Body.Close()
+	resolved := resp.Request.URL.String()
 	if resolved == "" {
 		return rawURL, nil
 	}
 	return NormalizeURL(resolved), nil
+}
+
+// sanitizeURL validates and sanitizes a URL to prevent SSRF.
+func sanitizeURL(rawURL string) (string, error) {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", fmt.Errorf("only http/https schemes allowed")
+	}
+	if parsed.Host == "" {
+		return "", fmt.Errorf("missing host")
+	}
+	return rawURL, nil
 }
 
 func DoneJobFileExists(jobFilename *string, completedAt, createdAt *int64, category string, fileIndex *storage.FileIndex) bool {
@@ -138,6 +162,13 @@ func NewRouter(state *AppState) http.Handler {
 	r.Use(securityHeaders)
 	r.Use(auth.CORSMiddleware(state.Config.Server.CORSOrigins))
 	r.Use(auth.AuthMiddleware(state.AuthState, &state.Config.Server))
+
+	// Rate limiting on sensitive endpoints
+	rl := auth.NewRateLimiter(
+		state.Config.Security.RateLimitRequests,
+		state.Config.Security.RateLimitWindowSeconds,
+	)
+	r.Use(auth.RateLimitMiddleware(rl))
 
 	// Guest routes
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

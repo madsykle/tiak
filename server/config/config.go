@@ -25,8 +25,8 @@ type ServerConfig struct {
 }
 
 type SecurityConfig struct {
-	MaxUploadSize         int
-	RateLimitRequests     uint32
+	MaxUploadSize          int
+	RateLimitRequests      uint32
 	RateLimitWindowSeconds uint64
 }
 

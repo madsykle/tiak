@@ -35,7 +35,7 @@ func loginHandler(state *AppState) http.HandlerFunc {
 			Path:     "/",
 			HttpOnly: true,
 			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
+			SameSite: http.SameSiteStrictMode,
 			MaxAge:   int(state.Config.Server.JWTExpiryHours * 3600),
 		})
 		w.Header().Set("Content-Type", "application/json")
