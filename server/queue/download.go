@@ -27,6 +27,9 @@ type DownloadQueue struct {
 	MaxRetryCount   uint32
 	SyncDestination string
 	SyncMode        string
+	syncRunning     bool
+	syncError       string
+	syncLogs        []string
 	mu              sync.RWMutex
 }
 
@@ -39,6 +42,7 @@ func NewDownloadQueue(d *db.MongoDB, fi *storage.FileIndex, maxRetry uint32) *Do
 		MaxRetryCount:   maxRetry,
 		SyncDestination: "onedrive:EDITS",
 		SyncMode:        "copy",
+		syncLogs:        []string{},
 	}
 }
 

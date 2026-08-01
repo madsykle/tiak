@@ -7,6 +7,8 @@ import SystemInfoSection from "@/components/settings/SystemInfoSection";
 import CloudSyncSection from "@/components/settings/CloudSyncSection";
 import PlayerPreferencesSection from "@/components/settings/PlayerPreferencesSection";
 import { useVisibilityPolling } from "@/hooks/useVisibilityPolling";
+import { fetchWithAuth } from "@/lib/api";
+import { API_BASE } from "@/lib/config";
 import { useAuthState, useAppStore } from "@/store/app-store";
 import {
 	useCategories,
@@ -108,14 +110,23 @@ export default function SettingsPage() {
 	const fetchSyncStatus = useCallback(async () => {
 		if (role !== "admin") return;
 		try {
-			const res = await fetch("/sync/status", {
-				headers: {
-					Authorization: `Bearer ${localStorage.getItem("token")}`,
-				},
-			});
+			const res = await fetchWithAuth(`${API_BASE}/sync/status`);
 			if (res.ok) {
-				const data = await res.json();
-				setSyncStatus(data);
+				const responseData: unknown = await res.json();
+				const data =
+					responseData && typeof responseData === "object"
+						? (responseData as Record<string, unknown>)
+						: {};
+				setSyncStatus({
+					status: typeof data.status === "string" ? data.status : "idle",
+					lastRun: typeof data.lastRun === "string" ? data.lastRun : null,
+					logs: Array.isArray(data.logs)
+						? data.logs.filter((log): log is string => typeof log === "string")
+						: [],
+					error: typeof data.error === "string" ? data.error : null,
+					unsyncedCount:
+						typeof data.unsyncedCount === "number" ? data.unsyncedCount : 0,
+				});
 			}
 		} catch {
 			console.error("Failed to fetch sync status");
@@ -128,9 +139,15 @@ export default function SettingsPage() {
 		}
 	}, [role, fetchSyncStatus]);
 
-	useVisibilityPolling(fetchSyncStatus, 10000, {
+	useVisibilityPolling(fetchSyncStatus, syncStatus.status === "running" ? 2000 : 10000, {
 		runImmediately: false,
 	});
+
+	useEffect(() => {
+		if (syncStatus.status === "running") {
+			void fetchSyncStatus();
+		}
+	}, [syncStatus.status, fetchSyncStatus]);
 
 	const showMessage = useCallback((type: "success" | "error", text: string) => {
 		setMsg({ type, text });
@@ -202,11 +219,23 @@ export default function SettingsPage() {
 
 	const handleSync = async () => {
 		setMsg(null);
+		setSaving(true);
 		try {
+			// Persist the currently selected mode before starting the run. Without
+			// this, the backend could still use the previous mode (usually copy).
+			await updateSettingsMutation.mutateAsync({
+				maxConcurrent,
+				syncDestination,
+				syncMode,
+			});
+			updateSettings({ maxConcurrent, syncDestination, syncMode, playerType });
 			await syncMutation.mutateAsync();
+			await fetchSyncStatus();
 			showMessage("success", "Sync started");
 		} catch {
 			showMessage("error", "Sync failed");
+		} finally {
+			setSaving(false);
 		}
 	};
 
