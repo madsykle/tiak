@@ -59,7 +59,9 @@ export function useAuth() {
 // ============================================
 // Queue/Jobs Queries & Mutations
 // ============================================
-export function useJobs(options?: UseQueryOptions<DownloadJob[]>) {
+export function useJobs(
+	options?: Omit<UseQueryOptions<DownloadJob[]>, "queryKey" | "queryFn">,
+) {
 	return useQuery({
 		queryKey: queryKeys.jobs,
 		queryFn: async () => {
@@ -82,7 +84,7 @@ export function useHistory(page = 1, limit = 50) {
 			if (!res.ok) throw new Error("Failed to fetch history");
 			return res.json() as Promise<HistoryResponse>;
 		},
-		refetchInterval: 15000,
+		refetchInterval: 5000,
 	});
 }
 
@@ -101,7 +103,10 @@ export function useAddJob() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ urls, category }),
 			});
-			if (!res.ok) throw new Error("Failed to add jobs");
+			if (!res.ok) {
+				const message = await res.text().catch(() => "");
+				throw new Error(message || `Failed to add jobs (${res.status})`);
+			}
 			return res.json() as Promise<AddJobResponse>;
 		},
 		onSuccess: () => {
@@ -164,9 +169,10 @@ export function useDeleteJob() {
 // ============================================
 // Files Queries & Mutations
 // ============================================
-export function useFiles() {
+export function useFiles(enabled = true) {
 	return useQuery({
 		queryKey: queryKeys.files,
+		enabled,
 		queryFn: async () => {
 			const res = await fetchWithAuth(`${API_BASE}/files`);
 			if (!res.ok) throw new Error("Failed to fetch files");
@@ -189,9 +195,10 @@ export function useUsage() {
 	});
 }
 
-export function useCategories() {
+export function useCategories(enabled = true) {
 	return useQuery({
 		queryKey: queryKeys.categories,
+		enabled,
 		queryFn: async () => {
 			const res = await fetchWithAuth(`${API_BASE}/categories`);
 			if (!res.ok) throw new Error("Failed to fetch categories");

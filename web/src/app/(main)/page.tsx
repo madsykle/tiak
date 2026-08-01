@@ -21,6 +21,7 @@ export default function QueuePage() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { role } = useAuthState();
+	const canManageCategories = role === "admin";
 	const [urls, setUrls] = useState("");
 	const [selectedCategory, setSelectedCategory] = useState("default");
 	const [previewJob, setPreviewJob] = useState<DownloadJob | null>(null);
@@ -30,14 +31,14 @@ export default function QueuePage() {
 	const [skipped, setSkipped] = useState<{ url: string; reason: string; filename?: string; category?: string; dateFolder?: string }[]>([]);
 	const clipboardRef = useRef("");
 	const { data: jobs = [] } = useJobs();
-	const { data: categories = ["default"] } = useCategories();
+	const { data: categories = ["default"] } = useCategories(canManageCategories);
 	const { data: historyData } = useHistory(1, 8);
 	const addJobMutation = useAddJob();
 	const retryJobMutation = useRetryJob();
 	const redownloadJobMutation = useRedownloadJob();
 	const deleteJobMutation = useDeleteJob();
 
-	useEffect(() => { if (categories.length && !categories.includes(selectedCategory)) setSelectedCategory(categories[0]); }, [categories, selectedCategory]);
+	useEffect(() => { if (categories.length && !selectedCategory) setSelectedCategory(categories[0]); }, [categories, selectedCategory]);
 	useEffect(() => { if (!retryError) return; const timer = setTimeout(() => setRetryError(null), 5000); return () => clearTimeout(timer); }, [retryError]);
 
 	const resolveUrl = async (url: string) => {
@@ -64,7 +65,14 @@ export default function QueuePage() {
 	const refresh = () => { queryClient.invalidateQueries({ queryKey: ["jobs"] }); queryClient.invalidateQueries({ queryKey: ["history"] }); };
 	const addJob = async () => {
 		if (!urls.trim()) return;
-		try { const result = await addJobMutation.mutateAsync({ urls, category: selectedCategory }); if (result.added.length) setUrls(""); if (result.skipped.length) setSkipped(result.skipped); } catch (error) { setRetryError(error instanceof Error ? error.message : "Could not add these links"); }
+		setRetryError(null);
+		try {
+			const result = await addJobMutation.mutateAsync({ urls, category: selectedCategory });
+			if (result.added.length) setUrls("");
+			setSkipped(result.skipped);
+		} catch (error) {
+			setRetryError(error instanceof Error ? error.message : "Could not add these links");
+		}
 	};
 	const retry = async (id: string, redownload = false) => {
 		if (retryingIds.has(id)) return;
@@ -82,7 +90,7 @@ export default function QueuePage() {
 
 		<section className="app-card relative overflow-visible border-accent/25 bg-gradient-to-br from-accent/10 via-surface to-surface p-4 sm:p-6"><div className="flex items-center gap-2 text-xs font-semibold text-accent"><Zap size={15} />Fast capture</div><h2 className="mt-3 max-w-xl text-xl font-semibold tracking-tight sm:text-2xl">Paste links. Keep the source.</h2><p className="mt-2 max-w-lg text-sm leading-6 text-content-muted">Add one or more video links. Your downloads will stay organized by category.</p><div className="relative z-10 mt-5 overflow-visible rounded-2xl border border-border bg-background/45 focus-within:border-accent/70 focus-within:ring-4 focus-within:ring-accent/10"><textarea value={urls} onChange={(event) => setUrls(event.target.value)} rows={4} placeholder="Paste YouTube, TikTok, or Instagram links" className="block min-h-28 w-full resize-none border-0 bg-transparent p-4 text-sm leading-6 text-foreground placeholder:text-content-subtle focus:outline-none focus:ring-0" aria-label="Links to download" /><div className="relative z-20 flex flex-col gap-3 border-t border-border-subtle bg-surface-subtle/55 p-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-center gap-2 text-xs text-content-muted">{role === "admin" ? <SearchableSelect options={categories} value={selectedCategory} onChange={setSelectedCategory} className="min-w-0 flex-1 sm:w-44" /> : <><Clock3 size={14} className="shrink-0 text-accent" /><span>Guest links expire after 5 minutes</span></>}</div><button type="button" onClick={addJob} disabled={addJobMutation.isPending || !urls.trim()} className="button-primary w-full sm:w-auto">{addJobMutation.isPending ? "Adding links" : "Add to queue"}</button></div></div><div className="mt-4 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-content-subtle"><span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-background/35 px-2.5 py-1.5"><Link2 size={12} /> One link per line</span><span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-background/35 px-2.5 py-1.5"><Download size={12} /> Auto organized</span></div></section>
 
-		{skipped.length > 0 && <section className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4"><div className="flex items-center gap-2 text-sm font-semibold text-amber-200"><HelpCircle size={16} />{skipped.length} link{skipped.length === 1 ? "" : "s"} already in your library</div><div className="mt-3 grid gap-2">{skipped.map((item, index) => <div key={`${item.url}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-background/20 p-3 text-xs"><span className="min-w-0"><span className="block truncate text-content-muted">{item.url}</span><span className="mt-1 block text-amber-100">{item.reason}</span></span>{item.filename && item.category && item.dateFolder && <button type="button" onClick={() => triggerInvisibleDownload(getDownloadUrl(`data/${item.category}/${item.dateFolder}/${item.filename}`))} className="button-secondary min-h-9 shrink-0 border-amber-300/20 bg-amber-100/10 px-3 text-xs text-amber-100">Download</button>}</div>)}</div></section>}
+		{skipped.length > 0 && <section className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4"><div className="flex items-center gap-2 text-sm font-semibold text-amber-200"><HelpCircle size={16} />{skipped.length} link{skipped.length === 1 ? "" : "s"} could not be added</div><div className="mt-3 grid gap-2">{skipped.map((item, index) => <div key={`${item.url}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-background/20 p-3 text-xs"><span className="min-w-0"><span className="block truncate text-content-muted">{item.url}</span><span className="mt-1 block text-amber-100">{item.reason}</span></span>{item.filename && item.category && item.dateFolder && <button type="button" onClick={() => triggerInvisibleDownload(getDownloadUrl(`data/${item.category}/${item.dateFolder}/${item.filename}`))} className="button-secondary min-h-9 shrink-0 border-amber-300/20 bg-amber-100/10 px-3 text-xs text-amber-100">Download</button>}</div>)}</div></section>}
 		{retryError && <div className="flex items-start gap-3 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200"><HelpCircle size={17} className="mt-0.5 shrink-0" /><span className="min-w-0 flex-1">{retryError}</span><button type="button" onClick={() => setRetryError(null)} aria-label="Dismiss error" className="text-red-200/70 hover:text-red-100"><X size={16} /></button></div>}
 
 		<section className="space-y-3"><div className="flex items-end justify-between"><div><p className="eyebrow">Live status</p><h2 className="type-section-header mt-1">Active downloads</h2></div><span className="text-xs text-content-muted">{activeJobs.length} active</span></div>{activeJobs.length === 0 ? <div className="app-card-muted flex flex-col items-center justify-center px-4 py-14 text-center"><span className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-accent/10 text-accent"><CheckCircle2 size={24} /></span><h3 className="text-sm font-semibold">Queue is clear</h3><p className="mt-1 max-w-xs text-xs leading-5 text-content-muted">Paste a link above to start building your library.</p></div> : <div className="grid gap-2">{activeJobs.map((job) => <article key={job.id} className="app-card relative overflow-hidden p-4"><div className="absolute inset-y-0 left-0 bg-accent/[0.08] transition-all" style={{ width: job.status === "downloading" ? `${job.progress || 0}%` : "0%" }} /><div className="relative"><div className="flex items-start gap-3"><span className={`mt-1.5 size-2 shrink-0 rounded-full ${job.status === "downloading" ? "bg-accent shadow-[0_0_0_4px_rgb(var(--accent)/0.12)]" : "bg-content-subtle"}`} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium" title={job.url}>{job.url}</p><div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-content-muted"><span className="capitalize">{job.status}</span>{job.platform && job.platform !== "unknown" && <span className={platformBadgeClass(job.platform)}>{platformLabel(job.platform)}</span>}{job.status === "downloading" && <span>{job.progress?.toFixed(0)}% {job.eta ? ` / ${job.eta}` : ""}</span>}</div></div><button type="button" onClick={() => cancel(job.id)} className="button-secondary min-h-9 shrink-0 px-2.5 text-xs text-red-300 hover:border-red-300/40">Cancel</button></div></div></article>)}</div>}</section>

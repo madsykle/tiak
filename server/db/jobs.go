@@ -125,9 +125,12 @@ func (m *MongoDB) UpdateJobMetadata(ctx context.Context, id string, creator, ava
 	return err
 }
 
-func (m *MongoDB) UpdateJobCategory(ctx context.Context, id, category string) error {
-	_, err := m.jobs().UpdateByID(ctx, id, bson.M{"$set": bson.M{"category": category}})
-	return err
+func (m *MongoDB) UpdateJobCategory(ctx context.Context, id, category string) (bool, error) {
+	result, err := m.jobs().UpdateByID(ctx, id, bson.M{"$set": bson.M{"category": category}})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount == 1, nil
 }
 
 func (m *MongoDB) UpdateJobPlatform(ctx context.Context, id, platform string) error {
@@ -319,8 +322,8 @@ func (m *MongoDB) MarkDone(ctx context.Context, id, filename string, creator, av
 
 func (m *MongoDB) MarkFailed(ctx context.Context, id, errMsg string) error {
 	_, err := m.jobs().UpdateByID(ctx, id, bson.M{"$set": bson.M{
-		"status":  "failed",
-		"error":   errMsg,
+		"status": "failed",
+		"error":  errMsg,
 	}})
 	return err
 }
@@ -370,9 +373,24 @@ func (m *MongoDB) CheckJobExists(ctx context.Context, id string) (bool, error) {
 	return count > 0, nil
 }
 
-func (m *MongoDB) UpdateCategoryByFilename(ctx context.Context, filename, category string) error {
-	_, err := m.jobs().UpdateOne(ctx, bson.M{"filename": filename}, bson.M{"$set": bson.M{"category": category}})
-	return err
+func (m *MongoDB) UpdateCategoryByFilename(ctx context.Context, filename, oldCategory, newCategory string) (bool, error) {
+	filter := bson.M{"filename": filename, "category": oldCategory}
+	matches, err := m.jobs().CountDocuments(ctx, filter)
+	if err != nil {
+		return false, err
+	}
+	if matches == 0 {
+		// Files can exist on disk without a corresponding job document.
+		return false, nil
+	}
+	if matches > 1 {
+		return false, fmt.Errorf("multiple jobs match filename %q in category %q", filename, oldCategory)
+	}
+	result, err := m.jobs().UpdateOne(ctx, filter, bson.M{"$set": bson.M{"category": newCategory}})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount == 1, nil
 }
 
 func (m *MongoDB) FindJobByFilename(ctx context.Context, filename string) (*models.Job, error) {
@@ -416,7 +434,7 @@ func (m *MongoDB) ResetCrashedJobs(ctx context.Context) (int64, error) {
 
 func (m *MongoDB) DeleteOldFailedJobs(ctx context.Context, beforeTimestamp int64) (int64, error) {
 	result, err := m.jobs().DeleteMany(ctx, bson.M{
-		"status": "failed",
+		"status":    "failed",
 		"createdAt": bson.M{"$lt": beforeTimestamp},
 	})
 	if err != nil {

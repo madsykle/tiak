@@ -26,7 +26,10 @@ func addToQueue(state *AppState) http.HandlerFunc {
 			URLs     string `json:"urls"`
 			Category string `json:"category"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
 		if req.Category == "" {
 			req.Category = "default"
 		}
@@ -67,8 +70,8 @@ func addToQueue(state *AppState) http.HandlerFunc {
 			state.Queue.AddJob(job.ID)
 			added = append(added, *job)
 		}
-		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]interface{}{"added": added, "skipped": skipped})
 	}
 }

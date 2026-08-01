@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import InstallPrompt from "@/components/InstallPrompt";
 import { useAuthState, useAppStore } from "@/store/app-store";
-import { FolderOpen, History, Inbox, LayoutDashboard, Settings } from "lucide-react";
+import { BarChart3, FolderOpen, History, Inbox, LayoutDashboard, Settings } from "lucide-react";
 import Logo from "@/components/Logo";
 
 interface LayoutProps {
@@ -24,6 +24,12 @@ const navItems = [
 		label: "History",
 		href: "/history",
 		icon: History,
+		show: (role: string | null) => role === "admin" || role === "premium_member",
+	},
+	{
+		label: "Stats",
+		href: "/stats",
+		icon: BarChart3,
 		show: (role: string | null) => role === "admin" || role === "premium_member",
 	},
 	{

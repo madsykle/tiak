@@ -36,7 +36,7 @@ export default React.memo(function FileCard({ file, isSelected, onSelect, onPrev
 		<article style={style} className={`group relative overflow-hidden rounded-2xl border bg-surface transition duration-200 ${isSelected ? "border-accent ring-2 ring-accent/20" : "border-border/70 hover:-translate-y-0.5 hover:border-accent/50"}`}>
 			<div className="relative aspect-[4/5] overflow-hidden bg-surface-strong">
 				<Thumbnail path={file.path} alt={file.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-				<div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-2.5">
+				<div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-2.5">
 					<label className={`flex size-9 cursor-pointer items-center justify-center rounded-xl border backdrop-blur-md transition ${isSelected ? "border-accent bg-accent text-background" : "border-white/20 bg-black/45 text-white hover:bg-black/65"}`}>
 						<input type="checkbox" checked={isSelected} onChange={() => onSelect(file.path)} className="sr-only" aria-label={`Select ${file.name}`} />
 						{isSelected ? <Check size={16} strokeWidth={2.5} /> : <span className="size-3 rounded border border-white/80" />}
@@ -47,7 +47,7 @@ export default React.memo(function FileCard({ file, isSelected, onSelect, onPrev
 					<span className="flex items-center gap-1.5">{isVideo ? <Video size={13} /> : isImage ? <ImageIcon size={13} /> : <File size={13} />}{typeLabel}</span>
 					<span>{extension}</span>
 				</div>
-				{(isVideo || isImage) && <button type="button" onClick={() => onPreview(file)} className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100" aria-label={`Preview ${file.name}`}><span className="flex size-12 items-center justify-center rounded-full bg-white text-background shadow-xl"><Play size={20} fill="currentColor" /></span></button>}
+				{(isVideo || isImage) && <button type="button" onClick={() => onPreview(file)} className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100" aria-label={`Preview ${file.name}`}><span className="flex size-12 items-center justify-center rounded-full bg-white text-background shadow-xl"><Play size={20} fill="currentColor" /></span></button>}
 			</div>
 
 			<div className="flex min-h-[9.25rem] flex-col gap-3 p-3">

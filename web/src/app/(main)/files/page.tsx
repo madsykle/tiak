@@ -24,10 +24,10 @@ function formatDateHeader(dateStr: string) {
 export default function FilesPage() {
 	const { data: filesData, refetch: refetchFiles } = useFiles();
 	const { data: usage, refetch: refetchUsage } = useUsage();
-	const { data: categories = ["default"] } = useCategories();
-	const moveFileMutation = useMoveFile();
 	const { role } = useAuthState();
 	const canManageFiles = role === "admin";
+	const { data: categories = ["default"] } = useCategories(canManageFiles);
+	const moveFileMutation = useMoveFile();
 
 	const allFiles: FileItem[] = useMemo(() => {
 		if (!filesData) return [];

@@ -152,7 +152,7 @@ func (fi *FileIndex) GetIndex() FileIndexResponse {
 }
 
 func (fi *FileIndex) AddFile(path string) {
-	path = filepath.Clean(path)
+	path = normalizeIndexedPath(path)
 	info, err := os.Stat(path)
 	if err != nil {
 		return
@@ -184,9 +184,10 @@ func (fi *FileIndex) AddFile(path string) {
 }
 
 func (fi *FileIndex) RemoveFile(path string) {
+	path = normalizeIndexedPath(path)
 	fi.mu.Lock()
 	for i, f := range fi.files {
-		if f.Path == path {
+		if normalizeIndexedPath(f.Path) == path {
 			fi.files = append(fi.files[:i], fi.files[i+1:]...)
 			break
 		}
@@ -249,6 +250,23 @@ func (fi *FileIndex) FindFileByName(name string) *FileItem {
 		}
 	}
 	return nil
+}
+
+func normalizeIndexedPath(path string) string {
+	clean := filepath.Clean(path)
+	root, err := filepath.Abs(DataRoot)
+	if err != nil {
+		return clean
+	}
+	absolute, err := filepath.Abs(clean)
+	if err != nil {
+		return clean
+	}
+	relative, err := filepath.Rel(root, absolute)
+	if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(os.PathSeparator)) {
+		return clean
+	}
+	return filepath.Join(DataRoot, relative)
 }
 
 func (fi *FileIndex) InvalidateCache() {
@@ -386,36 +404,43 @@ func ValidateDataPath(path string) (string, error) {
 
 func MoveFileOnDisk(absPath, newCategory string) (string, error) {
 	sanitized := SanitizeCategoryName(newCategory)
-	if sanitized == "" {
+	if sanitized == "" || sanitized == "." || sanitized == ".." || strings.ContainsAny(sanitized, `/\\`) {
 		return "", fmt.Errorf("invalid category name")
 	}
 	absPath, err := filepath.Abs(absPath)
 	if err != nil {
 		return "", err
 	}
-	root, _ := filepath.Abs(DataRoot)
-	if !strings.HasPrefix(absPath, root) {
+	root, err := filepath.Abs(DataRoot)
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(root, absPath)
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
 		return "", fmt.Errorf("access denied")
 	}
 	if _, err := os.Stat(absPath); err != nil {
 		return "", fmt.Errorf("file not found")
 	}
-	rel, _ := filepath.Rel(root, absPath)
-	comps := strings.SplitN(rel, string(os.PathSeparator), 2)
-	rest := ""
-	if len(comps) > 1 {
-		rest = comps[1]
+	components := strings.Split(rel, string(os.PathSeparator))
+	if len(components) < 2 || components[0] == "" {
+		return "", fmt.Errorf("invalid file path")
 	}
-	// Skip old category component
-	if i := strings.Index(rest, string(os.PathSeparator)); i != -1 {
-		rest = rest[i+1:]
-	} else {
-		rest = ""
+	relativeFile := filepath.Join(components[1:]...)
+	newAbs := filepath.Join(root, sanitized, relativeFile)
+	if filepath.Clean(absPath) == filepath.Clean(newAbs) {
+		return filepath.Join(DataRoot, sanitized, relativeFile), nil
 	}
-	newAbs := filepath.Join(root, sanitized, rest)
-	os.MkdirAll(filepath.Dir(newAbs), 0755)
+	if _, err := os.Stat(newAbs); err == nil {
+		return "", fmt.Errorf("a file with that name already exists in %s", sanitized)
+	} else if !os.IsNotExist(err) {
+		return "", err
+	}
+	if err := os.MkdirAll(filepath.Dir(newAbs), 0755); err != nil {
+		return "", err
+	}
 	if err := os.Rename(absPath, newAbs); err != nil {
 		return "", err
 	}
-	return newAbs, nil
+	return filepath.Join(DataRoot, sanitized, relativeFile), nil
 }

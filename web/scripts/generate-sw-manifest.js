@@ -3,8 +3,22 @@ const path = require('path');
 const fs = require('fs');
 
 async function generateManifest() {
-  const swSrc = path.join(__dirname, '../public/sw.js');
-  const swDest = path.join(__dirname, '../.next/standalone/public/sw.js');
+  const publicDir = path.join(__dirname, '../public');
+  const standaloneRoot = path.join(__dirname, '../.next/standalone');
+  const standalonePublicDir = path.join(standaloneRoot, 'public');
+  const standaloneStaticDir = path.join(standaloneRoot, '.next/static');
+  const sourceStaticDir = path.join(__dirname, '../.next/static');
+  const swSrc = path.join(publicDir, 'sw.js');
+  const swDest = path.join(standalonePublicDir, 'sw.js');
+
+  // Next's standalone output does not include public/, so copy it explicitly
+  // for direct `node .next/standalone/server.js` deployments as well as Docker.
+  fs.rmSync(standalonePublicDir, { recursive: true, force: true });
+  fs.mkdirSync(standalonePublicDir, { recursive: true });
+  fs.cpSync(publicDir, standalonePublicDir, { recursive: true });
+  fs.mkdirSync(path.dirname(standaloneStaticDir), { recursive: true });
+  fs.rmSync(standaloneStaticDir, { recursive: true, force: true });
+  fs.cpSync(sourceStaticDir, standaloneStaticDir, { recursive: true });
 
   const { count, size, warnings } = await injectManifest({
     swSrc,
@@ -31,7 +45,6 @@ async function generateManifest() {
   const generatedSw = fs.readFileSync(swDest, 'utf8');
   
   // Get public files
-  const publicDir = path.join(__dirname, '../public');
   const publicFiles = getPublicFiles(publicDir);
   
   // Inject them into the precache manifest
@@ -66,32 +79,35 @@ function getPublicFiles(dir, baseDir = dir) {
 }
 
 function injectPublicFiles(swContent, publicFiles) {
-  // Find the precacheAndRoute call and inject public files
-  const manifestMatch = swContent.match(/precacheAndRoute\((\[.*?\])/s);
-  if (!manifestMatch) return swContent;
-  
+  // Workbox replaces self.__WB_MANIFEST with an array during injectManifest.
+  // Add public assets to that generated array so offline startup can resolve
+  // the manifest, icons, and other files served from public/.
+  const manifestMatch = swContent.match(
+    /const PRECACHE_MANIFEST = (\[.*?\]) \|\| \[\];/s,
+  );
+  if (!manifestMatch) {
+    throw new Error("Generated service worker precache marker not found");
+  }
+
   let manifest;
   try {
     manifest = JSON.parse(manifestMatch[1]);
   } catch {
     return swContent;
   }
-  
-  // Add public files to manifest
+
   for (const file of publicFiles) {
-    // Check if already in manifest
-    if (!manifest.some((m) => m.url === file.url)) {
+    if (!manifest.some((entry) => entry.url === file.url)) {
       manifest.push({
         revision: file.revision,
         url: file.url,
       });
     }
   }
-  
-  // Replace the manifest array
+
   return swContent.replace(
-    /precacheAndRoute\(\[.*?\]/s,
-    `precacheAndRoute(${JSON.stringify(manifest, null, 2)}`
+    /const PRECACHE_MANIFEST = \[.*?\] \|\| \[\];/s,
+    `const PRECACHE_MANIFEST = ${JSON.stringify(manifest, null, 2)} || [];`,
   );
 }
 

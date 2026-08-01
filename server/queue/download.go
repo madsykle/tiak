@@ -109,15 +109,9 @@ type downloadResult struct {
 }
 
 func (dq *DownloadQueue) runYtDlp(ctx context.Context, job *models.Job) (*downloadResult, error) {
-	pythonPath := os.Getenv("YT_DLP_PYTHON")
-	if pythonPath == "" {
-		cwd, _ := os.Getwd()
-		pythonPath = filepath.Join(cwd, "venv_python", "bin", "python")
-	}
-	ytDlpPath := os.Getenv("YT_DLP_BINARY")
-	if ytDlpPath == "" {
-		cwd, _ := os.Getwd()
-		ytDlpPath = filepath.Join(cwd, "bin", "yt-dlp")
+	downloader, downloaderArgs, err := resolveYtDlpCommand()
+	if err != nil {
+		return nil, err
 	}
 
 	outputFolder := storage.GetTodayFolder(job.Category)
@@ -129,11 +123,13 @@ func (dq *DownloadQueue) runYtDlp(ctx context.Context, job *models.Job) (*downlo
 		template = filepath.Join(outputFolder, "%(title)s.%(ext)s")
 	}
 
-	cmd := exec.CommandContext(ctx, "nice", "-n", "10", pythonPath, ytDlpPath,
+	commandArgs := append([]string{"-n", "10", downloader}, downloaderArgs...)
+	commandArgs = append(commandArgs,
 		"--newline", "--no-check-certificates", "--no-mtime", "--no-update",
 		"--merge-output-format", "mp4", "--remux-video", "mp4",
 		"--postprocessor-args", "ffmpeg:-movflags +faststart", "--write-info-json",
 		"-f", "bv*[height<=1080]+ba/b[height<=1080]/bestvideo+bestaudio/best")
+	cmd := exec.CommandContext(ctx, "nice", commandArgs...)
 
 	if isTikTok {
 		cmd.Args = append(cmd.Args, "--add-header", "Referer:https://www.tiktok.com/")
@@ -158,9 +154,17 @@ func (dq *DownloadQueue) runYtDlp(ctx context.Context, job *models.Job) (*downlo
 	}
 	cmd.Args = append(cmd.Args, "-o", template, "--", actualURL)
 
-	stdout, _ := cmd.StdoutPipe()
-	stderr, _ := cmd.StderrPipe()
-	_ = cmd.Start()
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("could not capture yt-dlp output: %w", err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, fmt.Errorf("could not capture yt-dlp errors: %w", err)
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("could not start yt-dlp: %w", err)
+	}
 
 	foundFilename := ""
 	reProgress := regexp.MustCompile(`\[download\]\s+(\d+\.?\d*?)%`)
@@ -168,7 +172,10 @@ func (dq *DownloadQueue) runYtDlp(ctx context.Context, job *models.Job) (*downlo
 	reMerge := regexp.MustCompile(`[mM]erger.*into\s+"?([^"]*)"?`)
 	reAlready := regexp.MustCompile(`[dD]ownloaded\s+(.*)\s+has already been downloaded`)
 
+	var outputWg sync.WaitGroup
+	outputWg.Add(2)
 	go func() {
+		defer outputWg.Done()
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -178,13 +185,13 @@ func (dq *DownloadQueue) runYtDlp(ctx context.Context, job *models.Job) (*downlo
 				}
 			}
 			if m := reDest.FindStringSubmatch(line); len(m) > 1 {
-				foundFilename = strings.TrimSpace(m[1])
+				foundFilename = filepath.Base(strings.TrimSpace(m[1]))
 			}
 			if m := reMerge.FindStringSubmatch(line); len(m) > 1 {
-				foundFilename = strings.Trim(strings.TrimSpace(m[1]), "\"")
+				foundFilename = filepath.Base(strings.Trim(strings.TrimSpace(m[1]), "\""))
 			}
 			if m := reAlready.FindStringSubmatch(line); len(m) > 1 {
-				foundFilename = strings.TrimSpace(m[1])
+				foundFilename = filepath.Base(strings.TrimSpace(m[1]))
 				dq.db.UpdateJobProgress(ctx, job.ID, 100, int64Ptr(0))
 			}
 		}
@@ -192,16 +199,22 @@ func (dq *DownloadQueue) runYtDlp(ctx context.Context, job *models.Job) (*downlo
 
 	stderrOutput := ""
 	go func() {
+		defer outputWg.Done()
+		var lines []string
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.Contains(line, "ERROR:") && stderrOutput == "" {
-				stderrOutput = strings.TrimSpace(line)
-			}
+			lines = append(lines, strings.TrimSpace(scanner.Text()))
+		}
+		stderrOutput = strings.TrimSpace(strings.Join(lines, "\n"))
+		const maxErrorLength = 12000
+		if len([]rune(stderrOutput)) > maxErrorLength {
+			runes := []rune(stderrOutput)
+			stderrOutput = "…" + string(runes[len(runes)-maxErrorLength+1:])
 		}
 	}()
 
-	err := cmd.Wait()
+	err = cmd.Wait()
+	outputWg.Wait()
 	if err != nil {
 		if stderrOutput != "" {
 			return nil, fmt.Errorf("%s", stderrOutput)
@@ -261,6 +274,65 @@ func (dq *DownloadQueue) runYtDlp(ctx context.Context, job *models.Job) (*downlo
 	}
 
 	return &downloadResult{filename: foundFilename, creator: creator, avatar: nil, caption: caption}, nil
+}
+
+func resolveYtDlpCommand() (string, []string, error) {
+	cwd, _ := os.Getwd()
+	pythonPath := resolveConfiguredPath(os.Getenv("YT_DLP_PYTHON"), filepath.Join(cwd, "venv_python", "bin", "python"))
+	ytDlpPath := resolveConfiguredPath(os.Getenv("YT_DLP_BINARY"), filepath.Join(cwd, "bin", "yt-dlp"))
+
+	if isExecutable(ytDlpPath) {
+		return ytDlpPath, nil, nil
+	}
+	if isRegularFile(ytDlpPath) && isExecutable(pythonPath) {
+		return pythonPath, []string{ytDlpPath}, nil
+	}
+	if path, err := exec.LookPath("yt-dlp"); err == nil {
+		return path, nil, nil
+	}
+	if isExecutable(pythonPath) {
+		return pythonPath, []string{"-m", "yt_dlp"}, nil
+	}
+
+	return "", nil, fmt.Errorf("yt-dlp is not installed or configured (checked %s and %s)", pythonPath, ytDlpPath)
+}
+
+func resolveConfiguredPath(value, fallback string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		value = fallback
+	}
+	if filepath.IsAbs(value) {
+		return value
+	}
+	candidates := []string{filepath.Join(mustGetwd(), value)}
+	if executable, err := os.Executable(); err == nil {
+		candidates = append(candidates, filepath.Join(filepath.Dir(executable), value))
+	}
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+	}
+	return candidates[0]
+}
+
+func mustGetwd() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+	return cwd
+}
+
+func isRegularFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
+func isExecutable(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular() && info.Mode().Perm()&0111 != 0
 }
 
 func generateThumbnail(thumbPath, videoPath string) {

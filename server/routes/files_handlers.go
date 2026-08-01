@@ -238,7 +238,10 @@ func moveFile(state *AppState) http.HandlerFunc {
 			JobID       string `json:"jobId"`
 			NewCategory string `json:"newCategory"`
 		}
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid move request", http.StatusBadRequest)
+			return
+		}
 		p := req.Path
 		if p == "" {
 			http.Error(w, `{"error":"path required"}`, http.StatusBadRequest)
@@ -249,13 +252,52 @@ func moveFile(state *AppState) http.HandlerFunc {
 			http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusForbidden)
 			return
 		}
-		newPath, err := storage.MoveFileOnDisk(abs, req.NewCategory)
-		if err != nil {
-			http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		root, rootErr := filepath.Abs(storage.DataRoot)
+		relativePath, relativeErr := filepath.Rel(root, abs)
+		pathParts := strings.Split(relativePath, string(os.PathSeparator))
+		if rootErr != nil || relativeErr != nil || len(pathParts) < 2 || pathParts[0] == "" {
+			http.Error(w, `{"error":"invalid file path"}`, http.StatusBadRequest)
 			return
 		}
-		state.FileIndex.RemoveFile(abs)
-		state.FileIndex.AddFile(newPath)
+		oldCategory := pathParts[0]
+
+		newPath, err := storage.MoveFileOnDisk(abs, req.NewCategory)
+		if err != nil {
+			status := http.StatusInternalServerError
+			if strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "invalid") {
+				status = http.StatusConflict
+			}
+			http.Error(w, `{"error":"`+err.Error()+`"}`, status)
+			return
+		}
+
+		// Keep the job metadata in sync with the directory move. Roll the file
+		// back if MongoDB cannot be updated so the index and database agree.
+		var categoryErr error
+		if req.JobID != "" {
+			var matched bool
+			matched, categoryErr = state.DB.UpdateJobCategory(r.Context(), req.JobID, storage.SanitizeCategoryName(req.NewCategory))
+			if categoryErr == nil && !matched {
+				categoryErr = fmt.Errorf("job not found")
+			}
+		} else {
+			_, categoryErr = state.DB.UpdateCategoryByFilename(r.Context(), filepath.Base(abs), oldCategory, storage.SanitizeCategoryName(req.NewCategory))
+		}
+		if categoryErr != nil {
+			newAbs, pathErr := storage.ValidateDataPath(newPath)
+			if pathErr == nil {
+				if rollbackErr := os.Rename(newAbs, abs); rollbackErr != nil {
+					log.Printf("file move rollback failed from %s to %s: %v", newAbs, abs, rollbackErr)
+					state.FileIndex.BuildIndex()
+				}
+			}
+			http.Error(w, `{"error":"failed to update file metadata"}`, http.StatusInternalServerError)
+			return
+		}
+
+		if indexErr := state.FileIndex.BuildIndex(); indexErr != nil {
+			log.Printf("file index rebuild after move failed: %v", indexErr)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "newPath": newPath})
 	}

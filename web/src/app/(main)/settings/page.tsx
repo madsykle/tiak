@@ -82,7 +82,7 @@ export default function SettingsPage() {
 	} | null>(null);
 
 	// TanStack Query hooks
-	const { data: categories = [] } = useCategories();
+	const { data: categories = [] } = useCategories(role === "admin");
 	const { data: settingsData } = useSettings();
 	const { data: usage } = useUsage();
 	const createCategoryMutation = useCreateCategory();
