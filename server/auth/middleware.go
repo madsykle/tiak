@@ -88,7 +88,7 @@ func CORSMiddleware(origins []string) func(http.Handler) http.Handler {
 					break
 				}
 			}
-			if allowed {
+			if allowed || len(origins) == 0 {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
 			w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH")

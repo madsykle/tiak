@@ -163,12 +163,11 @@ func NewRouter(state *AppState) http.Handler {
 	r.Use(auth.CORSMiddleware(state.Config.Server.CORSOrigins))
 	r.Use(auth.AuthMiddleware(state.AuthState, &state.Config.Server))
 
-	// Rate limiting on sensitive endpoints
+	// Rate limiting on sensitive endpoints only
 	rl := auth.NewRateLimiter(
 		state.Config.Security.RateLimitRequests,
 		state.Config.Security.RateLimitWindowSeconds,
 	)
-	r.Use(auth.RateLimitMiddleware(rl))
 
 	// Guest routes
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -187,13 +186,17 @@ func NewRouter(state *AppState) http.Handler {
 		io.WriteString(w, "Tiak Server is running (Go)")
 	})
 
-	r.Post("/api/auth/login", loginHandler(state))
-	r.Post("/api/auth/logout", func(w http.ResponseWriter, r *http.Request) {
-		http.SetCookie(w, &http.Cookie{Name: "token", Value: "", Path: "/", MaxAge: 0})
+	r.Post("/api/auth/login", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth.RateLimitMiddleware(rl)(loginHandler(state)).ServeHTTP(w, r)
+	}))
+	r.Post("/api/auth/logout", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{Name: "token", Value: "", Path: "/tiak/", MaxAge: 0})
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, `{"success":true}`)
-	})
-	r.Post("/api/auth/signup", signupHandler(state))
+	}))
+	r.Post("/api/auth/signup", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth.RateLimitMiddleware(rl)(signupHandler(state)).ServeHTTP(w, r)
+	}))
 	r.Get("/api/auth/me", meHandler(state))
 	r.Post("/api/queue/add", addToQueue(state))
 	r.Get("/api/queue/list", listQueue(state))

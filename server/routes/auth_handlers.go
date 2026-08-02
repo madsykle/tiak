@@ -32,10 +32,10 @@ func loginHandler(state *AppState) http.HandlerFunc {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "token",
 			Value:    token,
-			Path:     "/",
+			Path:     "/tiak/",
 			HttpOnly: true,
 			Secure:   true,
-			SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteNoneMode,
 			MaxAge:   int(state.Config.Server.JWTExpiryHours * 3600),
 		})
 		w.Header().Set("Content-Type", "application/json")

@@ -1,33 +1,17 @@
 server {
     listen 80;
     listen [::]:80;
-    server_name your-domain.com;  # Replace with your domain
+    server_name your-domain.com;
 
-    # Redirect HTTP to HTTPS (configure certbot after)
-    # return 301 https://$server_name$request_uri;
-
-    # Next.js Web Frontend (if running on same host)
-    # location / {
-    #     proxy_pass http://localhost:3000;
-    #     proxy_http_version 1.1;
-    #     proxy_set_header Upgrade $http_upgrade;
-    #     proxy_set_header Connection 'upgrade';
-    #     proxy_set_header Host $host;
-    #     proxy_cache_bypass $http_upgrade;
-    #     proxy_set_header X-Real-IP $remote_addr;
-    #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    # }
-
-    # Go Backend API
-    location /api/ {
-        proxy_pass http://localhost:4697;
+    # Go Backend API (served under /tiak/)
+    location /tiak/ {
+        proxy_pass http://localhost:4697/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         
-        # Large uploads (video files)
         client_max_body_size 2G;
         client_body_timeout 300s;
         proxy_read_timeout 300s;
@@ -35,8 +19,8 @@ server {
     }
 
     # Video Streaming - CRITICAL: proxy_buffering off
-    location /api/files/stream {
-        proxy_pass http://localhost:4697;
+    location /tiak/files/stream {
+        proxy_pass http://localhost:4697/files/stream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -44,7 +28,6 @@ server {
         proxy_set_header Range $http_range;
         proxy_set_header If-Range $http_if_range;
         
-        # Disable buffering for smooth video playback
         proxy_buffering off;
         proxy_cache off;
         
@@ -54,8 +37,8 @@ server {
     }
 
     # Thumbnails - cache for 1 day
-    location /api/files/thumbnail {
-        proxy_pass http://localhost:4697;
+    location /tiak/files/thumbnail {
+        proxy_pass http://localhost:4697/files/thumbnail;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -66,16 +49,16 @@ server {
     }
 
     # Health checks (no auth)
-    location /health {
-        proxy_pass http://localhost:4697;
+    location /tiak/health {
+        proxy_pass http://localhost:4697/health;
         access_log off;
     }
-    location /ready {
-        proxy_pass http://localhost:4697;
+    location /tiak/ready {
+        proxy_pass http://localhost:4697/ready;
         access_log off;
     }
-    location /metrics {
-        proxy_pass http://localhost:4697;
+    location /tiak/metrics {
+        proxy_pass http://localhost:4697/metrics;
         access_log off;
     }
 }

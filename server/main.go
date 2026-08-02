@@ -23,7 +23,7 @@ import (
 
 func main() {
 	// Load .env if present
-	godotenv.Load()
+	godotenv.Overload()
 
 	cfg := config.LoadConfig()
 	if err := cfg.Validate(); err != nil {

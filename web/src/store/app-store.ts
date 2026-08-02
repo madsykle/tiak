@@ -39,6 +39,8 @@ export const useAppStore = create<AppState>()(
 			role: null,
 			token:
 				typeof window !== "undefined" ? localStorage.getItem("token") : null,
+			// ponytail: token field kept for persist compatibility, not used for auth
+			// cookie-only auth: getToken() always returns null
 			guestId:
 				typeof window !== "undefined" ? localStorage.getItem("guest_id") : null,
 			isAuthenticated: false,
@@ -63,7 +65,6 @@ export const useAppStore = create<AppState>()(
 					const data = await apiLogin(username, password);
 					set({
 						role: data.role,
-						token: data.token,
 						isAuthenticated: true,
 						isLoading: false,
 					});
@@ -102,7 +103,6 @@ export const useAppStore = create<AppState>()(
 					const data = await apiLogin(username, password);
 					set({
 						role: data.role,
-						token: data.token,
 						isAuthenticated: true,
 						isLoading: false,
 					});
